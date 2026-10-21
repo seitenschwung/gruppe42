@@ -14,14 +14,14 @@ RUN node site/vorlagen/beratung/build.js site/kunden/gruppe42/gruppe42.json \
 FROM node:20-alpine AS test
 WORKDIR /app
 COPY server/ server/
-RUN node --test server/server.test.js
+RUN node --test server/server.test.js server/products.test.js
 
 # --- 3) Serve: Node server for static files and later /api/* ---
 FROM node:20-alpine
 ARG APP_VERSION=dev
 ENV NODE_ENV=production APP_VERSION=$APP_VERSION STATIC_ROOT=/app/html
 WORKDIR /app
-COPY server/server.js server/server.js
+COPY server/server.js server/products.js server/products.json server/
 COPY --from=build /out/ /app/html/
 USER node
 EXPOSE 8080

@@ -13,7 +13,7 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 - `site/kunden/gruppe42/static/img/`: logo + partner logos, copied into the output as-is
 - `site/vorlagen/beratung/`: template (`build.js`, `src/css`, `src/js`, `fonts`, `images`, `schema.json`)
 - `site/lib/`: helpers used by `build.js` (`helfer.js`, `bilder.js`)
-- `Dockerfile`: stage 1 builds `site/` to HTML, stage 2 runs `server/server.test.js` (pipeline test stage), stage 3 is `server/server.js` (`/healthz`, `/version.txt`, `/api/*` later)
+- `Dockerfile`: stage 1 builds `site/` to HTML, stage 2 runs `server/*.test.js` (pipeline test stage), stage 3 is `server/server.js` (`/healthz`, `/version.txt`, `/api/*` later)
 
 ## Commands
 - Build: `cd site && node vorlagen/beratung/build.js kunden/gruppe42/gruppe42.json && cp -r kunden/gruppe42/static/. vorlagen/beratung/dist/`
@@ -29,3 +29,5 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 - Deploy: only the CI job `Deploy (Coolify)` on push to `main` (needs repo var `COOLIFY_APP_UUID`, which sets `IMAGE`).
   Coolify "Auto Deploy" must stay off, else compose fails with "required variable IMAGE is missing"
 - Shop plan: `docs/shop-architektur.md`
+- Shop data: `server/products.json` (only source of prices, cents; `entwurf:true` = placeholder, not buyable), `server/products.js` validates; `.env.example` lists Stripe vars
+- Shop images in `site/kunden/gruppe42/static/img/shop/` (Unsplash, credit in products.json); `images.unsplash.com` needs `dev allow`
