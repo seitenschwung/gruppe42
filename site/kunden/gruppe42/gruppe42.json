@@ -1,0 +1,690 @@
+{
+  "demo_modus": false,
+  "ersteller": "Seitenschwung",
+  "name": "Gruppe 42",
+  "firma": "Gruppe 42 e.U.",
+  "kurzbeschreibung": "Personalentwicklung, Unternehmenskultur und Employer Branding aus Wien. Workshops und Programme für Führungskräfte, Mitarbeitende, Lehrlinge und Teams, seit 2002.",
+  "website_url": "https://gruppe42.seitenschwung.com",
+  "kontakt": {
+    "telefon": "+43 699 111 59 870",
+    "email": "info@gruppe42.at",
+    "adresse": {
+      "strasse": "Engerthstraße 156A/8/32",
+      "plz": "1020",
+      "ort": "Wien",
+      "land": "Österreich"
+    }
+  },
+  "hero": {
+    "kicker": "Seit 2002 · Personalentwicklung aus Wien",
+    "titel": "Menschen, die *gern* zur Arbeit kommen.",
+    "text": "Wir unterstützen Unternehmen dabei, ein Umfeld zu schaffen, in dem Mitarbeitende sich morgens auf die Arbeit freuen, ihr Bestes geben und abends erfüllt nach Hause gehen.",
+    "bild": {
+      "datei": "hero.jpg",
+      "alt": "Teilnehmende hören bei einem Workshop in einem hellen Altbau-Raum aufmerksam zu",
+      "credit": "Timur Shakerzianov / Unsplash",
+      "fokus": "center 45%"
+    }
+  },
+  "zahlen": [
+    {
+      "wert": "35 Jahre",
+      "text": "Berufserfahrung in Wirtschaft, Politik und Bildung"
+    },
+    {
+      "wert": "24 Jahre",
+      "text": "selbständig in Beratung, Training und Mediation"
+    },
+    {
+      "wert": "19 Jahre",
+      "text": "Lehrtätigkeit am FH Campus Wien"
+    },
+    {
+      "wert": "25+",
+      "text": "praxiserprobte Workshops und Programme"
+    }
+  ],
+  "referenzen": {
+    "titel": "Unternehmen und Institutionen, die mit uns arbeiten",
+    "namen": [
+      "ÖBB",
+      "PORR",
+      "AMS",
+      "Opel Wien",
+      "MAN",
+      "RBI Group IT",
+      "FH Campus Wien",
+      "Wittmann Battenfeld",
+      "Ardex",
+      "Bildungsdirektion Wien",
+      "Sozialministerium",
+      "lawyers & more"
+    ],
+    "logos": [
+      {
+        "name": "ÖBB",
+        "bild": "img/partner/logo_oebb.png"
+      },
+      {
+        "name": "RBGIT",
+        "bild": "img/partner/logo_gitg.png"
+      },
+      {
+        "name": "AMS - Arbeitsmarkt Service",
+        "bild": "img/partner/logo_ams.png"
+      },
+      {
+        "name": "Ardex",
+        "bild": "img/partner/logo_ardex.png"
+      },
+      {
+        "name": "Blaha",
+        "bild": "img/partner/logo_blaha.png"
+      },
+      {
+        "name": "Bildungsdirektion Wien",
+        "bild": "img/partner/logo_bildungsdirektionwien.png"
+      },
+      {
+        "name": "BMBWF",
+        "bild": "img/partner/logo_bmbwf.png"
+      },
+      {
+        "name": "BMSGPK",
+        "bild": "img/partner/logo_bmsgbk.png"
+      },
+      {
+        "name": "FH Campus Wien",
+        "bild": "img/partner/logo_fhc.png"
+      },
+      {
+        "name": "Gekko - Wir lieben IT",
+        "bild": "img/partner/logo_gekko.png"
+      },
+      {
+        "name": "IGO industries",
+        "bild": "img/partner/logo_igo.png"
+      },
+      {
+        "name": "Lawyers & more",
+        "bild": "img/partner/logo_law.png"
+      },
+      {
+        "name": "MAN",
+        "bild": "img/partner/logo_man.png"
+      },
+      {
+        "name": "Opel",
+        "bild": "img/partner/logo_opel.png"
+      },
+      {
+        "name": "Porr",
+        "bild": "img/partner/logo_porr.png"
+      },
+      {
+        "name": "Wibeba -",
+        "bild": "img/partner/logo_wibeba.png"
+      },
+      {
+        "name": "Wittmann Battenfeld",
+        "bild": "img/partner/logo_wittmann.png"
+      },
+      {
+        "name": "Sehen Wutscher!",
+        "bild": "img/partner/logo_wutscher.png"
+      }
+    ]
+  },
+  "haltung": {
+    "kicker": "Unsere Haltung",
+    "text": "Wir glauben an eine Arbeitsplatz-(R)Evolution: Menschen arbeiten, nicht weil sie müssen, sondern *weil sie wollen.*",
+    "nebentext": "Menschen verlassen selten ein Unternehmen. Sie verlassen ihre Führungskräfte. Deshalb setzen wir dort an, wo Kultur entsteht: bei Haltung, Kommunikation und Führung."
+  },
+  "geschichte": {
+    "kicker": "Unsere Geschichte",
+    "titel": "Erfahrung aus 35 Berufsjahren. Für Ihr Unternehmen.",
+    "text": "Von der Europapolitik in Wien, Brüssel und Linz in die Personalentwicklung: Gruppe 42 verbindet den Blick für Organisationen und Institutionen mit über zwei Jahrzehnten Praxis in Training, Beratung und Mediation.",
+    "qualifikationen": [
+      "Wirtschaftsstudium, Universität Linz",
+      "Studienlehrgang Training und Bildungsmanagement, Universität Linz",
+      "Human Resources Management, Open University",
+      "Ausbildung zur Mediatorin",
+      "Mitglied der WKO Wien, Fachgruppe Unternehmensberatung"
+    ],
+    "stationen": [
+      {
+        "jahr": "1991",
+        "titel": "Europapolitik in Wien",
+        "text": "Assistentin in der Österreichischen Gesellschaft für Europapolitik."
+      },
+      {
+        "jahr": "1993",
+        "titel": "Brüssel",
+        "text": "Assistentin bei der EFTA Surveillance Authority."
+      },
+      {
+        "jahr": "1995",
+        "titel": "Linz",
+        "text": "EU-Referentin am Institut für Sozial- und Wirtschaftswissenschaften."
+      },
+      {
+        "jahr": "1998",
+        "titel": "Europäisches Parlament",
+        "text": "Parlamentarische Mitarbeiterin von Dr. Maria Berger, Abgeordnete zum EU-Parlament."
+      },
+      {
+        "jahr": "2002",
+        "titel": "Der Schritt in die Selbständigkeit",
+        "text": "Unternehmensberaterin, Mediatorin und Führungskräftetrainerin. Seither begleiten wir Unternehmen, Institutionen und ihre Menschen.",
+        "hervorheben": true
+      },
+      {
+        "jahr": "2007",
+        "titel": "FH Campus Wien",
+        "text": "Lektorin für Personalmanagement, Führungstraining und Kommunikation."
+      },
+      {
+        "jahr": "2021",
+        "titel": "Denkanstöße",
+        "text": "Start des Blogs über Führung, Generationen und Unternehmenskultur."
+      },
+      {
+        "jahr": "Heute",
+        "titel": "Partnerin für Organisationen jeder Größe",
+        "text": "Programme für Führungskräfte, Mitarbeitende, Lehrlinge und Teams, vom Familienbetrieb bis zu ÖBB, PORR und dem AMS."
+      }
+    ]
+  },
+  "leistungen": {
+    "kicker": "Leistungen",
+    "titel": "Drei Hebel für eine Kultur, in der Menschen bleiben.",
+    "eintraege": [
+      {
+        "id": "personalentwicklung",
+        "titel": "Personalentwicklung",
+        "text": "Persönliche, methodische und Beziehungskompetenzen stärken, von der Führungsebene bis zum ersten Lehrjahr.",
+        "schlagworte": [
+          "Führungskräfte",
+          "Mitarbeitende",
+          "Lehrlinge",
+          "Teams"
+        ],
+        "bild": {
+          "datei": "personalentwicklung.jpg",
+          "alt": "Zwei Frauen im vertraulichen Gespräch an einem Tisch am Fenster",
+          "credit": "Christina @ wocintechchat.com / Unsplash"
+        },
+        "link": "#zielgruppen"
+      },
+      {
+        "id": "unternehmenskultur",
+        "titel": "Unternehmenskultur",
+        "text": "Vision und Werte, die gelebt werden. Eine Kommunikation, die Vertrauen schafft. Führung, die begeistert.",
+        "schlagworte": [
+          "Vision & Werte",
+          "Kommunikation",
+          "Führung"
+        ],
+        "bild": {
+          "datei": "kultur.jpg",
+          "alt": "Drei Kolleg:innen lachen gemeinsam am Laptop",
+          "credit": "Brooke Cagle / Unsplash"
+        },
+        "motto": "Überlassen Sie Ihre Kultur nicht dem Zufall.",
+        "intro": "Der Schlüsselfaktor für Wettbewerbsfähigkeit ist und bleibt der Mensch. Eine starke Unternehmenskultur schafft Rahmenbedingungen, in denen sich Menschen zu engagierten, innovativen und loyalen Mitarbeitenden entwickeln. Wir unterstützen Sie dabei, Ihre einzigartige Kultur und Identität zu stärken und zum Leben zu erwecken.",
+        "abschnitte": [
+          {
+            "titel": "Vision und Werte",
+            "untertitel": "Geben Sie Ihren Mitarbeitenden einen Grund aufzustehen.",
+            "text": "Mit einer klaren Vision und gelebten Werten zeigen Sie, wofür Sie stehen und was Sie antreibt. Damit werden Sie unverwechselbar, sichtbar und attraktiv: für Menschen, die Ihre Produkte kaufen, und vor allem für jene, die für Sie arbeiten."
+          },
+          {
+            "titel": "Kommunikation",
+            "untertitel": "Vertrauen und Verbundenheit schaffen.",
+            "text": "Ihre Unternehmenskultur spiegelt sich darin, wie Menschen miteinander sprechen. Wir unterstützen Sie, eine gesunde Kommunikationskultur zu schaffen, im persönlichen Umgang ebenso wie in digitalen Medien."
+          },
+          {
+            "titel": "Führung",
+            "untertitel": "Führungskräfte, die Menschen begeistern.",
+            "text": "Nichts prägt Ihre Kultur stärker als Ihre Führungskräfte. Wir begleiten Sie auf dem Weg zu Führungskräften, denen Mitarbeitende folgen, nicht weil sie müssen, sondern weil sie wollen."
+          }
+        ]
+      },
+      {
+        "id": "employer-branding",
+        "titel": "Employer Branding",
+        "text": "Eine Arbeitgebermarke, die die Wahrheit sagt. Von der Strategie über die Verankerung bis zur laufenden Betreuung.",
+        "schlagworte": [
+          "Strategie",
+          "Implementierung",
+          "Management"
+        ],
+        "bild": {
+          "datei": "employer-branding.jpg",
+          "alt": "Team feiert im Besprechungsraum mit einem High five vor einer Wand mit Haftnotizen",
+          "credit": "Walls.io / Unsplash"
+        },
+        "motto": "Attraktiv für bestehende und zukünftige Mitarbeitende.",
+        "intro": "Neue Erwartungen, ein Wertewandel zwischen den Generationen und der Wettbewerb um Fachkräfte verlangen eine glaubwürdige Arbeitgebermarke. Sie entsteht nicht in einer Werbekampagne, sondern aus Ihrer gelebten Unternehmenskultur. Es geht darum, authentisch zu sein, statt nur zu sagen, dass man es ist.",
+        "abschnitte": [
+          {
+            "titel": "Strategie",
+            "untertitel": "Klar und unverwechselbar positioniert.",
+            "text": "Analyse der bisherigen Arbeitgeberpositionierung und Arbeitskultur, Entwicklung der Employer-Branding-Strategie mit Werten, Leitbild, Zielgruppen und Maßnahmen, festgehalten in einem Employer Branding Manual."
+          },
+          {
+            "titel": "Implementierung",
+            "untertitel": "Innen verankert, außen sichtbar.",
+            "text": "Verankerung durch Trainings, Workshops und Coachings, bessere Arbeitskultur, interne Kommunikation und ein stimmiger Auftritt nach außen gegenüber Ihren Zielgruppen."
+          },
+          {
+            "titel": "Employer Branding Management",
+            "untertitel": "Damit die Marke lebendig bleibt.",
+            "text": "Klare Zuständigkeiten, Planung von Inhalten, Maßnahmen und Kommunikation. Auf Wunsch übernehmen wir das Management oder begleiten Sie als Sparringpartner."
+          }
+        ]
+      }
+    ]
+  },
+  "zielgruppen_kopf": {
+    "kicker": "Für wen",
+    "titel": "Workshops und Programme für jede Ebene."
+  },
+  "zielgruppen": [
+    {
+      "id": "fuehrungskraefte",
+      "titel": "Führungskräfte",
+      "motto": "Sei die Führungskraft, die du dir *gewünscht* hättest.",
+      "teaser": "„Sei die Führungskraft, die du dir gewünscht hättest.“",
+      "intro": "Wenn Mitarbeitende kündigen, verlassen sie meist nicht das Unternehmen, sondern ihre Führungskraft. Selten fehlt es an Fachwissen. Der Schritt in die Führung ist ein Wechsel vom Fachexperten zum Menschenexperten.",
+      "bild": {
+        "datei": "fuehrungskraefte.jpg",
+        "alt": "Eine Führungskraft spricht vor ihrem Team am langen Besprechungstisch",
+        "credit": "Christina @ wocintechchat.com / Unsplash"
+      },
+      "workshops": [
+        {
+          "kategorie": "Selbstkompetenz",
+          "titel": "Führung, eine Frage der Haltung",
+          "text": "Die eigene Grundhaltung kennen und authentisch mit der Führungsrolle verbinden.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Selbstkompetenz",
+          "titel": "Rolle und Aufgabe als Führungskraft",
+          "text": "Das eigene Führungsverhalten reflektieren und die persönlichen Potenziale als Führungskraft erkennen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Kommunizieren, Beziehungen stärken",
+          "text": "Offen, klar und wertfrei kommunizieren, aufmerksam zuhören und die eigene Position vertreten.",
+          "dauer": "3 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Schwierige Gespräche führen",
+          "text": "Kritik formulieren, ohne zu verletzen. Konflikte früh erkennen und gemeinsam lösen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Coachingtools: Mitarbeitende stärken",
+          "text": "Mitarbeitende ziel- und ressourcenorientiert dabei unterstützen, Aufgaben selbständig zu lösen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Mediative Tools: Spannungen klären",
+          "text": "Klärungsprozesse sachlich und persönlich begleiten, bevor Konflikte eskalieren.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Teams zu herausragenden Leistungen führen",
+          "text": "Kreativität, Motivation und Leistungsfähigkeit steigern und die Dynamik im Team verstehen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Führen im Generationen-Mix",
+          "text": "Von Babyboomern bis Generation Z: unterschiedliche Werte und Stärken gezielt nutzen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Strategische Kompetenz",
+          "titel": "Visions- und Leitbildentwicklung",
+          "text": "Orientierung geben: Vision und Leitbild gemeinsam entwickeln und im Alltag verankern.",
+          "dauer": "2–5 Tage"
+        },
+        {
+          "kategorie": "Strategische Kompetenz",
+          "titel": "Führung in bewegten Zeiten",
+          "text": "Wandel als Chance nutzen, Betroffene zu Beteiligten machen und Sicherheit vermitteln.",
+          "dauer": "2 Tage"
+        }
+      ],
+      "stimme": {
+        "text": "Durch zahlreiche Beispiele und Übungen wurde die Theorie lebendig und in der Praxis umsetzbar.",
+        "wer": "Peter Bichler",
+        "rolle": "Filialleiter, Wutscher SCS"
+      }
+    },
+    {
+      "id": "mitarbeitende",
+      "titel": "Mitarbeitende",
+      "motto": "Kommen, um zu *bleiben*.",
+      "teaser": "„Kommen, um zu bleiben.“",
+      "intro": "Entwicklungsmöglichkeiten und Weiterbildung entscheiden über Engagement und darüber, wie lange Menschen bleiben, gerade bei jungen Talenten. Geben Sie Ihren Mitarbeitenden die Chance, ihr volles Potenzial zu entfalten.",
+      "bild": {
+        "datei": "mitarbeitende.jpg",
+        "alt": "Drei Kolleg:innen arbeiten gemeinsam am Laptop",
+        "credit": "Chase Chappell / Unsplash"
+      },
+      "workshops": [
+        {
+          "kategorie": "Selbstkompetenz",
+          "titel": "Selbstbild und Fremdbild",
+          "text": "Offen und vertrauensvoll auf andere zugehen, die eigene Wirkung kennen und sich realistisch einschätzen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Selbstkompetenz",
+          "titel": "Burn-out-Prävention",
+          "text": "Eigene Stressoren und Warnsignale erkennen und Beruf und Privatleben in gesunder Balance halten.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Selbstkompetenz",
+          "titel": "Potenzialentfaltung",
+          "text": "Eigene Spielräume und Stärken erkennen und beruflich wie privat gezielt einsetzen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Selbstkompetenz",
+          "titel": "Zeitressourcen optimal nutzen",
+          "text": "Prioritäten setzen, Zeitdiebe erkennen und Freizeit ohne schlechtes Gewissen genießen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Erfolgreich kommunizieren",
+          "text": "Klar, offen und wertfrei kommunizieren, einfühlsam zuhören und Position beziehen.",
+          "dauer": "3 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Umgang mit schwierigen Situationen",
+          "text": "Eigene Konfliktmuster kennen, Konflikte früh erkennen und mit kreativen Strategien lösen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Interkulturelle Kompetenz",
+          "text": "Kulturelle Prägungen verstehen und erfolgreich in multikulturellen Teams arbeiten.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Beziehungskompetenz",
+          "titel": "Kund:innen zu Fans machen",
+          "text": "Vertrauensvolle Beziehungen aufbauen, professionell mit Reklamationen umgehen und überzeugend beraten.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Methodenkompetenz",
+          "titel": "Besprechungen und Workshops moderieren",
+          "text": "Meetings effizient und ergebnisorientiert leiten und Gruppen produktiver machen.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Methodenkompetenz",
+          "titel": "Erfolgreich präsentieren",
+          "text": "Publikumsgerecht und überzeugend präsentieren, mit Medien und Körpersprache.",
+          "dauer": "2 Tage"
+        },
+        {
+          "kategorie": "Lehrgang",
+          "titel": "Moderation und Visualisierungstechniken",
+          "text": "Eigene Moderationsdesigns entwickeln, Gruppenprozesse steuern und auch in schwierigen Situationen gelassen bleiben.",
+          "dauer": "6 Tage (48 UE)"
+        }
+      ],
+      "stimme": {
+        "text": "Du bist sehr auf unsere unterschiedlichen Charaktere und Bedürfnisse eingegangen und hast es uns einfach gemacht, ganz offen mit den Themen umzugehen.",
+        "wer": "Sabine Prucha",
+        "rolle": "Wiener Betriebs- und Baugesellschaft mbH"
+      }
+    },
+    {
+      "id": "lehrlinge",
+      "titel": "Lehrlinge & Ausbilder:innen",
+      "motto": "Junge Talente sicher ins *Arbeitsleben* begleiten.",
+      "teaser": "„Junge Talente sicher ins Arbeitsleben begleiten.“",
+      "intro": "Lehrlinge von heute gestalten die Zukunft Ihres Unternehmens mit. Holen Sie junge Menschen dort ab, wo sie stehen, und formen Sie selbstbewusste, loyale und motivierte Mitarbeitende. Für Lehrlinge, Ausbilder:innen und Mentor:innen.",
+      "bild": {
+        "datei": "lehrlinge.jpg",
+        "alt": "Junge Menschen in Arbeitskleidung an Werkbänken in einer Lehrwerkstatt",
+        "credit": "Septian Setiawan / Unsplash"
+      },
+      "foerderung": "Die Teilnahme an diesen Workshops kann von der WKO mit bis zu 75 % gefördert werden. Nähere Infos auf [lehrefoerdern.at](https://www.lehrefoerdern.at).",
+      "workshops": [
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Welcome Days",
+          "text": "Gemeinsame Kennenlerntage zu Beginn der Lehre: Arbeitsfeld, Vorgesetzte und Kolleg:innen kennenlernen, Vertrauen und Orientierung gewinnen."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Potenzialentfaltung",
+          "text": "Den Übergang von der Schule in den Beruf meistern, Stärken erkennen und ein Zukunftsbild entwickeln."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Selbstbild und Fremdbild",
+          "text": "Den eigenen Handlungsspielraum kennen und sicher und vertrauensvoll auf andere zugehen."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Gelungene Kommunikation",
+          "text": "Klar und offen kommunizieren, einfühlsam zuhören und Position beziehen."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Erfolgreich präsentieren",
+          "text": "Ideen überzeugend vermitteln und sicher und authentisch auftreten."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Kooperation und Teamarbeit",
+          "text": "Zum Teamerfolg beitragen, Feedback geben und nehmen und mit Konflikten konstruktiv umgehen."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Umgang mit Konflikten",
+          "text": "Konfliktsignale erkennen und mit deeskalierenden Gesprächstechniken lösen."
+        },
+        {
+          "kategorie": "Für Lehrlinge",
+          "titel": "Kund:innen zu Fans machen",
+          "text": "Kundenbeziehungen persönlich und am Telefon professionell gestalten."
+        },
+        {
+          "kategorie": "Peer-Mediation",
+          "titel": "Lehrgang Peer-Mediation",
+          "text": "Lehrlinge lernen, Konflikte unter Gleichaltrigen zu schlichten: Einführung, Kommunikation und Intervention, Praxismodul. Ein Beitrag zur Gewaltprävention und eine Entlastung für Ausbilder:innen.",
+          "dauer": "3 × 2 Tage + 4 halbe Tage"
+        },
+        {
+          "kategorie": "Für Ausbilder:innen",
+          "titel": "Meine Rolle als Lehrlingsausbilder:in",
+          "text": "Eigene Werte, Muster und Glaubenssätze erkennen und die Rolle erfolgreich ausfüllen."
+        },
+        {
+          "kategorie": "Für Ausbilder:innen",
+          "titel": "Lehrlinge führen",
+          "text": "Den Spagat zwischen Autoritäts- und Vertrauensperson schaffen und Begeisterung wecken."
+        },
+        {
+          "kategorie": "Für Ausbilder:innen",
+          "titel": "Konflikt- und Kritikgespräche wertschätzend führen",
+          "text": "Kritik formulieren, ohne zu verletzen, und Gespräche gut vorbereiten."
+        },
+        {
+          "kategorie": "Für Ausbilder:innen",
+          "titel": "Interkulturelle Kompetenz",
+          "text": "Kulturelle Prägungen verstehen und mit multikulturellen Gruppen erfolgreich arbeiten."
+        },
+        {
+          "kategorie": "Für Ausbilder:innen",
+          "titel": "Praxis-Erfahrungsaustausch",
+          "text": "Herausforderungen im Umgang mit Lehrlingen gemeinsam reflektieren und neue Perspektiven gewinnen.",
+          "dauer": "tageweise nach Bedarf"
+        },
+        {
+          "kategorie": "Mentoring",
+          "titel": "Mentoring-Programm für Lehrlinge",
+          "text": "Erfahrene Mitarbeitende begleiten Lehrlinge als Vertrauenspersonen. Wir unterstützen Mentor:innen und Lehrlinge mit Kompetenztrainings, Workshops und Coaching. Das senkt Abbruchraten und sichert Fachkräfte."
+        }
+      ],
+      "stimme": {
+        "text": "Das war eine der besten Schulungen, die ich im Laufe der Lehrzeit hatte. Unterhaltsam, locker und sehr lehrreich fürs Leben.",
+        "wer": "Kristian Berengiuc",
+        "rolle": "Berater beim AMS"
+      }
+    },
+    {
+      "id": "teams",
+      "titel": "Teams",
+      "motto": "Teams zu *Spitzenleistungen* führen.",
+      "teaser": "„Teams zu Spitzenleistungen führen.“",
+      "intro": "Um in einer komplexen, sich rasch verändernden Welt erfolgreich zu sein, braucht es funktionierende Teams. Offene Kommunikation und Agilität sind dabei entscheidend. Schaffen Sie die Voraussetzungen für Teams, die für ein gemeinsames Ziel brennen.",
+      "bild": {
+        "datei": "teams.jpg",
+        "alt": "Ein Team jubelt gemeinsam am Schreibtisch",
+        "credit": "Vitaly Gariev / Unsplash"
+      },
+      "workshops": [
+        {
+          "kategorie": "Formate",
+          "titel": "Teambuilding",
+          "text": "Zusammenarbeit und Zusammenhalt stärken: Was läuft gut, wo liegen Potenziale, welche Rollen und Spielregeln gelten? Die Trainerin moderiert und sichert die Ergebnisse.",
+          "dauer": "2 Tage außer Haus"
+        },
+        {
+          "kategorie": "Formate",
+          "titel": "Team Check-up",
+          "text": "Das Team bringt eigene Themen ein und entwickelt gemeinsam Lösungen. Für reibungslose Abläufe und bessere Zusammenarbeit.",
+          "dauer": "ca. monatlich 1,5 Stunden"
+        },
+        {
+          "kategorie": "Formate",
+          "titel": "Workshop-Moderation",
+          "text": "Wir entwerfen die Dramaturgie, führen durch den Prozess, steuern Diskussionen und dokumentieren die Ergebnisse. So können sich alle auf den Inhalt konzentrieren.",
+          "dauer": "nach Bedarf"
+        }
+      ],
+      "stimme": {
+        "text": "In klaren und strukturierten Schritten ließ sie uns in kürzester Zeit die Stärken unseres Teams bewusst werden.",
+        "wer": "Bernhard Breunlich",
+        "rolle": "Managing Partner, lawyers & more"
+      }
+    }
+  ],
+  "rahmen": [
+    {
+      "titel": "Inhouse oder außer Haus",
+      "text": "In Ihren Räumen oder in einem Seminarhotel, ganz nach Ihrem Bedarf."
+    },
+    {
+      "titel": "Inhalte nach Maß",
+      "text": "Jeder Workshop wird an Ihre Ziele, Ihr Team und Ihre Branche angepasst."
+    },
+    {
+      "titel": "Viel Praxis",
+      "text": "Übungen und Beispiele aus dem Alltag statt Frontalvortrag. Sofort umsetzbar."
+    }
+  ],
+  "ablauf": {
+    "kicker": "So arbeiten wir",
+    "titel": "Maßgeschneidert statt von der Stange.",
+    "schritte": [
+      {
+        "titel": "Erstgespräch",
+        "text": "Unverbindlich: Ziele, Herausforderungen und Wünsche besprechen und klären, ob wir zueinander passen."
+      },
+      {
+        "titel": "Programm",
+        "text": "Wir stellen Workshops, Coaching und Moderation passend zu Ihrem Unternehmen zusammen."
+      },
+      {
+        "titel": "Workshops",
+        "text": "Viel Praxis, wenig Frontalvortrag. Übungen und Beispiele, die sofort im Alltag wirken."
+      },
+      {
+        "titel": "Begleitung",
+        "text": "Team Check-ups, Reflexion und Coaching sichern, dass das Gelernte bleibt."
+      }
+    ]
+  },
+  "stimmen": {
+    "kicker": "Stimmen",
+    "haupt": {
+      "text": "In nur sechs Wochen sind wir vom ersten Schritt zu unserer Vision gekommen. *Sensationell.*",
+      "wer": "Bernhard Breunlich",
+      "rolle": "Managing Partner, lawyers & more"
+    },
+    "weitere": [
+      {
+        "text": "Anfangs hatte ich die Befürchtung, dass es wieder einer dieser langweiligen Frontalvorträge werden würde. Weit gefehlt!",
+        "wer": "Wolfgang Sokoll",
+        "rolle": "Opel Wien"
+      },
+      {
+        "text": "Die Workshops waren sehr kurzweilig, abwechslungsreich und perfekt an die Teilnehmer angepasst.",
+        "wer": "BM DI Reinhard Schöller",
+        "rolle": "Leiter PORR Campus"
+      },
+      {
+        "text": "Sie schafft es, Teilnehmende unterschiedlicher Hierarchieebenen abzuholen und mitzureißen.",
+        "wer": "Bernadette Irnberger",
+        "rolle": "Personalentwicklerin"
+      }
+    ]
+  },
+  "person": {
+    "kicker": "Über Ingrid",
+    "name": "Mag. Ingrid Nirnberger",
+    "rolle": "Unternehmensberaterin, Mediatorin und Führungskräftetrainerin",
+    "text": "Humorvoll, authentisch und mit dem Blick für das, was im Alltag wirklich funktioniert. So beschreiben Teilnehmende ihre Workshops. Ingrid verbindet Wirtschaftsstudium, Mediation und Jahre in der Europapolitik mit über zwei Jahrzehnten in der Erwachsenenbildung.",
+    "bild": {
+      "datei": "ingring_nirnberger.png",
+      "alt": "Porträt von Ingrid Nirnberger",
+      "fokus": "62% center"
+    },
+    "fakten": [
+      {
+        "titel": "Seit 2002",
+        "text": "selbständig in Beratung und Training"
+      },
+      {
+        "titel": "Seit 2007",
+        "text": "Lektorin am FH Campus Wien"
+      },
+      {
+        "titel": "Mediatorin",
+        "text": "für Konflikte im Team und zwischen Ebenen"
+      },
+      {
+        "titel": "Brüssel & Wien",
+        "text": "EFTA, EU-Parlament, Europapolitik"
+      }
+    ]
+  },
+  "kontaktband": {
+    "titel": "Ihr Unternehmen ist einzigartig. *Ihre Lösung auch.*",
+    "text": "Vereinbaren Sie ein unverbindliches Gespräch. Wir hören zu, stellen Fragen und sagen Ihnen ehrlich, ob wir die Richtigen für Sie sind."
+  },
+  "impressum": "**Gruppe 42 e.U.**  \nEngerthstraße 156A/8/32  \n1020 Wien, Österreich\n\nTelefon: [+43 699 111 59 870](tel:+4369911159870)  \nE-Mail: [info@gruppe42.at](mailto:info@gruppe42.at)\n\n**Inhaberin:** Mag. Ingrid Nirnberger  \n**Unternehmensgegenstand:** Unternehmensberatung, Training und Mediation  \n**Firmenbuchnummer:** FN 463582p  \n**Firmenbuchgericht:** Handelsgericht Wien  \n**UID-Nummer:** ATU59882023  \n**Mitgliedschaft:** Wirtschaftskammer Wien, Fachgruppe Unternehmensberatung, Buchhaltung und Informationstechnologie  \n**Berufsrecht:** Gewerbeordnung, abrufbar unter [ris.bka.gv.at](https://www.ris.bka.gv.at)  \n**Aufsichtsbehörde:** Magistratisches Bezirksamt des 2. Bezirks\n\n## Haftungsausschluss\n\nDie Inhalte dieser Website dienen ausschließlich der Information. Der Besuch der angebotenen Seminare ersetzt keine ärztliche oder psychotherapeutische Behandlung. Für Inhalte verlinkter externer Seiten sind ausschließlich deren Betreiber verantwortlich.",
+  "datenschutz": "## 1. Verantwortliche\n\nGruppe 42 e.U., Mag. Ingrid Nirnberger, Engerthstraße 156A/8/32, 1020 Wien, [info@gruppe42.at](mailto:info@gruppe42.at)\n\n## 2. Grundsätzliches\n\nDiese Website verwendet **keine Cookies**, **kein Tracking** und **keine Analyse-Werkzeuge**. Schriftarten und Bilder werden ausschließlich vom eigenen Server geladen. Es werden keine Daten an Dritte übertragen, solange Sie nicht selbst einen externen Link anklicken.\n\n## 3. Hosting und Server-Logfiles\n\nBeim Aufruf der Website speichert der Hosting-Anbieter technisch notwendige Daten (z. B. IP-Adresse, Datum und Uhrzeit, aufgerufene Seite, Browsertyp) in Server-Logfiles. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und stabilen Betrieb). Die Logfiles werden nach spätestens 14 Tagen gelöscht.\n\n## 4. Kontaktaufnahme\n\nWenn Sie per E-Mail oder Telefon Kontakt aufnehmen, werden Ihre Angaben zur Bearbeitung der Anfrage verarbeitet (Art. 6 Abs. 1 lit. b DSGVO).\n\n## 5. Externe Links\n\nDie Website enthält Links zu externen Angeboten (z. B. lehrefoerdern.at). Erst wenn Sie einen solchen Link anklicken, werden Daten an den jeweiligen Anbieter übertragen.\n\n## 6. Ihre Rechte\n\nSie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten sowie auf Datenübertragbarkeit und Widerspruch (Art. 15 bis 21 DSGVO). Außerdem können Sie sich bei der Österreichischen Datenschutzbehörde beschweren ([dsb.gv.at](https://www.dsb.gv.at)).",
+  "logo": "img/gruppe42-logo.png"
+}

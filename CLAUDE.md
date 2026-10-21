@@ -1,51 +1,28 @@
-# TODO: project name
+# Gruppe 42 website
 
-> **First session:** the TODOs below are still open. Ask the owner what is unclear, fill them
-> in, delete this note and open a PR. Keep this file under 60 lines. Tools, MCPs and box rules
-> are in the global box CLAUDE.md, don't repeat them here.
-
-## Demo content
-`public/`, `Dockerfile` and `nginx.conf` are a placeholder static site that already satisfies the
-contract below and keeps CI green. Replace them with the real project (or adapt them), then delete
-this section.
-
-## Purpose
-TODO: what this project is, for whom, and the production URL.
+Static website for Gruppe 42 (Personalentwicklung, Wien; Mag. Ingrid Nirnberger), prod
+`gruppe42.seitenschwung.com`. Extracted from `Nirnberger/sample_sites` (template `beratung`);
+nothing else from that repo is kept. UI language: German.
 
 ## Stack
-TODO: language, framework, database, notable libraries.
-
-## Commands
-- Install: TODO
-- Dev server: TODO (listen on 0.0.0.0 so `dev expose` works)
-- Tests: TODO
-- Build: TODO
+Plain Node (no npm deps) static-site generator, output served by unprivileged nginx. Image build
+needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` is missing.
 
 ## Layout
-TODO: the few folders that matter.
+- `site/kunden/gruppe42/gruppe42.json`: all page content (texts, workshops, references, logo paths)
+- `site/kunden/gruppe42/static/img/`: logo + partner logos, copied into the output as-is
+- `site/vorlagen/beratung/`: template (`build.js`, `src/css`, `src/js`, `fonts`, `images`, `schema.json`)
+- `site/lib/`: helpers used by `build.js` (`helfer.js`, `bilder.js`)
+- `Dockerfile`: stage 1 builds `site/` to HTML, stage 2 is nginx; `nginx.conf` has `/healthz`, `/version.txt`
 
-## CI and deploy contract
-`.github/workflows/ci.yml` is a thin caller of the shared pipeline in `seitenschwung/template`,
-managed by the owner. You can't change workflow files, so build the project to fit it:
-- If `package-lock.json` exists, CI runs `npm ci`, then `npm run lint`, `npm test` and
-  `npm run build` when those scripts exist. Keep them green locally before pushing.
-- If a `Dockerfile` exists, CI builds it and runs the image hardened: read-only root
-  filesystem, `/tmp` as the only writable path, no capabilities, as the image's (non-root)
-  user. The image must:
-  - listen on port **8080**
-  - answer `GET /healthz` with 200
-  - serve `GET /version.txt` with the build argument `APP_VERSION` (the commit SHA)
-- If `/` returns HTML, CI also crawls the site with Playwright, axe (WCAG AA, serious and
-  critical findings fail) and Lighthouse (accessibility, best practices and SEO at least 90).
-- A Dockerfile stage named `test` (`FROM ... AS test`) is built first: put lint and tests there for
-  stacks without `package-lock.json`. It must not be the last stage.
-- `docker-compose.yml` keeps the CrowdSec labels (`crowdsec.enable=true`,
-  `crowdsec.labels.type=nginx`) and the json-file log rotation on every service that serves traffic.
-  The CrowdSec agent on the server reads the container logs through them. Don't remove them; the
-  type must match a parser there, so ask the owner before changing it.
-- `docker-compose.yml` is what Coolify runs. Keep `image: ${IMAGE}`: the pipeline pushes
-  the tested image to ghcr.io and tells Coolify which tag to run.
-- `main` is production: every merge deploys after green CI. Work on branches, open PRs.
+## Commands
+- Build: `cd site && node vorlagen/beratung/build.js kunden/gruppe42/gruppe42.json && cp -r kunden/gruppe42/static/. vorlagen/beratung/dist/`
+- Preview: `python3 -m http.server 8080 -d site/vorlagen/beratung/dist` (dist is git-ignored)
+- Docker: `docker build --build-arg APP_VERSION=dev -t gruppe42 .`; CI does build + hardened run + axe/Lighthouse
+- No tests/lint scripts; CI browser tests are the check
 
-## Conventions
-TODO: code style, language of the UI, anything the owner insists on.
+## Pitfalls
+- `demo_modus: false` + `website_url` set on purpose: demo mode adds noindex and fails Lighthouse SEO (<90)
+- Portrait `ingring_nirnberger.png` is missing (was in S3); the template shows a placeholder
+- Logo usage rights, Impressum details and open client questions are unconfirmed
+- Build writes to `vorlagen/beratung/dist` and `.bildcache`; both git-ignored (`dist/`; add `.bildcache/` if needed)

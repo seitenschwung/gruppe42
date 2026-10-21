@@ -1,0 +1,4 @@
+{
+  "$comment": "Inhaltsschema dieser Vorlage – geprüft von build-all.js und tests/inhalte.js",
+  "$ref": "../../schemas/beratung.schema.json"
+}
