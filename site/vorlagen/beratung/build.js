@@ -58,7 +58,7 @@ const demo = s.demo_modus === true;
 const firma = s.firma || s.name;
 const adresse = s.kontakt.adresse || {};
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz']);
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop']);
 const ids = [...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
@@ -361,6 +361,40 @@ ${seitenkopf(l.titel, l.motto, l.intro, l.bild)}
 ${kontaktband()}`;
 }
 
+// Shop: Produkte kommen aus der Serverdatei (s.shop.produkte, Pfad relativ zur Inhalts-JSON). Preise werden
+// hier nur angezeigt; maßgeblich ist immer der Server. Kaufen-Knopf bleibt aus, bis der Checkout live ist.
+const TYP = { online: 'Online', praesenz: 'Vor Ort' };
+function shopSeite(cfg) {
+  const daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), cfg.produkte), 'utf8'));
+  const eur = new Intl.NumberFormat('de-AT', { style: 'currency', currency: daten.waehrung.toUpperCase() });
+  const entwurf = daten.produkte.some((p) => p.entwurf);
+  const karten = daten.produkte.map((p) => {
+    const b = p.bild || {};
+    if (b.datei) benutzt.set(b.datei, { datei: b.datei, alt: b.alt || '', credit: b.credit || '' });
+    return `
+      <li class="karte">
+        ${b.datei ? `<img src="${esc(b.datei)}" alt="${esc(b.alt || '')}" width="960" height="640" loading="lazy" decoding="async">` : '<div class="platzhalter" aria-hidden="true"></div>'}
+        <div class="karte-inhalt">
+          <ul class="schlagworte"><li>${esc(TYP[p.typ] || p.typ)}</li></ul>
+          <h2>${esc(p.titel)}</h2>
+          <p>${esc(p.beschreibung)}</p>
+          <p class="shop-preis">${Number.isInteger(p.preis_cent) ? eur.format(p.preis_cent / 100) : 'Preis folgt'}</p>
+          <button class="knopf knopf-dunkel" type="button" disabled>Bald buchbar<span class="sr-only">: ${esc(p.titel)}</span></button>
+        </div>
+      </li>`;
+  }).join('');
+  return `
+${seitenkopf(cfg.titel || 'Seminare', cfg.motto, cfg.intro)}
+<section class="abschnitt" aria-label="${esc(cfg.titel || 'Seminare')}">
+  <div class="container">
+    ${entwurf ? '<p class="shop-hinweis">Entwurf: Texte, Preise und Termine sind Platzhalter. Buchen ist noch nicht möglich.</p>' : ''}
+    <ul class="karten">${karten}
+    </ul>
+    <p class="shop-recht">Vor dem Start: <a href="impressum.html">Impressum</a> und <a href="datenschutz.html">Datenschutz</a> prüfen; AGB und Widerrufsbelehrung folgen.</p>
+  </div>
+</section>`;
+}
+
 function rechtsSeite(datei, ueberschrift, quelle) {
   if (!quelle) warn(`${ueberschrift} ist leer – bitte ergänzen, bevor die Seite online geht.`);
   const nachweise = datei === 'impressum.html' ? [...benutzt.values()].filter((b) => b.credit) : [];
@@ -388,7 +422,7 @@ const css = minifyCss(fs.readFileSync(path.join(ROOT, 'src/css/style.css'), 'utf
 const heroInfo = s.hero.bild ? verarbeiteBild(normBild(s.hero.bild).datei) : null;
 const ogBild = heroInfo ? absolut(heroInfo.src) : '';
 
-function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '' }) {
+function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false }) {
   const start = datei === 'index.html';
   const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei}` : '';
   const anker = (id) => (start ? `#${id}` : `./#${id}`);
@@ -405,7 +439,7 @@ function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(titel)}</title>
 <meta name="description" content="${esc(beschreibung)}">
-${demo ? '<meta name="robots" content="noindex, nofollow">' : ''}
+${demo || noindex ? '<meta name="robots" content="noindex, nofollow">' : ''}
 ${seitenUrl ? `<link rel="canonical" href="${esc(seitenUrl)}">` : ''}
 <meta name="theme-color" content="#FFFBF5">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
@@ -507,6 +541,15 @@ const seiten = [
     beschreibung: (l.intro || l.text || l.titel).slice(0, 160),
   })),
 ];
+// Shop-Seite: nicht im Menü, nicht in der Sitemap, noindex, bis s.shop.sichtbar true ist (Rechtstexte freigegeben)
+if (s.shop && s.shop.aktiv) {
+  const sichtbar = s.shop.sichtbar === true;
+  seiten.push({
+    datei: 'shop.html', aktiv: 'shop', inhalt: shopSeite(s.shop), noindex: !sichtbar,
+    titel: `${s.shop.titel || 'Seminare'} – ${s.name}`,
+    beschreibung: (s.shop.intro || `Seminare von ${s.name}`).slice(0, 160),
+  });
+}
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
 for (const seite of seiten) fs.writeFileSync(path.join(DIST, seite.datei), layout(seite));
 
@@ -521,7 +564,7 @@ fs.writeFileSync(path.join(DIST, 'robots.txt'),
   demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${websiteUrl ? `Sitemap: ${websiteUrl}/sitemap.xml\n` : ''}`);
 if (websiteUrl && !demo) {
   const heute = new Date().toISOString().slice(0, 10);
-  const urls = seiten.map((p) => `<url><loc>${websiteUrl}/${p.datei === 'index.html' ? '' : p.datei}</loc><lastmod>${heute}</lastmod></url>`).join('');
+  const urls = seiten.filter((p) => !p.noindex).map((p) => `<url><loc>${websiteUrl}/${p.datei === 'index.html' ? '' : p.datei}</loc><lastmod>${heute}</lastmod></url>`).join('');
   fs.writeFileSync(path.join(DIST, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>\n`);
 }
 if (!demo && !websiteUrl) warn('website_url ist leer – ohne sie fehlen canonical-Link, absolute Open-Graph-Bilder und sitemap.xml.');

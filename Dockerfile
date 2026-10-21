@@ -6,6 +6,7 @@ FROM node:20-alpine AS build
 RUN apk add --no-cache libwebp-tools
 WORKDIR /app
 COPY site/ site/
+COPY server/products.json server/products.json
 RUN node site/vorlagen/beratung/build.js site/kunden/gruppe42/gruppe42.json \
  && cp -r site/vorlagen/beratung/dist /out \
  && cp -r site/kunden/gruppe42/static/. /out/
