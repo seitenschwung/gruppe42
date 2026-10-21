@@ -16,3 +16,14 @@ jobs:
       packages: write
     uses: seitenschwung/template/.github/workflows/pipeline.yml@v1
     secrets: inherit
+
+  # Screenshots of the PR as a comment (optional; delete this job to go without). Also runs when the
+  # tests fail, because that is when a picture helps most.
+  preview:
+    needs: pipeline
+    if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: seitenschwung/template/.github/workflows/preview.yml@v1
+    secrets: inherit
