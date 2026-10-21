@@ -25,4 +25,7 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 - `demo_modus: false` + `website_url` set on purpose: demo mode adds noindex and fails Lighthouse SEO (<90)
 - Portrait `ingring_nirnberger.png` is missing (was in S3); the template shows a placeholder
 - Logo usage rights, Impressum details and open client questions are unconfirmed
-- Build writes to `vorlagen/beratung/dist` and `.bildcache`; both git-ignored (`dist/`; add `.bildcache/` if needed)
+- Build writes to `vorlagen/beratung/dist` and `.bildcache`; both git-ignored
+- Deploy: only the CI job `Deploy (Coolify)` on push to `main` (needs repo var `COOLIFY_APP_UUID`, which sets `IMAGE`).
+  Coolify "Auto Deploy" must stay off, else compose fails with "required variable IMAGE is missing"
+- Shop plan: `docs/shop-architektur.md`
