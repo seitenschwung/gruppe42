@@ -461,6 +461,7 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
       <ul>
         ${s.leistungen.eintraege.length ? `<li><a href="${anker('leistungen')}"${s.leistungen.eintraege.some((l) => l.id === aktiv) ? ' aria-current="page"' : ''}>Leistungen</a></li>` : ''}
         ${zielgruppenNav}
+        ${s.shop && s.shop.aktiv && s.shop.sichtbar === true ? `<li><a href="shop.html"${aktiv === 'shop' ? ' aria-current="page"' : ''}>${esc(s.shop.titel || 'Seminare')}</a></li>` : ''}
         ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
         <li><a href="#kontakt">Kontakt</a></li>
         <li><a class="knopf knopf-dunkel" href="#kontakt">Erstgespräch vereinbaren</a></li>

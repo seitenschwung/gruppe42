@@ -689,7 +689,7 @@
   "logo": "img/gruppe42-logo.svg",
   "shop": {
     "aktiv": true,
-    "sichtbar": false,
+    "sichtbar": true,
     "produkte": "../../../server/products.json",
     "titel": "Seminare",
     "motto": "Seminare *buchen*",
