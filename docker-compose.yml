@@ -9,7 +9,7 @@ services:
     # CrowdSec reads this container's logs through the Docker API (labels, see CLAUDE.md).
     labels:
       - crowdsec.enable=true
-      - crowdsec.labels.type=nginx
+      - crowdsec.labels.type=http
     logging:
       driver: json-file
       options:

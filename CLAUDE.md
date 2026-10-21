@@ -5,7 +5,7 @@ Static website for Gruppe 42 (Personalentwicklung, Wien; Mag. Ingrid Nirnberger)
 nothing else from that repo is kept. UI language: German.
 
 ## Stack
-Plain Node (no npm deps) static-site generator, output served by unprivileged nginx. Image build
+Plain Node (no npm deps) static-site generator, output served by a small dependency-free Node server (`server/`). Image build
 needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` is missing.
 
 ## Layout
@@ -13,7 +13,7 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 - `site/kunden/gruppe42/static/img/`: logo + partner logos, copied into the output as-is
 - `site/vorlagen/beratung/`: template (`build.js`, `src/css`, `src/js`, `fonts`, `images`, `schema.json`)
 - `site/lib/`: helpers used by `build.js` (`helfer.js`, `bilder.js`)
-- `Dockerfile`: stage 1 builds `site/` to HTML, stage 2 is nginx; `nginx.conf` has `/healthz`, `/version.txt`
+- `Dockerfile`: stage 1 builds `site/` to HTML, stage 2 runs `server/server.test.js` (pipeline test stage), stage 3 is `server/server.js` (`/healthz`, `/version.txt`, `/api/*` later)
 
 ## Commands
 - Build: `cd site && node vorlagen/beratung/build.js kunden/gruppe42/gruppe42.json && cp -r kunden/gruppe42/static/. vorlagen/beratung/dist/`
