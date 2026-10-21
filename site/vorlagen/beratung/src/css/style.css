@@ -258,3 +258,10 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .referenzen .referenzen-logos { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .referenzen-logos li { min-height: 84px; background: #fff; }
 .referenzen-logos img { width: 160px; max-width: 100%; height: auto; }
+
+.shop-hinweis { margin-bottom: 24px; padding: 14px 18px; border-radius: 12px; background: var(--honig-hell); color: var(--espresso); font-size: 15px; }
+.shop-preis { font-weight: 700; color: var(--espresso) !important; }
+.shop-recht { margin-top: 32px; font-size: 14px; color: var(--stein); }
+.karte-inhalt .knopf { align-self: flex-start; margin-top: auto; }
+.knopf:disabled { opacity: .6; cursor: not-allowed; }
+.karte h2 { font-size: 24px; line-height: 1.25; font-weight: 700; letter-spacing: -.01em; }

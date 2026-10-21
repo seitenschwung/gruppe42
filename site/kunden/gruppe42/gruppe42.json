@@ -686,5 +686,13 @@
   },
   "impressum": "**Gruppe 42 e.U.**  \nEngerthstraße 156A/8/32  \n1020 Wien, Österreich\n\nTelefon: [+43 699 111 59 870](tel:+4369911159870)  \nE-Mail: [info@gruppe42.at](mailto:info@gruppe42.at)\n\n**Inhaberin:** Mag. Ingrid Nirnberger  \n**Unternehmensgegenstand:** Unternehmensberatung, Training und Mediation  \n**Firmenbuchnummer:** FN 463582p  \n**Firmenbuchgericht:** Handelsgericht Wien  \n**UID-Nummer:** ATU59882023  \n**Mitgliedschaft:** Wirtschaftskammer Wien, Fachgruppe Unternehmensberatung, Buchhaltung und Informationstechnologie  \n**Berufsrecht:** Gewerbeordnung, abrufbar unter [ris.bka.gv.at](https://www.ris.bka.gv.at)  \n**Aufsichtsbehörde:** Magistratisches Bezirksamt des 2. Bezirks\n\n## Haftungsausschluss\n\nDie Inhalte dieser Website dienen ausschließlich der Information. Der Besuch der angebotenen Seminare ersetzt keine ärztliche oder psychotherapeutische Behandlung. Für Inhalte verlinkter externer Seiten sind ausschließlich deren Betreiber verantwortlich.",
   "datenschutz": "## 1. Verantwortliche\n\nGruppe 42 e.U., Mag. Ingrid Nirnberger, Engerthstraße 156A/8/32, 1020 Wien, [info@gruppe42.at](mailto:info@gruppe42.at)\n\n## 2. Grundsätzliches\n\nDiese Website verwendet **keine Cookies**, **kein Tracking** und **keine Analyse-Werkzeuge**. Schriftarten und Bilder werden ausschließlich vom eigenen Server geladen. Es werden keine Daten an Dritte übertragen, solange Sie nicht selbst einen externen Link anklicken.\n\n## 3. Hosting und Server-Logfiles\n\nBeim Aufruf der Website speichert der Hosting-Anbieter technisch notwendige Daten (z. B. IP-Adresse, Datum und Uhrzeit, aufgerufene Seite, Browsertyp) in Server-Logfiles. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an einem sicheren und stabilen Betrieb). Die Logfiles werden nach spätestens 14 Tagen gelöscht.\n\n## 4. Kontaktaufnahme\n\nWenn Sie per E-Mail oder Telefon Kontakt aufnehmen, werden Ihre Angaben zur Bearbeitung der Anfrage verarbeitet (Art. 6 Abs. 1 lit. b DSGVO).\n\n## 5. Externe Links\n\nDie Website enthält Links zu externen Angeboten (z. B. lehrefoerdern.at). Erst wenn Sie einen solchen Link anklicken, werden Daten an den jeweiligen Anbieter übertragen.\n\n## 6. Ihre Rechte\n\nSie haben das Recht auf Auskunft, Berichtigung, Löschung und Einschränkung der Verarbeitung Ihrer Daten sowie auf Datenübertragbarkeit und Widerspruch (Art. 15 bis 21 DSGVO). Außerdem können Sie sich bei der Österreichischen Datenschutzbehörde beschweren ([dsb.gv.at](https://www.dsb.gv.at)).",
-  "logo": "img/gruppe42-logo.svg"
+  "logo": "img/gruppe42-logo.svg",
+  "shop": {
+    "aktiv": true,
+    "sichtbar": false,
+    "produkte": "../../../server/products.json",
+    "titel": "Seminare",
+    "motto": "Seminare *buchen*",
+    "intro": "PLATZHALTER: Einleitungstext liefert der Kunde."
+  }
 }
