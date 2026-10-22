@@ -8,7 +8,7 @@
       "beschreibung": "PLATZHALTER: Text, Dauer, Termine und Inhalte liefert der Kunde.",
       "preis_cent": null,
       "max_menge": 1,
-      "bild": { "datei": "img/shop/online-seminar.jpg", "alt": "Mann bei einem Videoanruf am Laptop im Büro", "credit": "LinkedIn Sales Solutions / Unsplash" },
+      "bild": { "datei": "shop/online-seminar.jpg", "alt": "Mann bei einem Videoanruf am Laptop im Büro", "credit": "LinkedIn Sales Solutions / Unsplash" },
       "entwurf": true
     },
     {
@@ -18,7 +18,7 @@
       "beschreibung": "PLATZHALTER: Text, Ort, Termine, Teilnehmerzahl und Inhalte liefert der Kunde.",
       "preis_cent": null,
       "max_menge": 1,
-      "bild": { "datei": "img/shop/praesenz-seminar.jpg", "alt": "Trainerin erklärt einer Gruppe etwas am Whiteboard", "credit": "Centre for Ageing Better / Unsplash" },
+      "bild": { "datei": "shop/praesenz-seminar.jpg", "alt": "Trainerin erklärt einer Gruppe etwas am Whiteboard", "credit": "Centre for Ageing Better / Unsplash" },
       "entwurf": true
     }
   ]

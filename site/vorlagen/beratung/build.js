@@ -370,10 +370,9 @@ function shopSeite(cfg) {
   const entwurf = daten.produkte.some((p) => p.entwurf);
   const karten = daten.produkte.map((p) => {
     const b = p.bild || {};
-    if (b.datei) benutzt.set(b.datei, { datei: b.datei, alt: b.alt || '', credit: b.credit || '' });
     return `
       <li class="karte">
-        ${b.datei ? `<img src="${esc(b.datei)}" alt="${esc(b.alt || '')}" width="960" height="640" loading="lazy" decoding="async">` : '<div class="platzhalter" aria-hidden="true"></div>'}
+        ${bild(b, { sizes: '(min-width: 900px) 360px, 92vw' })}
         <div class="karte-inhalt">
           <ul class="schlagworte"><li>${esc(TYP[p.typ] || p.typ)}</li></ul>
           <h2>${esc(p.titel)}</h2>

@@ -23,13 +23,13 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 
 ## Pitfalls
 - `demo_modus: false` + `website_url` set on purpose: demo mode adds noindex and fails Lighthouse SEO (<90)
-- Portrait `ingring_nirnberger.png` is missing (was in S3); the template shows a placeholder
+- Portrait: `site/vorlagen/beratung/images/ingrid-nirnberger.jpg` (from client inbox, `person.bild`); images in `images/` get WebP size variants at build, `static/img/` is copied as-is (SVG, small logos)
 - Logo usage rights, Impressum details and open client questions are unconfirmed
 - Build writes to `vorlagen/beratung/dist` and `.bildcache`; both git-ignored
 - Deploy: only the CI job `Deploy (Coolify)` on push to `main` (needs repo var `COOLIFY_APP_UUID`, which sets `IMAGE`).
   Coolify "Auto Deploy" must stay off, else compose fails with "required variable IMAGE is missing"
 - Shop plan: `docs/shop-architektur.md`
 - Shop data: `server/products.json` (only source of prices, cents; `entwurf:true` = placeholder, not buyable), `server/products.js` validates; `.env.example` lists Stripe vars
-- Shop images in `site/kunden/gruppe42/static/img/shop/` (Unsplash, credit in products.json); `images.unsplash.com` needs `dev allow`
+- Shop images in `site/vorlagen/beratung/images/shop/` (`bild.datei: shop/x.jpg` in products.json) (Unsplash, credit in products.json); `images.unsplash.com` needs `dev allow`
 - Shop page `shop.html`: built by `shopSeite()` in build.js from `shop` in gruppe42.json (reads `server/products.json`). Visible (menu, sitemap, indexable) since `shop.sichtbar: true`; false = hidden (noindex, no menu, not in sitemap); buy button disabled until checkout exists
 - Checkout: `server/checkout.js` (POST /api/checkout {id,menge}; 503 without STRIPE_SECRET_KEY; rate limit; tests mock Stripe). Webhook: `server/webhook.js` (POST /api/stripe/webhook, signature verified, idempotent by event id in memory). Orders: `server/orders.js` appends to `$DATA_DIR/orders.jsonl` (default `/data`, compose volume `orders-data`; no customer data, one line per Checkout session). Read: `docker exec <container> cat /data/orders.jsonl`. Unwritable /data -> webhook 500 -> Stripe retries
