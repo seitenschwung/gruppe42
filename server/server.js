@@ -117,7 +117,17 @@ if (require.main === module) {
     root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
     version: process.env.APP_VERSION || 'dev',
     log: console.log,
-    api: require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }),
+    api: {
+      routes: {
+        ...require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }).routes,
+        ...require('./webhook').createWebhook({
+          env: process.env,
+          log: console.log,
+          // Orders are stored in a later step; for now only a PII-free line goes to the log.
+          onPaid: (o) => console.log(`order paid: session=${o.session_id} product=${o.product_id} menge=${o.menge}`),
+        }).routes,
+      },
+    },
   });
   server.keepAliveTimeout = 65_000;
   server.listen(8080, '0.0.0.0', () => console.log('listening on :8080'));
