@@ -31,5 +31,5 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 - Shop plan: `docs/shop-architektur.md`
 - Shop data: `server/products.json` (only source of prices, cents; `entwurf:true` = placeholder, not buyable), `server/products.js` validates; `.env.example` lists Stripe vars
 - Shop images in `site/kunden/gruppe42/static/img/shop/` (Unsplash, credit in products.json); `images.unsplash.com` needs `dev allow`
-- Shop page `shop.html`: built by `shopSeite()` in build.js from `shop` in gruppe42.json (reads `server/products.json`). Hidden (noindex, no menu, not in sitemap) until `shop.sichtbar: true`; buy button disabled until checkout exists
+- Shop page `shop.html`: built by `shopSeite()` in build.js from `shop` in gruppe42.json (reads `server/products.json`). Visible (menu, sitemap, indexable) since `shop.sichtbar: true`; false = hidden (noindex, no menu, not in sitemap); buy button disabled until checkout exists
 - Checkout: `server/checkout.js` (POST /api/checkout {id,menge}; 503 without STRIPE_SECRET_KEY; rate limit; tests mock Stripe). Webhook + orders still TODO
