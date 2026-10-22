@@ -31,7 +31,8 @@ function send(res, status, headers, body) {
   res.end(body);
 }
 
-function createServer({ root, version, log }) {
+// api: optional { routes: { '/api/x': { method, handler(req, res, send) } } } (see checkout.js)
+function createServer({ root, version, log, api }) {
   const rootDir = path.resolve(root);
 
   return http.createServer((req, res) => {
@@ -43,16 +44,23 @@ function createServer({ root, version, log }) {
         log(`${ip} - - [${clfDate(new Date())}] "${req.method} ${req.url}" ${res.statusCode} ${res.getHeader('content-length') || '-'} "${h.referer || '-'}" "${h['user-agent'] || '-'}"`);
       });
     }
-    if (req.method !== 'GET' && req.method !== 'HEAD') {
-      return send(res, 405, { Allow: 'GET, HEAD', 'Content-Type': 'text/plain; charset=utf-8' }, 'Method Not Allowed\n');
-    }
-    const head = req.method === 'HEAD';
     let pathname;
     try {
       pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     } catch {
       return send(res, 400, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Bad Request\n');
     }
+    if (api && api.routes[pathname]) {
+      const route = api.routes[pathname];
+      if (req.method !== route.method) {
+        return send(res, 405, { Allow: route.method, 'Content-Type': 'application/json; charset=utf-8' }, '{"error":"method_not_allowed"}\n');
+      }
+      return route.handler(req, res, send);
+    }
+    if (req.method !== 'GET' && req.method !== 'HEAD') {
+      return send(res, 405, { Allow: 'GET, HEAD', 'Content-Type': 'text/plain; charset=utf-8' }, 'Method Not Allowed\n');
+    }
+    const head = req.method === 'HEAD';
 
     if (pathname === '/healthz') {
       return send(res, 200, { 'Content-Type': 'text/plain; charset=utf-8' }, head ? undefined : 'ok\n');
@@ -109,6 +117,7 @@ if (require.main === module) {
     root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
     version: process.env.APP_VERSION || 'dev',
     log: console.log,
+    api: require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }),
   });
   server.keepAliveTimeout = 65_000;
   server.listen(8080, '0.0.0.0', () => console.log('listening on :8080'));
