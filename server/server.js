@@ -113,6 +113,7 @@ function serve(req, res, file, st, head) {
 module.exports = { createServer };
 
 if (require.main === module) {
+  const orders = require('./orders').createOrderStore({ dir: process.env.DATA_DIR || '/data' });
   const server = createServer({
     root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
     version: process.env.APP_VERSION || 'dev',
@@ -123,8 +124,11 @@ if (require.main === module) {
         ...require('./webhook').createWebhook({
           env: process.env,
           log: console.log,
-          // Orders are stored in a later step; for now only a PII-free line goes to the log.
-          onPaid: (o) => console.log(`order paid: session=${o.session_id} product=${o.product_id} menge=${o.menge}`),
+          // Throws if /data is not writable: the webhook then answers 500 and Stripe retries.
+          onPaid: async (o) => {
+            const { created } = await orders.add(o);
+            if (created) console.log(`order stored: session=${o.session_id} product=${o.product_id} menge=${o.menge}`);
+          },
         }).routes,
       },
     },
