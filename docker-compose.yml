@@ -18,6 +18,8 @@ services:
     expose:
       - "8080"
     read_only: true
+    volumes:
+      - orders-data:/data
     tmpfs:
       - /tmp:size=64m,mode=1777,noexec,nosuid,nodev
     cap_drop:
@@ -33,3 +35,6 @@ services:
       timeout: 3s
       start_period: 10s
       retries: 3
+
+volumes:
+  orders-data:
