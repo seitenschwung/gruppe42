@@ -292,6 +292,7 @@ ${p.name ? `<section class="sand abschnitt person" id="ueber" aria-labelledby="p
   </div>
 </section>` : ''}
 
+${faqAbschnitt()}
 ${kontaktband()}`;
 }
 
@@ -404,6 +405,54 @@ function rechtsSeite(datei, ueberschrift, quelle) {
     datei, titel: `${ueberschrift} – ${s.name}`, beschreibung: `${ueberschrift} der Website von ${firma}.`,
     inhalt: `<section class="abschnitt rechtliches"><div class="container"><h1>${ueberschrift}</h1><div class="rechtstext">${quelle ? h.markdown(quelle) : '<p>Dieser Text wird noch ergänzt.</p>'}${liste2}</div></div></section>`,
   };
+}
+
+// --- FAQ + strukturierte Daten (JSON-LD) -------------------------------------
+// FAQ erscheint nur bei faq.sichtbar === true (Texte sprechen für die Inhaberin, bis dahin Platzhalter).
+const faqEintraege = () => liste((s.faq || {}).eintraege).filter((e) => e.frage && e.antwort);
+const faqSichtbar = () => (s.faq || {}).sichtbar === true && faqEintraege().length > 0;
+function faqAbschnitt() {
+  if (!faqSichtbar()) return '';
+  const f = s.faq;
+  return `<section class="faq abschnitt" id="faq" aria-labelledby="faq-titel">
+  <div class="container">
+    <div class="kopfzeile"><div>${f.kicker ? `<p class="kicker">${esc(f.kicker)}</p>` : ''}<h2 class="titel" id="faq-titel">${betont(f.titel || 'Häufige Fragen')}</h2></div></div>
+    <div class="faq-liste">${faqEintraege().map((e) => `
+      <details><summary>${esc(e.frage)}</summary><div class="faq-antwort"><p>${esc(e.antwort)}</p></div></details>`).join('')}
+    </div>
+  </div>
+</section>`;
+}
+const ldTag = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+// Ergänzt jede indexierbare Seite um JSON-LD. Nur Daten, die vorhanden sind (keine Preise/Bewertungen).
+function ergaenzeStrukturdaten(seitenListe) {
+  for (const seite of seitenListe) {
+    if (seite.noindex) continue;
+    const start = seite.datei === 'index.html';
+    const tags = [];
+    if (start && faqSichtbar()) {
+      tags.push(ldTag({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqEintraege().map((e) => ({ '@type': 'Question', name: e.frage, acceptedAnswer: { '@type': 'Answer', text: e.antwort } })) }));
+    }
+    if (!start && websiteUrl && !['impressum.html', 'datenschutz.html'].includes(seite.datei)) {
+      const url = `${websiteUrl}/${seite.datei}`;
+      const name = seite.titel.split(' – ')[0].split(':')[0];
+      const graph = [
+        { '@type': 'BreadcrumbList', itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Start', item: `${websiteUrl}/` },
+          { '@type': 'ListItem', position: 2, name, item: url },
+        ] },
+        { '@type': 'WebPage', '@id': url, url, name: seite.titel, description: seite.beschreibung, inLanguage: 'de-AT', isPartOf: { '@type': 'WebSite', name: s.name, url: `${websiteUrl}/` } },
+      ];
+      const z = s.zielgruppen.find((x) => seiteVon(x.id) === seite.datei);
+      if (z) {
+        for (const w of z.workshops) {
+          graph.push({ '@type': 'Course', name: w.titel, description: w.text || undefined, inLanguage: 'de-AT', provider: { '@type': 'Organization', name: firma, url: `${websiteUrl}/` }, url });
+        }
+      }
+      tags.push(ldTag({ '@context': 'https://schema.org', '@graph': graph }));
+    }
+    if (tags.length) seite.zusatzHead = (seite.zusatzHead || '') + tags.join('');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -551,6 +600,7 @@ if (s.shop && s.shop.aktiv) {
   });
 }
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
+ergaenzeStrukturdaten(seiten);
 for (const seite of seiten) fs.writeFileSync(path.join(DIST, seite.datei), layout(seite));
 
 // ---------------------------------------------------------------------------
