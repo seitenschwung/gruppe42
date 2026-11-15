@@ -420,7 +420,8 @@ ${seitenkopf(cfg.titel || 'Seminare', cfg.motto, cfg.intro)}
     </ul>
     <p class="shop-recht">Vor dem Start: <a href="impressum.html">Impressum</a> und <a href="datenschutz.html">Datenschutz</a> prüfen; AGB und Widerrufsbelehrung folgen.</p>
   </div>
-</section>`;
+</section>
+${kontaktband()}`;
 }
 
 // Tests: Fragen, Skala, Auswertungstexte liegen je Test in einer JSON-Datei (cfg.daten, neben der Inhalts-JSON).
@@ -497,6 +498,7 @@ ${seitenkopf(titel, cfg.motto, cfg.intro)}
     </div>
   </div>
 </section>
+${kontaktband()}
 <script type="application/json" id="antreiber-daten">${json}</script>`;
 }
 
@@ -522,7 +524,8 @@ ${seitenkopf(m.titel || 'So entstehen unsere Tests', m.motto, m.intro)}
       </table>
     </div>
   </div>
-</section>`;
+</section>
+${kontaktband()}`;
 }
 
 function testUebersicht(cfg) {
@@ -549,7 +552,8 @@ ${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro)}
 <section class="abschnitt" aria-label="${esc(cfg.titel || 'Selbsttests')}">
   <div class="container"><ul class="karten">${karten}${kartenKarte}
   </ul>${cfg.methodik ? '<p class="test-note methodik-link"><a href="methodik.html">So entstehen unsere Tests</a>: was sie können und was nicht.</p>' : ''}</div>
-</section>`;
+</section>
+${kontaktband()}`;
 }
 // Gesprächskarten: Kartensätze liegen als JSON auf der Seite; js/karten.js zieht zufällig ohne Wiederholung.
 // Ohne JavaScript bleibt die Liste aller Karten sichtbar.
@@ -585,6 +589,7 @@ ${seitenkopf(cfg.titel || 'Gesprächskarten', cfg.motto, cfg.intro)}
     </div>
   </div>
 </section>
+${kontaktband()}
 <script type="application/json" id="karten-daten">${daten}</script>`;
 }
 
@@ -756,6 +761,8 @@ function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '
   const start = datei === 'index.html';
   const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei}` : '';
   const anker = (id) => (start ? `#${id}` : `./#${id}`);
+  // Kontaktband vorhanden -> Sprung auf der Seite; sonst zur Startseite (sonst tut der Knopf nichts)
+  const kontaktZiel = inhalt.includes('id="kontakt"') ? '#kontakt' : './#kontakt';
   const og = [
     ['og:type', 'website'], ['og:locale', 'de_AT'], ['og:site_name', s.name],
     ['og:title', titel], ['og:description', beschreibung],
@@ -795,8 +802,8 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
         ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${aktiv === 'selbsttests' || aktiv === 'gespraechskarten' || sichtbareTests.some((e) => e.id === aktiv) ? ' aria-current="page"' : ''}>${esc(sichtbareTests.length === 1 && !kartenSichtbar ? sichtbareTests[0].titel : testsCfg.titel || 'Selbsttests')}</a></li>` : ''}
         ${impulseSichtbar && s.impulse.eintraege.length ? `<li><a href="impulse.html"${aktiv === 'impulse' ? ' aria-current="page"' : ''}>${esc(s.impulse.titel || 'Impulse')}</a></li>` : ''}
         ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
-        <li><a href="#kontakt">Kontakt</a></li>
-        <li><a class="knopf knopf-dunkel" href="#kontakt">Erstgespräch vereinbaren</a></li>
+        <li><a href="${kontaktZiel}">Kontakt</a></li>
+        <li><a class="knopf knopf-dunkel" href="${kontaktZiel}">Erstgespräch vereinbaren</a></li>
       </ul>
     </nav>
   </div>
