@@ -419,7 +419,8 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .gkarten-satz { min-height: 48px; padding: 0 22px; border-radius: 999px; border: 1.5px solid var(--espresso); background: transparent; color: var(--espresso); font: inherit; font-weight: 600; cursor: pointer; }
 .gkarten-satz:hover { background: var(--honig-hell); }
 .gkarten-satz[aria-pressed="true"] { background: var(--espresso); color: #fff; }
-.gkarten-buehne { display: grid; align-content: center; justify-items: center; gap: 20px; min-height: clamp(280px, 48vh, 460px); padding: clamp(24px, 6vw, 72px); background: var(--creme); border: 1px solid var(--linie-2); border-left: 8px solid var(--honig); border-radius: 28px; text-align: center; }
+.gkarten-buehne { display: grid; align-content: center; justify-items: center; gap: 20px; min-height: clamp(280px, 48vh, 460px); padding: clamp(24px, 6vw, 72px); position: relative; overflow: hidden; background: #fff; border: 1px solid var(--linie-2); border-radius: 28px; box-shadow: 0 10px 30px #2e25201a; text-align: center; }
+.gkarten-buehne::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 8px; background: var(--honig); }
 .gkarten-zaehler { font-size: 14px; font-weight: 600; letter-spacing: .04em; color: var(--stein); }
 .gkarten-text { font-family: var(--titel); font-size: clamp(26px, 4.4vw, 52px); line-height: 1.18; color: var(--espresso); max-width: 22em; overflow-wrap: anywhere; outline: none; }
 .gkarten-aktionen { justify-content: center; }
@@ -431,3 +432,25 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .gkarten-app:fullscreen .gkarten-text { font-size: clamp(36px, 6.4vw, 96px); max-width: 20em; }
 .gkarten-app:fullscreen .test-note { display: none; }
 @media print { .gkarten-app { display: none; } }
+
+/* Feinschliff: Knöpfe als <button>, Übersichtskarten, Kopfzeile, Karten-Hinweis */
+button.knopf { font: inherit; font-weight: 600; cursor: pointer; }
+button.knopf-rand { background: transparent; }
+button.knopf-dunkel { background: var(--espresso); color: #fff; }
+button.knopf-dunkel:hover { background: #4A3D35; }
+button.knopf-rand:hover { background: var(--espresso); color: #fff; }
+button.knopf:disabled { opacity: .4; cursor: not-allowed; }
+.gkarten-app .test-note { text-align: center; margin-inline: auto; }
+.karten .karte:has(.knopf-dunkel):not(:has(img)) { background: #fff; border: 1px solid var(--linie-2); transition: box-shadow .2s, transform .2s; }
+.karten .karte:has(.knopf-dunkel):not(:has(img)):hover { box-shadow: 0 10px 30px #2e25201a; transform: translateY(-2px); }
+@media (prefers-reduced-motion: reduce) { .karten .karte { transition: none; transform: none !important; } }
+@media (max-width: 1180px) and (min-width: 861px) {
+  .hauptnav ul { gap: 4px 16px; font-size: 14.5px; }
+  .hauptnav .knopf { padding: 0 16px; }
+  .kopf-innen { gap: 10px 20px; }
+}
+[tabindex="-1"]:focus, [tabindex="-1"]:focus-visible { outline: none; }
+.test-zeile, .test-chart-achsenzeile { grid-template-columns: minmax(160px, 34%) 1fr 64px; }
+.test-zeile-label { min-width: 0; }
+.test-zeile-name { min-width: 0; overflow-wrap: anywhere; hyphens: auto; }
+@media (max-width: 640px) { .test-zeile, .test-chart-achsenzeile { grid-template-columns: 1fr 48px; } }

@@ -122,24 +122,24 @@
     "kind": "levels",
     "kicker": "Dein Ergebnis",
     "title": "Das *Klima* in deinem Team",
-    "intro": "PLATZHALTER: Einleitungstext liefert der Kunde.",
+    "intro": "Zehn Aussagen zu fünf Bereichen, die das Miteinander im Team prägen. Du siehst, wo es gut läuft und wo ein Gespräch lohnt.",
     "outro": "Nutze die Gesprächsfragen als Einstieg für ein offenes Teamgespräch. Ein Ergebnis ist eine Einladung zum Reden, kein Urteil.",
     "note": "Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
     "levels": [
       {
         "min": 0,
         "title": "Hier lohnt sich ein Gespräch",
-        "text": "PLATZHALTER: Es gibt Bereiche, in denen sich das Team mehr Klarheit oder Rückhalt wünscht. Das ist ein guter Ausgangspunkt."
+        "text": "In einigen Bereichen wünscht sich dein Team vermutlich mehr Klarheit, Rückhalt oder Austausch. Das ist kein Urteil, sondern ein guter Ausgangspunkt: Wenn du im Team darüber sprichst, kann sich schnell etwas bewegen."
       },
       {
         "min": 50,
         "title": "Solide mit Luft nach oben",
-        "text": "PLATZHALTER: Vieles funktioniert. Einzelne Bereiche verdienen Aufmerksamkeit."
+        "text": "Vieles funktioniert, und in einzelnen Bereichen steckt noch Potenzial. Schau dir die Bereiche mit den niedrigeren Werten an und sprich im Team darüber, was dort helfen würde."
       },
       {
         "min": 80,
         "title": "Ein starkes Fundament",
-        "text": "PLATZHALTER: Das Team erlebt viel Vertrauen und Zusammenarbeit. Pflege, was funktioniert."
+        "text": "Dein Team erlebt viel Vertrauen und Zusammenarbeit. Pflege, was funktioniert, und frag im Team regelmäßig nach, ob das so bleibt."
       }
     ],
     "cta": {

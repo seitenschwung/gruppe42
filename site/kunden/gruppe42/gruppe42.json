@@ -748,67 +748,67 @@
       {
         "id": "teamklima-check",
         "daten": "tests/teamklima.json",
-        "sichtbar": false,
+        "sichtbar": true,
         "titel": "Teamklima-Schnellcheck",
         "motto": "Wie ist das *Klima* in deinem Team?",
-        "intro": "PLATZHALTER: Zehn Aussagen, drei Minuten, Gesprächsfragen fürs nächste Teammeeting.",
+        "intro": "Zehn Aussagen, drei Minuten: Wie erlebst du das Klima in deinem Team? Am Ende bekommst du Gesprächsfragen für das nächste Teammeeting.",
         "kurz": "10 Aussagen · 3 Minuten",
-        "beschreibung": "PLATZHALTER: Kurzer Check mit Gesprächsfragen fürs nächste Teammeeting."
+        "beschreibung": "Kurzer Check mit Gesprächsfragen fürs nächste Teammeeting."
       },
       {
         "id": "fuehrungsstil-check",
         "daten": "tests/fuehrungsstil.json",
-        "sichtbar": false,
+        "sichtbar": true,
         "titel": "Führungsstil-Check",
         "motto": "Wie *führst* du?",
-        "intro": "PLATZHALTER: Zwanzig Alltagssituationen, fünf Minuten, ein Blick auf Aufgaben- und Beziehungsorientierung.",
+        "intro": "Zwanzig Alltagssituationen, fünf Minuten: Wo liegt dein Schwerpunkt zwischen Aufgaben- und Beziehungsorientierung?",
         "kurz": "20 Aussagen · 5 Minuten",
-        "beschreibung": "PLATZHALTER: Selbstreflexion für Führungskräfte zwischen Aufgaben- und Beziehungsorientierung."
+        "beschreibung": "Selbstreflexion für Führungskräfte zwischen Aufgaben- und Beziehungsorientierung."
       },
       {
         "id": "employer-branding-check",
         "daten": "tests/employer-branding.json",
-        "sichtbar": false,
+        "sichtbar": true,
         "titel": "Employer-Branding-Check",
         "motto": "Wie attraktiv ist dein *Unternehmen* als Arbeitgeber?",
-        "intro": "PLATZHALTER: Zwölf Aussagen, vier Bereiche, eine erste Standortbestimmung für dein Unternehmen.",
+        "intro": "Zwölf Aussagen, vier Bereiche, drei Minuten: eine erste Standortbestimmung zur Arbeitgebermarke deines Unternehmens.",
         "kurz": "12 Aussagen · 3 Minuten",
-        "beschreibung": "PLATZHALTER: Erste Standortbestimmung zur Arbeitgebermarke."
+        "beschreibung": "Erste Standortbestimmung zur Arbeitgebermarke deines Unternehmens."
       }
     ]
   },
   "karten": {
-    "sichtbar": false,
+    "sichtbar": true,
     "titel": "Gesprächskarten",
     "motto": "Gute Fragen für *Teammeetings*",
-    "intro": "PLATZHALTER: Wähle ein Kartenset, zieh eine Karte und beginne das Gespräch. Im Vollbild eignen sich die Karten zum Projizieren.",
+    "intro": "Wähle ein Kartenset, zieh eine Karte und beginne das Gespräch. Im Vollbild eignen sich die Karten zum Projizieren.",
     "kartensaetze": [
       {
         "id": "teamstart",
         "titel": "Teamstart",
         "karten": [
-          "PLATZHALTER: Was hat dich diese Woche gefreut?",
-          "PLATZHALTER: Was braucht das Team gerade am meisten?",
-          "PLATZHALTER: Welche Aufgabe würdest du gern abgeben, welche gern übernehmen?",
-          "PLATZHALTER: Worauf sind wir als Team stolz?",
-          "PLATZHALTER: Was sollten wir ab nächster Woche anders machen?",
-          "PLATZHALTER: Wofür möchtest du jemandem im Team Danke sagen?",
-          "PLATZHALTER: Welche Frage brennt dir heute unter den Nägeln?",
-          "PLATZHALTER: Woran merken wir, dass wir gut zusammenarbeiten?"
+          "Was hat dich diese Woche gefreut?",
+          "Was braucht das Team gerade am meisten?",
+          "Welche Aufgabe würdest du gern abgeben, welche gern übernehmen?",
+          "Worauf sind wir als Team stolz?",
+          "Was sollten wir ab nächster Woche anders machen?",
+          "Wofür möchtest du jemandem im Team Danke sagen?",
+          "Welche Frage brennt dir heute unter den Nägeln?",
+          "Woran merken wir, dass wir gut zusammenarbeiten?"
         ]
       },
       {
         "id": "rueckblick",
         "titel": "Rückblick und Lernen",
         "karten": [
-          "PLATZHALTER: Was ist im letzten Projekt gut gelaufen?",
-          "PLATZHALTER: Was würden wir beim nächsten Mal anders machen?",
-          "PLATZHALTER: Welche Entscheidung war schwieriger als gedacht?",
-          "PLATZHALTER: Was haben wir gelernt, das wir behalten wollen?",
-          "PLATZHALTER: Wo haben wir Zeit oder Energie verloren?",
-          "PLATZHALTER: Wer hat uns geholfen, ohne dass wir es gesagt haben?",
-          "PLATZHALTER: Welche Information hat uns gefehlt?",
-          "PLATZHALTER: Was nehmen wir uns für die nächsten vier Wochen vor?"
+          "Was ist im letzten Projekt gut gelaufen?",
+          "Was würden wir beim nächsten Mal anders machen?",
+          "Welche Entscheidung war schwieriger als gedacht?",
+          "Was haben wir gelernt, das wir behalten wollen?",
+          "Wo haben wir Zeit oder Energie verloren?",
+          "Wer hat uns geholfen, ohne dass wir es gesagt haben?",
+          "Welche Information hat uns gefehlt?",
+          "Was nehmen wir uns für die nächsten vier Wochen vor?"
         ]
       }
     ]
