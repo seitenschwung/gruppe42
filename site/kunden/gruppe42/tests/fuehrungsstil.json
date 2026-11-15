@@ -13,55 +13,154 @@
     {
       "id": "aufgabe",
       "name": "Aufgabenorientierung",
-      "headline": "PLATZHALTER: Klarheit, Struktur und Ergebnisse im Blick.",
+      "headline": "Du bringst Klarheit, Struktur und Ergebnisse voran.",
       "sections": [
-        { "kind": "text", "text": "PLATZHALTER: Auswertungstext zur Aufgabenorientierung liefert die Kundin." },
-        { "kind": "labeled", "title": "Reflexionsfrage:", "text": "Wo gibst du heute Klarheit, wo wäre mehr Spielraum für dein Team hilfreich?" }
+        {
+          "kind": "text",
+          "text": "Vielleicht gehören klare Ziele, verlässliche Abläufe und messbare Ergebnisse für dich zu guter Führung. Das gibt deinem Team Orientierung. Achte darauf, dass daneben Raum bleibt für Gespräch, Zwischentöne und die Frage, wie es den Menschen auf dem Weg dorthin geht."
+        },
+        {
+          "kind": "labeled",
+          "title": "Reflexionsfrage:",
+          "text": "Wo gibst du heute Klarheit, wo wäre mehr Spielraum für dein Team hilfreich?"
+        }
       ]
     },
     {
       "id": "beziehung",
       "name": "Beziehungsorientierung",
-      "headline": "PLATZHALTER: Vertrauen, Wertschätzung und Austausch im Blick.",
+      "headline": "Du stärkst Vertrauen, Wertschätzung und Austausch.",
       "sections": [
-        { "kind": "text", "text": "PLATZHALTER: Auswertungstext zur Beziehungsorientierung liefert die Kundin." },
-        { "kind": "labeled", "title": "Reflexionsfrage:", "text": "In welchen Situationen hilft dir der Blick auf die Menschen, wann bremst er eine nötige Entscheidung?" }
+        {
+          "kind": "text",
+          "text": "Vielleicht ist dir wichtig, dass sich Menschen gesehen fühlen und offen sprechen können. Das macht Teams stabil und mutig. Achte darauf, dass du daneben auch klare Entscheidungen und Erwartungen formulierst, selbst wenn sie unbequem sind."
+        },
+        {
+          "kind": "labeled",
+          "title": "Reflexionsfrage:",
+          "text": "In welchen Situationen hilft dir der Blick auf die Menschen, wann bremst er eine nötige Entscheidung?"
+        }
       ]
     }
   ],
   "questions": [
-    { "id": 1, "category": "aufgabe", "text": "Wenn ein Termin wackelt, lege ich sofort fest, wer was bis wann erledigt." },
-    { "id": 2, "category": "beziehung", "text": "Wenn jemand im Team gestresst wirkt, nehme ich mir Zeit für ein persönliches Gespräch, auch bei vollem Terminkalender." },
-    { "id": 3, "category": "aufgabe", "text": "Ich vergleiche Ergebnisse regelmäßig mit den vereinbarten Zielen." },
-    { "id": 4, "category": "beziehung", "text": "Bei einer Entscheidung frage ich aktiv nach den Sichtweisen meiner Mitarbeitenden." },
-    { "id": 5, "category": "aufgabe", "text": "In Besprechungen steuere ich das Gespräch zum Ergebnis, auch wenn es kurz unbequem wird." },
-    { "id": 6, "category": "beziehung", "text": "Wenn ein Fehler passiert, ist mein erster Impuls zu fragen, was die Person jetzt braucht." },
-    { "id": 7, "category": "aufgabe", "text": "Ich gebe klare Qualitätsstandards vor und achte darauf, dass sie eingehalten werden." },
-    { "id": 8, "category": "beziehung", "text": "Ich mache Erfolge im Team bewusst sichtbar und würdige sie." },
-    { "id": 9, "category": "aufgabe", "text": "Wenn ein Projekt im Verzug ist, spreche ich zuerst über Fakten und nächste Schritte." },
-    { "id": 10, "category": "beziehung", "text": "Bei Konflikten im Team vermittle ich lieber, als eine Lösung vorzugeben." },
-    { "id": 11, "category": "aufgabe", "text": "Ich behalte Aufgaben und Fristen im Überblick und frage bei Abweichungen nach." },
-    { "id": 12, "category": "beziehung", "text": "Persönliche Befindlichkeiten haben in meinen Besprechungen wenig Platz.", "reverse": true },
-    { "id": 13, "category": "aufgabe", "text": "Eine schwierige Entscheidung treffe ich auch dann, wenn nicht alle zustimmen." },
-    { "id": 14, "category": "beziehung", "text": "Ich kenne die Stärken und Interessen meiner Mitarbeitenden und berücksichtige sie bei der Aufgabenverteilung." },
-    { "id": 15, "category": "aufgabe", "text": "Abweichungen vom Plan lasse ich meist laufen, solange sich niemand beschwert.", "reverse": true },
-    { "id": 16, "category": "beziehung", "text": "Ich nehme mir regelmäßig Zeit für Gespräche, die nicht direkt mit Aufgaben zu tun haben." },
-    { "id": 17, "category": "aufgabe", "text": "Wenn jemand nicht liefert, spreche ich das zeitnah und direkt an." },
-    { "id": 18, "category": "beziehung", "text": "Kritik äußere ich so, dass die Person ihr Gesicht wahren kann." },
-    { "id": 19, "category": "aufgabe", "text": "Ich lasse Aufgaben ungern offen und dränge auf Abschluss." },
-    { "id": 20, "category": "beziehung", "text": "Auf Rückmeldungen meines Teams zu meiner Führung reagiere ich offen und gehe darauf ein." }
+    {
+      "id": 1,
+      "category": "aufgabe",
+      "text": "Wenn ein Termin wackelt, lege ich sofort fest, wer was bis wann erledigt."
+    },
+    {
+      "id": 2,
+      "category": "beziehung",
+      "text": "Wenn jemand im Team gestresst wirkt, nehme ich mir Zeit für ein persönliches Gespräch, auch bei vollem Terminkalender."
+    },
+    {
+      "id": 3,
+      "category": "aufgabe",
+      "text": "Ich vergleiche Ergebnisse regelmäßig mit den vereinbarten Zielen."
+    },
+    {
+      "id": 4,
+      "category": "beziehung",
+      "text": "Bei einer Entscheidung frage ich aktiv nach den Sichtweisen meiner Mitarbeitenden."
+    },
+    {
+      "id": 5,
+      "category": "aufgabe",
+      "text": "In Besprechungen steuere ich das Gespräch zum Ergebnis, auch wenn es kurz unbequem wird."
+    },
+    {
+      "id": 6,
+      "category": "beziehung",
+      "text": "Wenn ein Fehler passiert, ist mein erster Impuls zu fragen, was die Person jetzt braucht."
+    },
+    {
+      "id": 7,
+      "category": "aufgabe",
+      "text": "Ich gebe klare Qualitätsstandards vor und achte darauf, dass sie eingehalten werden."
+    },
+    {
+      "id": 8,
+      "category": "beziehung",
+      "text": "Ich mache Erfolge im Team bewusst sichtbar und würdige sie."
+    },
+    {
+      "id": 9,
+      "category": "aufgabe",
+      "text": "Wenn ein Projekt im Verzug ist, spreche ich zuerst über Fakten und nächste Schritte."
+    },
+    {
+      "id": 10,
+      "category": "beziehung",
+      "text": "Bei Konflikten im Team vermittle ich lieber, als eine Lösung vorzugeben."
+    },
+    {
+      "id": 11,
+      "category": "aufgabe",
+      "text": "Ich behalte Aufgaben und Fristen im Überblick und frage bei Abweichungen nach."
+    },
+    {
+      "id": 12,
+      "category": "beziehung",
+      "text": "Persönliche Befindlichkeiten haben in meinen Besprechungen wenig Platz.",
+      "reverse": true
+    },
+    {
+      "id": 13,
+      "category": "aufgabe",
+      "text": "Eine schwierige Entscheidung treffe ich auch dann, wenn nicht alle zustimmen."
+    },
+    {
+      "id": 14,
+      "category": "beziehung",
+      "text": "Ich kenne die Stärken und Interessen meiner Mitarbeitenden und berücksichtige sie bei der Aufgabenverteilung."
+    },
+    {
+      "id": 15,
+      "category": "aufgabe",
+      "text": "Abweichungen vom Plan lasse ich meist laufen, solange sich niemand beschwert.",
+      "reverse": true
+    },
+    {
+      "id": 16,
+      "category": "beziehung",
+      "text": "Ich nehme mir regelmäßig Zeit für Gespräche, die nicht direkt mit Aufgaben zu tun haben."
+    },
+    {
+      "id": 17,
+      "category": "aufgabe",
+      "text": "Wenn jemand nicht liefert, spreche ich das zeitnah und direkt an."
+    },
+    {
+      "id": 18,
+      "category": "beziehung",
+      "text": "Kritik äußere ich so, dass die Person ihr Gesicht wahren kann."
+    },
+    {
+      "id": 19,
+      "category": "aufgabe",
+      "text": "Ich lasse Aufgaben ungern offen und dränge auf Abschluss."
+    },
+    {
+      "id": 20,
+      "category": "beziehung",
+      "text": "Auf Rückmeldungen meines Teams zu meiner Führung reagiere ich offen und gehe darauf ein."
+    }
   ],
   "result": {
     "kind": "ranking",
     "kicker": "Dein Profil",
     "title": "Dein *Führungsstil* im Überblick",
-    "intro": "PLATZHALTER: Einleitungstext liefert die Kundin. Beide Orientierungen sind wichtig; es geht darum, wo dein Schwerpunkt liegt und wann du bewusst wechseln möchtest.",
+    "intro": "Gute Führung braucht beides: den Blick auf die Aufgabe und den Blick auf die Menschen. Dieser Check zeigt, wo dein Schwerpunkt liegt und wann es sich lohnt, bewusst zu wechseln.",
     "outro": "Nutze die Reflexionsfragen als Einstieg für ein Gespräch mit einer Kollegin, einem Coach oder deinem Team. Ein Ergebnis ist kein Urteil über deine Führung.",
     "note": "Jede Skala besteht aus zehn Aussagen (10–50 Punkte), die Werte werden addiert und innerhalb deines Profils verglichen. Es gibt keine Normwerte und keine Diagnose. Selbstbild, nicht Fremdbild. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
     "highlight": "Dein Schwerpunkt",
     "lead": "Deine Antworten liegen besonders bei: {names}. Das ist keine Festlegung, sondern ein Ausgangspunkt für deine Reflexion.",
-    "tie": "Beide Orientierungen liegen in deinen Antworten gleichauf. Das kann auf einen ausgewogenen Stil hindeuten.",
+    "tie": "Deine Bereiche liegen nahe beieinander, keiner sticht deutlich heraus. Lies die Beschreibungen in Ruhe und prüfe, welche sich für dich stimmig anfühlt.",
     "lowLabel": "Ein Blick auf dein Profil:",
-    "cta": { "text": "Führungsentwicklung besprechen", "href": "#kontakt" }
+    "cta": {
+      "text": "Führungsentwicklung besprechen",
+      "href": "#kontakt"
+    }
   }
 }

@@ -36,7 +36,7 @@
     window.setTimeout(function () { ansage.textContent = text; }, 30);
   }
   function zeigeZaehler() {
-    zaehlerEl.textContent = satz ? satz.titel + ' · Karte ' + gezogen + ' von ' + satz.karten.length : '';
+    zaehlerEl.textContent = satz ? satz.titel + ' · ' + (gezogen ? 'Karte ' + gezogen + ' von ' + satz.karten.length : satz.karten.length + ' Karten') : '';
   }
 
   function waehle(s, fokus) {
