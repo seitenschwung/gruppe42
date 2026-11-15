@@ -310,4 +310,16 @@
     location.href = 'mailto:?subject=' + encodeURIComponent(betreff) + '&body=' + encodeURIComponent(text);
   });
   ergebnis.querySelector('[data-druck]').addEventListener('click', function () { window.print(); });
+
+  // Vorschau der Auswertung ohne Test: ?vorschau (Zufallsantworten) oder ?vorschau=3 (alle Antworten = 3)
+  var vorschau = new URLSearchParams(location.search).get('vorschau');
+  if (vorschau !== null) {
+    var werte = Object.keys(DATA.scale).map(Number);
+    var fest = Number(vorschau);
+    antworten = antworten.map(function () {
+      return werte.indexOf(fest) !== -1 && vorschau !== '' ? fest : werte[Math.floor(Math.random() * werte.length)];
+    });
+    index = DATA.questions.length - 1;
+    auswerten();
+  }
 })();
