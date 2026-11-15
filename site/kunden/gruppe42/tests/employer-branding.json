@@ -14,28 +14,28 @@
       "id": "identitaet",
       "name": "Identität und Werte",
       "sections": [
-        { "kind": "labeled", "title": "Frage für euer nächstes Führungsteam-Treffen:", "text": "Warum sollte sich jemand bei uns und nicht beim Mitbewerb bewerben?" }
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Warum sollte sich jemand bei uns und nicht beim Mitbewerb bewerben?" }
       ]
     },
     {
       "id": "kommunikation",
       "name": "Sichtbarkeit und Kommunikation",
       "sections": [
-        { "kind": "labeled", "title": "Frage für euer nächstes Führungsteam-Treffen:", "text": "Wo begegnen potenzielle Mitarbeitende unserem Unternehmen zum ersten Mal?" }
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Wo begegnen potenzielle Mitarbeitende unserem Unternehmen zum ersten Mal?" }
       ]
     },
     {
       "id": "erlebnis",
       "name": "Bewerbung und Onboarding",
       "sections": [
-        { "kind": "labeled", "title": "Frage für euer nächstes Führungsteam-Treffen:", "text": "Wie fühlt sich der Weg von der Bewerbung bis zum ersten Monat aus Sicht der Neuen an?" }
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Wie fühlt sich der Weg von der Bewerbung bis zum ersten Monat aus Sicht der Neuen an?" }
       ]
     },
     {
       "id": "kultur",
       "name": "Kultur und Bindung",
       "sections": [
-        { "kind": "labeled", "title": "Frage für euer nächstes Führungsteam-Treffen:", "text": "Was würden unsere Mitarbeitenden Freunden über uns als Arbeitgeber erzählen?" }
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Was würden unsere Mitarbeitenden Freunden über uns als Arbeitgeber erzählen?" }
       ]
     }
   ],
@@ -56,14 +56,14 @@
   "result": {
     "kind": "levels",
     "kicker": "Dein Ergebnis",
-    "title": "Euer *Arbeitgeber-Profil*",
+    "title": "Dein *Arbeitgeber-Profil*",
     "intro": "PLATZHALTER: Einleitungstext liefert die Kundin.",
     "outro": "Nutze die Fragen als Einstieg für ein Gespräch im Führungsteam. Ein Ergebnis ist eine Einladung zum Nachdenken, kein Urteil.",
     "note": "Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
     "levels": [
       { "min": 0, "title": "Viel Potenzial zum Entwickeln", "text": "PLATZHALTER: Es gibt mehrere Bereiche, in denen sich ein genauer Blick lohnt. Ein guter Ausgangspunkt." },
       { "min": 50, "title": "Gute Basis mit Lücken", "text": "PLATZHALTER: Vieles funktioniert bereits. Einzelne Bereiche verdienen gezielte Aufmerksamkeit." },
-      { "min": 80, "title": "Starke Arbeitgebermarke", "text": "PLATZHALTER: Ihr seid gut aufgestellt. Pflegt, was funktioniert, und prüft regelmäßig nach." }
+      { "min": 80, "title": "Starke Arbeitgebermarke", "text": "PLATZHALTER: Du bist gut aufgestellt. Pflege, was funktioniert, und prüfe regelmäßig nach." }
     ],
     "cta": { "text": "Employer Branding besprechen", "href": "#kontakt" }
   }

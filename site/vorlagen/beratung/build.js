@@ -179,7 +179,7 @@ function kontaktband() {
   return `<section class="kontaktband abschnitt" id="kontakt" aria-labelledby="kontakt-titel">
   <div class="container">
     <div class="kontaktband-text">
-      <h2 id="kontakt-titel">${betont(kb.titel || 'Sprechen wir über Ihr Vorhaben.')}</h2>
+      <h2 id="kontakt-titel">${betont(kb.titel || 'Sprechen wir über dein Vorhaben.')}</h2>
       ${kb.text ? `<p>${esc(kb.text)}</p>` : ''}
     </div>
     <div class="knoepfe">
@@ -369,7 +369,7 @@ ${seitenkopf(z.titel, z.motto, z.intro, z.bild)}
 </section>
 ${s.rahmen.length ? `<section class="rahmen abschnitt" aria-labelledby="rahmen-titel">
   <div class="container">
-    <h2 class="titel" id="rahmen-titel">Abgestimmt auf <em>Ihr</em> Unternehmen.</h2>
+    <h2 class="titel" id="rahmen-titel">Abgestimmt auf <em>dein</em> Unternehmen.</h2>
     <ul>${s.rahmen.map((r) => `<li><strong>${esc(r.titel)}</strong>${esc(r.text || '')}</li>`).join('')}</ul>
   </div>
 </section>` : ''}
@@ -870,7 +870,7 @@ if (testsCfg) {
     const daten = ladeTest(e);
     seiten.push({
       datei: seiteVon(e.id), aktiv: e.id, inhalt: testSeite(e, daten, testsCfg), noindex: e.sichtbar !== true,
-      titel: `${e.titel}: ${daten.name} – ${s.name}`,
+      titel: daten.name && daten.name !== e.titel ? `${e.titel}: ${daten.name} – ${s.name}` : `${e.titel} – ${s.name}`,
       beschreibung: (e.intro || daten.name).slice(0, 160),
       zusatzHead: `<script src="${testJsUrl}" defer></script>`,
     });
