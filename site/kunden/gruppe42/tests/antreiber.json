@@ -1,0 +1,467 @@
+{
+  "id": "antreiber",
+  "name": "Meine inneren Antreiber",
+  "status": "Eigene, nicht psychometrisch validierte Fragen in Anlehnung an die fünf Antreiber der Transaktionsanalyse",
+  "scale": {
+    "1": "Trifft gar nicht zu",
+    "2": "Trifft eher nicht zu",
+    "3": "Trifft teilweise zu",
+    "4": "Trifft eher zu",
+    "5": "Trifft voll und ganz zu"
+  },
+  "categories": [
+    {
+      "id": "perfekt",
+      "name": "Sei perfekt!",
+      "headline": "Du darfst gut sein, ohne perfekt sein zu müssen.",
+      "lowContext": "Wenn dieser Bereich bei dir weniger hervortritt, bedeutet das nicht, dass dir Qualität unwichtig ist. Vielleicht gelingt es dir eher, zwischen Genauigkeit und Gelassenheit zu wechseln.",
+      "sections": [
+        {
+          "kind": "text",
+          "text": "Vielleicht kennst du diesen Moment: Eine Aufgabe ist eigentlich fertig, und trotzdem entdeckst du noch etwas, das du verbessern könntest. Hinter diesem Blick steckt oft ein ehrlicher Wunsch, Dinge sorgfältig und verlässlich zu gestalten. Diese Seite von dir verdient Anerkennung."
+        },
+        {
+          "kind": "column",
+          "title": "Was dich daran stärken kann",
+          "text": "Du siehst Details, übernimmst Verantwortung für Qualität und gibst dich nicht leicht mit halbherzigen Lösungen zufrieden. Menschen können sich auf deine Gewissenhaftigkeit verlassen. Deine Sorgfalt ist eine Fähigkeit – kein Beweis, den du immer wieder erbringen musst."
+        },
+        {
+          "kind": "column",
+          "title": "Wenn aus Sorgfalt innerer Druck wird",
+          "text": "Manchmal kann sich der Anspruch leise verschieben: von „Ich möchte es gut machen“ zu „Es darf kein Fehler passieren“. Dann kostet ein letzter Feinschliff womöglich mehr Energie, als er dem Ergebnis nützt. Vielleicht wird es schwer, stolz auf das bereits Geschaffte zu sein. Du darfst lernen, zwischen wichtig und vollkommen zu unterscheiden.",
+          "tone": "pressure"
+        },
+        {
+          "kind": "quote",
+          "text": "Ich darf sorgfältig sein und trotzdem Fehler machen. Gut genug darf wirklich genügen."
+        },
+        {
+          "kind": "labeled",
+          "title": "Eine kleine Einladung für deinen Alltag:",
+          "text": "Wähle heute eine kleine Aufgabe. Entscheide vorher, woran du erkennst, dass sie gut genug erledigt ist. Wenn dieser Punkt erreicht ist, lass sie bewusst stehen."
+        },
+        {
+          "kind": "labeled",
+          "title": "Deine Reflexionsfrage:",
+          "text": "Wo wünsche ich mir gerade mehr Leichtigkeit statt noch mehr Perfektion?"
+        }
+      ]
+    },
+    {
+      "id": "schnell",
+      "name": "Mach schnell!",
+      "headline": "Du musst nicht immer in Bewegung sein, um voranzukommen.",
+      "lowContext": "Wenn du hier weniger Zustimmung gegeben hast, heißt das nicht, dass dir Antrieb fehlt. Vielleicht kannst du eher auf dein eigenes Tempo hören, statt dich ständig anzutreiben.",
+      "sections": [
+        {
+          "kind": "text",
+          "text": "Vielleicht bist du jemand, der Dinge gerne in Gang bringt und nicht lange um den heißen Brei herumredet. Dein Tempo kann Schwung geben, Türen öffnen und anderen Mut machen, endlich anzufangen."
+        },
+        {
+          "kind": "column",
+          "title": "Was dich daran stärken kann",
+          "text": "Du kannst Möglichkeiten rasch erkennen, Entscheidungen anstoßen und aus Ideen konkrete Schritte machen. Gerade dort, wo etwas feststeckt, ist diese Energie ein Geschenk. Du darfst stolz auf deine Tatkraft sein."
+        },
+        {
+          "kind": "column",
+          "title": "Wenn Tempo zum inneren Muss wird",
+          "text": "Wenn innerlich ständig „Schneller!“ mitläuft, können Pausen sich plötzlich wie Zeitverlust anfühlen. Vielleicht bist du schon beim nächsten Punkt, während der jetzige Moment noch Aufmerksamkeit verdient. Ruhe bedeutet aber nicht Stillstand. Manches wird klarer, wenn es nicht sofort gehen muss.",
+          "tone": "pressure"
+        },
+        {
+          "kind": "quote",
+          "text": "Ich darf mein Tempo selbst wählen. Ich bin auch wertvoll, wenn ich innehalte."
+        },
+        {
+          "kind": "labeled",
+          "title": "Eine kleine Einladung für deinen Alltag:",
+          "text": "Baue heute zwischen zwei Tätigkeiten eine bewusste Minute Pause ein. Atme, spüre kurz nach und frage dich: Was braucht jetzt wirklich meine Aufmerksamkeit?"
+        },
+        {
+          "kind": "labeled",
+          "title": "Deine Reflexionsfrage:",
+          "text": "Wann ist mein Tempo eine Stärke – und wann würde mir Langsamkeit guttun?"
+        }
+      ]
+    },
+    {
+      "id": "anstrengung",
+      "name": "Streng dich an!",
+      "headline": "Du darfst deinen Weg auch leichter gehen.",
+      "lowContext": "Wenn dieser Antreiber wenig Raum einnimmt, bedeutet das nicht, dass du nicht engagiert bist. Vielleicht kannst du Einsatz und Erholung bereits gut miteinander verbinden.",
+      "sections": [
+        {
+          "kind": "text",
+          "text": "Vielleicht gehört Durchhalten für dich ganz selbstverständlich dazu. Du gibst nicht so schnell auf und bist bereit, dich einzusetzen, wenn dir etwas wichtig ist. Diese Beharrlichkeit kann dich auch durch anspruchsvolle Situationen tragen."
+        },
+        {
+          "kind": "column",
+          "title": "Was dich daran stärken kann",
+          "text": "Du bleibst dran, nimmst Herausforderungen ernst und bringst viel Engagement mit. Wer mit dir zusammenarbeitet oder lebt, erlebt möglicherweise deine Verlässlichkeit und deinen langen Atem. Das sind wertvolle Ressourcen."
+        },
+        {
+          "kind": "column",
+          "title": "Wenn Anstrengung zum Maßstab wird",
+          "text": "Schwierig wird es, wenn sich Erfolg nur dann richtig verdient anfühlt, wenn er mühsam war. Dann kann sogar eine einfache Lösung verdächtig wirken – oder eine Pause wie Aufgeben. Du musst dir Entlastung nicht erst verdienen. Auch Freude, Unterstützung und spielerisches Ausprobieren dürfen Teil deines Weges sein.",
+          "tone": "pressure"
+        },
+        {
+          "kind": "quote",
+          "text": "Ich darf mich einsetzen und zugleich gut für mich sorgen. Es darf auch leicht gehen."
+        },
+        {
+          "kind": "labeled",
+          "title": "Eine kleine Einladung für deinen Alltag:",
+          "text": "Achte bei einer anstehenden Aufgabe auf den Gedanken „Ich muss mich noch mehr anstrengen“. Frage dich stattdessen: Was wäre ein freundlicher, einfacher nächster Schritt?"
+        },
+        {
+          "kind": "labeled",
+          "title": "Deine Reflexionsfrage:",
+          "text": "Was würde sich verändern, wenn ich nicht jede gute Sache mühsam erarbeiten müsste?"
+        }
+      ]
+    },
+    {
+      "id": "recht",
+      "name": "Mach es allen recht!",
+      "headline": "Du darfst zu anderen Ja sagen, ohne dich selbst zu übergehen.",
+      "lowContext": "Wenn du diesen Aussagen seltener zugestimmt hast, heißt das nicht, dass dir andere egal sind. Vielleicht fällt es dir bereits leichter, Verbundenheit und eigene Grenzen zu verbinden.",
+      "sections": [
+        {
+          "kind": "text",
+          "text": "Vielleicht spürst du rasch, was andere brauchen, und möchtest, dass sich Menschen in deiner Nähe wohlfühlen. Du kannst Brücken bauen, aufmerksam zuhören und Verbindung schaffen. Darin liegt viel Wärme."
+        },
+        {
+          "kind": "column",
+          "title": "Was dich daran stärken kann",
+          "text": "Dein Einfühlungsvermögen hilft dir, Zwischentöne wahrzunehmen und Beziehungen achtsam zu gestalten. Du bringst Rücksicht mit und suchst oft nach Lösungen, in denen sich mehrere Menschen gesehen fühlen."
+        },
+        {
+          "kind": "column",
+          "title": "Wenn Harmonie zu viel kostet",
+          "text": "Manchmal kann aus Rücksicht die leise Sorge werden, andere zu enttäuschen. Dann sagst du vielleicht Ja, obwohl du Nein meinst, oder bemerkst deine eigenen Bedürfnisse erst sehr spät. Eine Grenze ist aber kein Liebesentzug. Du darfst freundlich bleiben und trotzdem bei dir selbst sein.",
+          "tone": "pressure"
+        },
+        {
+          "kind": "quote",
+          "text": "Meine Wünsche zählen. Ich darf Nein sagen und dabei ein zugewandter Mensch bleiben."
+        },
+        {
+          "kind": "labeled",
+          "title": "Eine kleine Einladung für deinen Alltag:",
+          "text": "Frage dich bei der nächsten kleinen Bitte nicht sofort „Was wird erwartet?“, sondern zuerst „Was möchte und kann ich gerade geben?“. Du darfst dir Zeit für die Antwort nehmen."
+        },
+        {
+          "kind": "labeled",
+          "title": "Deine Reflexionsfrage:",
+          "text": "Wo könnte ein freundliches Nein heute ein ehrliches Ja zu mir selbst sein?"
+        }
+      ]
+    },
+    {
+      "id": "stark",
+      "name": "Sei stark!",
+      "headline": "Du darfst stark sein und dich trotzdem zeigen.",
+      "lowContext": "Wenn diese Aussagen bei dir weniger zutreffen, ist das kein Zeichen von Schwäche. Vielleicht erlaubst du dir schon, Unterstützung zu suchen und Gefühle sichtbar werden zu lassen.",
+      "sections": [
+        {
+          "kind": "text",
+          "text": "Vielleicht bist du oft die Person, die ruhig bleibt, Lösungen sucht und weitermacht, wenn es schwierig wird. Selbstständigkeit kann Halt geben – dir selbst und manchmal auch anderen."
+        },
+        {
+          "kind": "column",
+          "title": "Was dich daran stärken kann",
+          "text": "Du kannst Verantwortung übernehmen, auch in unübersichtlichen Momenten handlungsfähig bleiben und Herausforderungen mit Ruhe begegnen. Diese innere Standfestigkeit ist eine wertvolle Ressource."
+        },
+        {
+          "kind": "column",
+          "title": "Wenn Stärke keinen Raum für Nähe lässt",
+          "text": "Wenn du glaubst, immer alles allein tragen zu müssen, werden Sorgen leicht unsichtbar. Vielleicht hältst du Gefühle zurück, um niemanden zu belasten, obwohl du selbst gerade Rückhalt brauchst. Verletzlichkeit nimmt dir deine Stärke nicht. Oft entsteht Verbindung genau dort, wo wir uns ein Stück ehrlicher zeigen.",
+          "tone": "pressure"
+        },
+        {
+          "kind": "quote",
+          "text": "Ich darf Hilfe annehmen, Gefühle zeigen und trotzdem stark sein."
+        },
+        {
+          "kind": "labeled",
+          "title": "Eine kleine Einladung für deinen Alltag:",
+          "text": "Teile mit einem vertrauten Menschen eine kleine ehrliche Antwort auf die Frage „Wie geht es dir?“ – nicht nur das, was du nach außen zeigen möchtest."
+        },
+        {
+          "kind": "labeled",
+          "title": "Deine Reflexionsfrage:",
+          "text": "Bei wem könnte ich ein wenig von dem ablegen, was ich sonst allein trage?"
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "category": "perfekt",
+      "text": "Ich bemerke kleine Ungenauigkeiten oft sofort."
+    },
+    {
+      "id": 2,
+      "category": "recht",
+      "text": "Ich überlege oft zuerst, wie meine Entscheidung bei anderen ankommt."
+    },
+    {
+      "id": 3,
+      "category": "schnell",
+      "text": "Wenn etwas langsam vorangeht, werde ich innerlich unruhig."
+    },
+    {
+      "id": 4,
+      "category": "anstrengung",
+      "text": "Ich habe das Gefühl, mir gute Ergebnisse erst verdienen zu müssen."
+    },
+    {
+      "id": 5,
+      "category": "stark",
+      "text": "Ich versuche, Probleme zuerst allein zu lösen."
+    },
+    {
+      "id": 6,
+      "category": "perfekt",
+      "text": "Bei einem Ergebnis denke ich zuerst daran, was noch besser sein könnte."
+    },
+    {
+      "id": 7,
+      "category": "recht",
+      "text": "Es fällt mir schwer, eine Bitte abzulehnen."
+    },
+    {
+      "id": 8,
+      "category": "schnell",
+      "text": "Ich erledige Dinge oft lieber sofort als später."
+    },
+    {
+      "id": 9,
+      "category": "anstrengung",
+      "text": "Wenn etwas leicht gelingt, erscheint es mir manchmal weniger wertvoll."
+    },
+    {
+      "id": 10,
+      "category": "stark",
+      "text": "Es kostet mich Überwindung, andere um Unterstützung zu bitten."
+    },
+    {
+      "id": 11,
+      "category": "perfekt",
+      "text": "Ich überprüfe Dinge lieber noch einmal, bevor ich sie abgebe."
+    },
+    {
+      "id": 12,
+      "category": "recht",
+      "text": "Ich stelle meine Wünsche gelegentlich hinten an, damit es keinen Streit gibt."
+    },
+    {
+      "id": 13,
+      "category": "schnell",
+      "text": "Beim Warten fällt es mir schwer, gelassen zu bleiben."
+    },
+    {
+      "id": 14,
+      "category": "anstrengung",
+      "text": "Ich bin stolz darauf, auch schwierige Phasen durchzuhalten."
+    },
+    {
+      "id": 15,
+      "category": "stark",
+      "text": "Ich zeige nach außen oft mehr Ruhe, als ich innerlich empfinde."
+    },
+    {
+      "id": 16,
+      "category": "perfekt",
+      "text": "Ein eigener Fehler beschäftigt mich manchmal länger als nötig."
+    },
+    {
+      "id": 17,
+      "category": "recht",
+      "text": "Ich bemerke schnell, wenn jemand mit mir unzufrieden ist."
+    },
+    {
+      "id": 18,
+      "category": "schnell",
+      "text": "Ich habe häufig das Gefühl, dass die Zeit nicht reicht."
+    },
+    {
+      "id": 19,
+      "category": "anstrengung",
+      "text": "Ich mache häufig weiter, obwohl meine Energie bereits nachlässt."
+    },
+    {
+      "id": 20,
+      "category": "stark",
+      "text": "Ich spreche selten über Dinge, die mich verletzen."
+    },
+    {
+      "id": 21,
+      "category": "perfekt",
+      "text": "Ich setze mir häufig höhere Maßstäbe als andere von mir verlangen."
+    },
+    {
+      "id": 22,
+      "category": "recht",
+      "text": "Nach einem klaren Nein habe ich manchmal ein schlechtes Gewissen."
+    },
+    {
+      "id": 23,
+      "category": "schnell",
+      "text": "Ich springe gedanklich zum nächsten Schritt, bevor der aktuelle abgeschlossen ist."
+    },
+    {
+      "id": 24,
+      "category": "anstrengung",
+      "text": "Ich glaube oft, noch mehr Einsatz zeigen zu müssen."
+    },
+    {
+      "id": 25,
+      "category": "stark",
+      "text": "Wenn es schwierig wird, möchte ich die Kontrolle behalten."
+    },
+    {
+      "id": 26,
+      "category": "perfekt",
+      "text": "Es fällt mir schwer, etwas unfertig oder unvollkommen zu lassen."
+    },
+    {
+      "id": 27,
+      "category": "recht",
+      "text": "Ich suche nach Lösungen, mit denen möglichst alle einverstanden sind."
+    },
+    {
+      "id": 28,
+      "category": "schnell",
+      "text": "Ich fühle mich wohler, wenn etwas zügig vorangeht."
+    },
+    {
+      "id": 29,
+      "category": "anstrengung",
+      "text": "Es ist mir unangenehm, für eine Aufgabe den einfacheren Weg zu wählen."
+    },
+    {
+      "id": 30,
+      "category": "stark",
+      "text": "Ich möchte anderen möglichst wenig zur Last fallen."
+    },
+    {
+      "id": 31,
+      "category": "perfekt",
+      "text": "Ich habe ein gutes Gefühl erst dann, wenn wirklich alles stimmt."
+    },
+    {
+      "id": 32,
+      "category": "recht",
+      "text": "Ich passe mich mitunter an, obwohl ich eigentlich anderer Meinung bin."
+    },
+    {
+      "id": 33,
+      "category": "schnell",
+      "text": "Beim Zuhören denke ich manchmal schon an meine nächste Antwort."
+    },
+    {
+      "id": 34,
+      "category": "anstrengung",
+      "text": "Ich übernehme auch dann viel, wenn ich schon ausgelastet bin."
+    },
+    {
+      "id": 35,
+      "category": "stark",
+      "text": "Es fällt mir schwer, zuzugeben, dass mich etwas überfordert."
+    },
+    {
+      "id": 36,
+      "category": "perfekt",
+      "text": "Bei wichtigen Aufgaben verliere ich mich gelegentlich in Details."
+    },
+    {
+      "id": 37,
+      "category": "recht",
+      "text": "Kritik von Menschen, die mir wichtig sind, trifft mich stark."
+    },
+    {
+      "id": 38,
+      "category": "schnell",
+      "text": "Ich plane meinen Tag so dicht, dass kaum Pausen bleiben."
+    },
+    {
+      "id": 39,
+      "category": "anstrengung",
+      "text": "Ich kann Erfolge schwer genießen, ohne an die nächste Herausforderung zu denken."
+    },
+    {
+      "id": 40,
+      "category": "stark",
+      "text": "In belastenden Situationen konzentriere ich mich lieber auf Lösungen als auf Gefühle."
+    },
+    {
+      "id": 41,
+      "category": "perfekt",
+      "text": "Ich bin enttäuscht von mir, wenn ich meinen Ansprüchen nicht genüge."
+    },
+    {
+      "id": 42,
+      "category": "recht",
+      "text": "Ich fühle mich verantwortlich, wenn die Stimmung in einer Gruppe kippt."
+    },
+    {
+      "id": 43,
+      "category": "schnell",
+      "text": "Ich wünsche mir, dass andere schneller zum Punkt kommen."
+    },
+    {
+      "id": 44,
+      "category": "anstrengung",
+      "text": "Ich gebe selten auf, selbst wenn eine Pause sinnvoll wäre."
+    },
+    {
+      "id": 45,
+      "category": "stark",
+      "text": "Ich versuche, Enttäuschungen mit mir selbst auszumachen."
+    },
+    {
+      "id": 46,
+      "category": "perfekt",
+      "text": "Ich möchte auch bei Kleinigkeiten möglichst alles richtig machen."
+    },
+    {
+      "id": 47,
+      "category": "recht",
+      "text": "Ich wünsche mir oft eine Rückmeldung, dass andere mit mir zufrieden sind."
+    },
+    {
+      "id": 48,
+      "category": "schnell",
+      "text": "Selbst in ruhigen Momenten verspüre ich den Drang, etwas zu erledigen."
+    },
+    {
+      "id": 49,
+      "category": "anstrengung",
+      "text": "Ich spüre inneren Druck, mich immer besonders zu bemühen."
+    },
+    {
+      "id": 50,
+      "category": "stark",
+      "text": "Es ist mir wichtig, auch in unsicheren Momenten souverän zu wirken."
+    }
+  ],
+  "result": {
+    "kind": "ranking",
+    "kicker": "Dein Profil",
+    "title": "Dein persönliches *Antreiber-Profil*",
+    "intro": "In deinen Antworten zeigen sich unterschiedliche innere Stimmen. Jede hat möglicherweise eine hilfreiche Seite und eine Seite, die Druck machen kann. Du musst keine davon loswerden. Vielleicht möchtest du besser wahrnehmen, wann sie dich unterstützen und wann du einen freundlicheren Umgang mit dir selbst brauchst.",
+    "outro": "Nimm dir von diesen Impulsen nur das mit, was sich stimmig anfühlt. Deine Antworten beschreiben keine feste Persönlichkeit und sagen nichts über deinen Wert aus. Entscheidend ist, wie du deine Muster im Alltag erlebst.",
+    "note": "Jede Skala besteht aus zehn Aussagen mit Antwortwerten von 1 bis 5 (10–50 Punkte). Die Werte werden addiert und innerhalb des individuellen Profils verglichen. Es gibt keine normierten Schwellenwerte, Diagnosen oder belastbaren Aussagen über Gesundheit oder psychische Eigenschaften. Ein hoher Wert zeigt nur, dass den entsprechenden Aussagen häufiger zugestimmt wurde. Konzeptionell angelehnt an die fünf inneren Antreiber der Transaktionsanalyse nach Taibi Kahler. Eigenständig formulierte Items und Coaching-Auswertung. Nicht wissenschaftlich validiert.",
+    "highlight": "Am stärksten angesprochen",
+    "lead": "Besonders angesprochen haben dich die Aussagen zu: {names}. Das ist keine Festlegung auf einen Persönlichkeitstyp, sondern ein möglicher Ausgangspunkt für deine Reflexion.",
+    "tie": "Alle Bereiche liegen in deinen Antworten gleichauf. Welche der Beschreibungen sich für dich richtig anfühlt, darfst du ganz in Ruhe selbst herausfinden.",
+    "lowLabel": "Ein Blick auf dein Profil:",
+    "cta": {
+      "text": "Im Erstgespräch vertiefen",
+      "href": "#kontakt"
+    }
+  }
+}

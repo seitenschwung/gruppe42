@@ -695,19 +695,39 @@
     "motto": "Seminare *buchen*",
     "intro": "PLATZHALTER: Einleitungstext liefert der Kunde."
   },
-  "antreiber_test": {
+  "tests": {
     "aktiv": true,
-    "sichtbar": true,
-    "daten": "antreiber.json",
-    "titel": "Antreiber-Test",
-    "motto": "Meine inneren *Antreiber*",
-    "intro": "Welche inneren Erwartungen treiben dich an – und welche Stärken stecken darin? Eine Selbstreflexion in etwa zehn Minuten.",
+    "titel": "Selbsttests",
+    "motto": "Selbsttests und *Reflexion*",
+    "intro": "Kurze Tests und Übungen, die im Browser laufen. Deine Antworten werden nicht gespeichert oder gesendet.",
     "datenschutz": "Deine Antworten werden nur in deinem Browser verarbeitet. Sie werden nicht an einen Server übertragen und nicht gespeichert.",
     "teaser": {
       "kicker": "Selbstreflexion",
       "titel": "Was treibt dich *wirklich* an?",
       "text": "50 Aussagen, etwa zehn Minuten, ein persönliches Profil deiner fünf inneren Antreiber – mit Stärken, Stolperfallen und kleinen Einladungen für den Alltag.",
-      "knopf": "Antreiber-Test starten"
-    }
+      "knopf": "Selbsttest starten"
+    },
+    "eintraege": [
+      {
+        "id": "antreiber-test",
+        "daten": "tests/antreiber.json",
+        "sichtbar": true,
+        "titel": "Antreiber-Test",
+        "motto": "Meine inneren *Antreiber*",
+        "intro": "Welche inneren Erwartungen treiben dich an – und welche Stärken stecken darin? Eine Selbstreflexion in etwa zehn Minuten.",
+        "kurz": "50 Aussagen · 8–12 Minuten",
+        "beschreibung": "Welche inneren Erwartungen treiben dich an – und welche Stärken stecken darin?"
+      },
+      {
+        "id": "teamklima-check",
+        "daten": "tests/teamklima.json",
+        "sichtbar": false,
+        "titel": "Teamklima-Schnellcheck",
+        "motto": "Wie ist das *Klima* in deinem Team?",
+        "intro": "PLATZHALTER: Zehn Aussagen, drei Minuten, Gesprächsfragen fürs nächste Teammeeting.",
+        "kurz": "10 Aussagen · 3 Minuten",
+        "beschreibung": "PLATZHALTER: Kurzer Check mit Gesprächsfragen fürs nächste Teammeeting."
+      }
+    ]
   }
 }

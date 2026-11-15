@@ -72,77 +72,127 @@
     eltern.append(p);
   }
 
+  // Abschnitte einer Kategorie: kind "text" | "labeled" | "column" (aufeinanderfolgende Spalten nebeneinander) | "quote"
+  function abschnitte(art, c) {
+    var spalten = null;
+    (c.sections || []).forEach(function (s) {
+      if (s.kind === 'column') {
+        if (!spalten) { spalten = el('div', 'test-spalten'); art.append(spalten); }
+        var sp = el('div', 'test-spalte' + (s.tone === 'pressure' ? ' test-spalte-druck' : ''));
+        if (s.title) sp.append(el('h4', null, s.title));
+        sp.append(el('p', null, s.text));
+        spalten.append(sp);
+        return;
+      }
+      spalten = null;
+      if (s.kind === 'quote') {
+        var z = el('blockquote', 'test-erlaubnis');
+        z.append(el('p', null, '„' + s.text + '“'));
+        art.append(z);
+      } else if (s.kind === 'labeled') {
+        absatz(art, s.title, s.text);
+      } else {
+        absatz(art, '', s.text);
+      }
+    });
+  }
+
+  function fuellung(wert, max, klasse) {
+    var spur = el('div', 'test-spur');
+    spur.setAttribute('aria-hidden', 'true');
+    var f = el('span');
+    f.style.width = (wert / max * 100) + '%';
+    spur.append(f);
+    var li = el('li', 'test-zeile' + (klasse ? ' ' + klasse : ''));
+    return { li: li, spur: spur };
+  }
+
+  var letztesErgebnis = '';
+
   function auswerten() {
     if (antworten.some(function (a) { return a === null; })) return;
-    var summe = {};
-    DATA.categories.forEach(function (c) { summe[c.id] = 0; });
-    DATA.questions.forEach(function (f, i) { summe[f.category] += antworten[i]; });
-    var sortiert = DATA.categories.slice().sort(function (a, b) { return summe[b.id] - summe[a.id]; });
-    var hoch = summe[sortiert[0].id];
-    var tief = summe[sortiert[sortiert.length - 1].id];
-    var gleich = hoch === tief;
-    var spitze = sortiert.filter(function (c) { return summe[c.id] === hoch; });
-    var max = DATA.questions.length / DATA.categories.length * 5;
+    var R = DATA.result;
+    var skalaMax = Math.max.apply(null, Object.keys(DATA.scale).map(Number));
+    var skalaMin = Math.min.apply(null, Object.keys(DATA.scale).map(Number));
+    var summe = {}, anzahl = {};
+    DATA.categories.forEach(function (c) { summe[c.id] = 0; anzahl[c.id] = 0; });
+    DATA.questions.forEach(function (f, i) {
+      var a = antworten[i];
+      summe[f.category] += f.reverse ? skalaMax + skalaMin - a : a;
+      anzahl[f.category]++;
+    });
+    function maxVon(c) { return anzahl[c.id] * skalaMax; }
+    var ranking = R.kind === 'ranking';
+    var gesamt = 0, gesamtMax = 0;
+    DATA.categories.forEach(function (c) { gesamt += summe[c.id]; gesamtMax += maxVon(c); });
+    var prozent = gesamt / gesamtMax * 100;
 
-    ergebnis.querySelector('[data-intro]').textContent = DATA.resultsIntro;
-    ergebnis.querySelector('[data-outro]').textContent = DATA.resultsOutro;
-    ergebnis.querySelector('[data-note]').textContent = DATA.interpretationNote + ' ' + DATA.contentNote;
+    var sortiert = DATA.categories.slice();
+    if (ranking) sortiert.sort(function (a, b) { return summe[b.id] / maxVon(b) - summe[a.id] / maxVon(a); });
+    var hochW = sortiert.length ? summe[sortiert[0].id] / maxVon(sortiert[0]) : 0;
+    var tiefW = sortiert.length ? summe[sortiert[sortiert.length - 1].id] / maxVon(sortiert[sortiert.length - 1]) : 0;
+    var gleich = hochW === tiefW;
+    var spitze = sortiert.filter(function (c) { return summe[c.id] / maxVon(c) === hochW; });
+
+    ergebnis.querySelector('[data-intro]').textContent = R.intro || '';
+    ergebnis.querySelector('[data-outro]').textContent = R.outro || '';
+    ergebnis.querySelector('[data-note]').textContent = R.note || '';
+
+    // Stufe (nur kind "levels")
+    var stufeEl = ergebnis.querySelector('[data-stufe]');
+    stufeEl.replaceChildren();
+    var stufeTitel = '';
+    if (!ranking) {
+      var stufe = R.levels.slice().sort(function (a, b) { return b.min - a.min; }).filter(function (l) { return prozent >= l.min; })[0] || R.levels[0];
+      stufeTitel = stufe.title;
+      stufeEl.append(el('p', 'test-stufe-wert', Math.round(prozent) + ' %'), el('h3', null, stufe.title), el('p', null, stufe.text));
+      stufeEl.hidden = false;
+    } else {
+      stufeEl.hidden = true;
+    }
 
     var rang = ergebnis.querySelector('[data-rang]');
     rang.replaceChildren();
+    var zeilen = [];
     sortiert.forEach(function (c) {
-      var wert = summe[c.id];
-      var li = el('li', 'test-zeile' + (!gleich && wert === hoch ? ' ist-spitze' : ''));
+      var max = maxVon(c);
+      var spitzeKlasse = ranking && !gleich && summe[c.id] / max === hochW ? 'ist-spitze' : '';
+      var f = fuellung(summe[c.id], max, spitzeKlasse);
       var kopf = el('div', 'test-zeile-kopf');
-      var name = el('a', 'test-zeile-name', c.name);
-      name.href = '#antreiber-' + c.id;
-      kopf.append(name, el('span', 'test-zeile-wert', wert + ' / ' + max));
-      var spur = el('div', 'test-spur');
-      spur.setAttribute('aria-hidden', 'true');
-      var fuell = el('span');
-      fuell.style.width = (wert / max * 100) + '%';
-      spur.append(fuell);
-      li.append(kopf, spur);
-      rang.append(li);
+      var name;
+      if ((c.sections || []).length) {
+        name = el('a', 'test-zeile-name', c.name);
+        name.href = '#thema-' + c.id;
+      } else {
+        name = el('span', 'test-zeile-name', c.name);
+      }
+      kopf.append(name, el('span', 'test-zeile-wert', summe[c.id] + ' / ' + max));
+      f.li.append(kopf, f.spur);
+      rang.append(f.li);
+      zeilen.push(c.name + ': ' + summe[c.id] + ' / ' + max);
     });
 
     var details = ergebnis.querySelector('[data-details]');
     details.replaceChildren();
-    if (gleich) {
-      details.append(el('p', 'test-lead', 'Alle fünf Bereiche liegen in deinen Antworten gleichauf. Welche der Beschreibungen sich für dich richtig anfühlt, darfst du ganz in Ruhe selbst herausfinden.'));
-    } else {
-      details.append(el('p', 'test-lead', 'Besonders angesprochen haben dich die Aussagen zu: ' + spitze.map(function (c) { return c.name; }).join(', ') + '. Das ist keine Festlegung auf einen Persönlichkeitstyp, sondern ein möglicher Ausgangspunkt für deine Reflexion.'));
+    if (ranking && R.lead) {
+      details.append(el('p', 'test-lead', gleich ? (R.tie || '') : R.lead.replace('{names}', spitze.map(function (c) { return c.name; }).join(', '))));
     }
 
     sortiert.forEach(function (c) {
-      var wert = summe[c.id];
+      if (!(c.sections || []).length && !c.headline) return;
       var art = el('article', 'test-thema');
-      art.id = 'antreiber-' + c.id;
+      art.id = 'thema-' + c.id;
       var kopf = el('header', 'test-thema-kopf');
-      var h = el('h3', null, c.name);
-      kopf.append(h);
-      if (!gleich && wert === hoch) kopf.append(el('span', 'test-marke', 'Am stärksten angesprochen'));
+      kopf.append(el('h3', null, c.name));
+      if (ranking && !gleich && summe[c.id] / maxVon(c) === hochW && R.highlight) kopf.append(el('span', 'test-marke', R.highlight));
       art.append(kopf);
-      art.append(el('p', 'test-headline', c.headline));
-      if (!gleich && wert === tief) absatz(art, 'Ein Blick auf dein Profil:', c.lowContext);
-      absatz(art, '', c.intro);
-      var spalten = el('div', 'test-spalten');
-      var links = el('div', 'test-spalte');
-      links.append(el('h4', null, c.strengthTitle));
-      links.append(el('p', null, c.strength));
-      var rechts = el('div', 'test-spalte test-spalte-druck');
-      rechts.append(el('h4', null, c.underPressureTitle));
-      rechts.append(el('p', null, c.underPressure));
-      spalten.append(links, rechts);
-      art.append(spalten);
-      var zitat = el('blockquote', 'test-erlaubnis');
-      zitat.append(el('p', null, '„' + c.permission + '“'));
-      art.append(zitat);
-      absatz(art, 'Eine kleine Einladung für deinen Alltag:', c.microStep);
-      absatz(art, 'Deine Reflexionsfrage:', c.reflection);
+      if (c.headline) art.append(el('p', 'test-headline', c.headline));
+      if (ranking && !gleich && summe[c.id] / maxVon(c) === tiefW && c.lowContext) absatz(art, R.lowLabel || '', c.lowContext);
+      abschnitte(art, c);
       details.append(art);
     });
 
+    letztesErgebnis = (stufeTitel ? [stufeTitel + ' (' + Math.round(prozent) + ' %)'] : []).concat(zeilen).join('\n');
     testSektion.hidden = true;
     ergebnis.hidden = false;
     var titel = d.getElementById('ergebnis-titel');
@@ -175,6 +225,11 @@
     testSektion.hidden = false;
     zeige('intro');
     nachOben(wurzel);
+  });
+  ergebnis.querySelector('[data-mail]').addEventListener('click', function () {
+    var betreff = (DATA.name || 'Mein Ergebnis') + ': mein Ergebnis';
+    var text = betreff + '\n\n' + letztesErgebnis + '\n\n' + location.href.split('#')[0];
+    location.href = 'mailto:?subject=' + encodeURIComponent(betreff) + '&body=' + encodeURIComponent(text);
   });
   ergebnis.querySelector('[data-druck]').addEventListener('click', function () { window.print(); });
 })();
