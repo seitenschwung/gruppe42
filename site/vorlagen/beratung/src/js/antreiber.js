@@ -97,16 +97,6 @@
     });
   }
 
-  function fuellung(wert, max, klasse) {
-    var spur = el('div', 'test-spur');
-    spur.setAttribute('aria-hidden', 'true');
-    var f = el('span');
-    f.style.width = (wert / max * 100) + '%';
-    spur.append(f);
-    var li = el('li', 'test-zeile' + (klasse ? ' ' + klasse : ''));
-    return { li: li, spur: spur };
-  }
-
   var letztesErgebnis = '';
 
   function auswerten() {
@@ -138,39 +128,127 @@
     ergebnis.querySelector('[data-outro]').textContent = R.outro || '';
     ergebnis.querySelector('[data-note]').textContent = R.note || '';
 
-    // Stufe (nur kind "levels")
+    // Stufe (nur kind "levels"): Kennzahl + segmentierte Skala mit Markierung
     var stufeEl = ergebnis.querySelector('[data-stufe]');
     stufeEl.replaceChildren();
     var stufeTitel = '';
     if (!ranking) {
-      var stufe = R.levels.slice().sort(function (a, b) { return b.min - a.min; }).filter(function (l) { return prozent >= l.min; })[0] || R.levels[0];
+      var stufen = R.levels.slice().sort(function (a, b) { return a.min - b.min; });
+      var stufe = stufen.filter(function (l) { return prozent >= l.min; }).pop() || stufen[0];
       stufeTitel = stufe.title;
       stufeEl.append(el('p', 'test-stufe-wert', Math.round(prozent) + ' %'), el('h3', null, stufe.title), el('p', null, stufe.text));
+      var skala = el('div', 'test-skala');
+      skala.setAttribute('role', 'img');
+      skala.setAttribute('aria-label', 'Skala von 0 bis 100 Prozent, dein Wert: ' + Math.round(prozent) + ' Prozent, Stufe „' + stufe.title + '“');
+      var band = el('div', 'test-skala-band');
+      stufen.forEach(function (l, i) {
+        var bis = i + 1 < stufen.length ? stufen[i + 1].min : 100;
+        var seg = el('div', 'test-skala-seg' + (l === stufe ? ' ist-aktiv' : ''));
+        seg.style.flex = (bis - l.min) + ' 1 0';
+        seg.dataset.stufe = String(i);
+        seg.append(el('span', null, l.title));
+        band.append(seg);
+      });
+      var marke = el('div', 'test-skala-marke');
+      marke.style.left = Math.min(100, Math.max(0, prozent)) + '%';
+      band.append(marke);
+      var achse = el('div', 'test-skala-achse');
+      achse.append(el('span', null, '0 %'), el('span', null, '100 %'));
+      skala.append(band, achse);
+      stufeEl.append(skala);
       stufeEl.hidden = false;
     } else {
       stufeEl.hidden = true;
     }
 
-    var rang = ergebnis.querySelector('[data-rang]');
-    rang.replaceChildren();
+    // Balkendiagramm: gerankte horizontale Balken, eine Farbe, Skala 0–max, Tabellenansicht
+    var chart = ergebnis.querySelector('[data-chart]');
+    chart.replaceChildren();
     var zeilen = [];
-    sortiert.forEach(function (c) {
-      var max = maxVon(c);
-      var spitzeKlasse = ranking && !gleich && summe[c.id] / max === hochW ? 'ist-spitze' : '';
-      var f = fuellung(summe[c.id], max, spitzeKlasse);
-      var kopf = el('div', 'test-zeile-kopf');
+    var kopfZeile = el('figcaption', 'test-chart-kopf');
+    var ueberschrift = ranking ? 'Dein Profil im Überblick' : 'Ergebnis je Bereich';
+    kopfZeile.append(el('h3', null, ueberschrift), el('p', null, 'Punkte je Bereich' + (ranking ? ', höchster Wert zuerst' : '') + '. Ein hoher Wert heißt nur: Diesen Aussagen hast du häufiger zugestimmt.'));
+    var plot = el('div', 'test-chart-plot');
+    var skalaMaxPunkte = Math.max.apply(null, sortiert.map(maxVon));
+    var achseEl = el('div', 'test-chart-achse');
+    achseEl.setAttribute('aria-hidden', 'true');
+    [0, 20, 40, 60, 80, 100].forEach(function (pz) { var s = el('span', null, String(Math.round(skalaMaxPunkte * pz / 100))); s.style.left = pz + '%'; achseEl.append(s); });
+    var zeilenListe = el('ol', 'test-chart-zeilen');
+    var tooltip = el('div', 'test-tooltip');
+    tooltip.setAttribute('role', 'tooltip');
+    tooltip.hidden = true;
+    sortiert.forEach(function (c, idx) {
+      var max = maxVon(c), wert = summe[c.id], pz = wert / max * 100;
+      var istSpitze = ranking && !gleich && wert / max === hochW;
+      var li = el('li', 'test-zeile' + (istSpitze ? ' ist-spitze' : ''));
+      var satz = c.name + ': ' + wert + ' von ' + max + ' Punkten (' + Math.round(pz) + ' %)';
+      li.tabIndex = 0;
+      li.setAttribute('aria-label', (ranking ? 'Platz ' + (idx + 1) + '. ' : '') + satz);
       var name;
       if ((c.sections || []).length) {
         name = el('a', 'test-zeile-name', c.name);
         name.href = '#thema-' + c.id;
+        name.tabIndex = -1;
       } else {
         name = el('span', 'test-zeile-name', c.name);
       }
-      kopf.append(name, el('span', 'test-zeile-wert', summe[c.id] + ' / ' + max));
-      f.li.append(kopf, f.spur);
-      rang.append(f.li);
-      zeilen.push(c.name + ': ' + summe[c.id] + ' / ' + max);
+      var kopf = el('div', 'test-zeile-label');
+      if (ranking) kopf.append(el('span', 'test-platz', String(idx + 1)));
+      kopf.append(name);
+      var spur = el('div', 'test-spur');
+      spur.setAttribute('aria-hidden', 'true');
+      var f = el('span', 'test-balken-fuell');
+      f.style.width = pz + '%';
+      spur.append(f);
+      var zahl = el('span', 'test-zeile-wert');
+      zahl.setAttribute('aria-hidden', 'true');
+      zahl.append(el('strong', null, String(wert)), document.createTextNode(' / ' + max));
+      li.append(kopf, spur, zahl);
+      function zeigeTip() {
+        tooltip.textContent = satz;
+        tooltip.hidden = false;
+        var r = li.getBoundingClientRect(), p = plot.getBoundingClientRect(), s = spur.getBoundingClientRect();
+        var halb = tooltip.offsetWidth / 2;
+        var links = s.left - p.left + s.width * pz / 100;
+        tooltip.style.top = (r.top - p.top - 8) + 'px';
+        tooltip.style.left = Math.max(halb, Math.min(links, s.right - p.left - halb)) + 'px';
+      }
+      li.addEventListener('mouseenter', zeigeTip);
+      li.addEventListener('focus', zeigeTip);
+      li.addEventListener('mouseleave', function () { tooltip.hidden = true; });
+      li.addEventListener('blur', function () { tooltip.hidden = true; });
+      zeilenListe.append(li);
+      zeilen.push(c.name + ': ' + wert + ' / ' + max);
     });
+    var achsenZeile = el('div', 'test-chart-achsenzeile');
+    achsenZeile.append(el('span'), achseEl, el('span'));
+    plot.append(zeilenListe, achsenZeile, tooltip);
+
+    // Tabellenansicht (barrierefreie Alternative zur Grafik)
+    var tabKnopf = el('button', 'test-tabknopf', 'Als Tabelle anzeigen');
+    tabKnopf.type = 'button';
+    tabKnopf.setAttribute('aria-expanded', 'false');
+    var tab = el('table', 'test-tabelle');
+    tab.hidden = true;
+    var th = el('tr');
+    ['Bereich', 'Punkte', 'Maximum', 'Anteil'].forEach(function (h) { var c = el('th', null, h); c.scope = 'col'; th.append(c); });
+    var thead = el('thead'); thead.append(th); tab.append(thead);
+    var tb = el('tbody');
+    sortiert.forEach(function (c) {
+      var tr = el('tr'), max = maxVon(c);
+      var tdName = el('th', null, c.name); tdName.scope = 'row';
+      tr.append(tdName, el('td', null, String(summe[c.id])), el('td', null, String(max)), el('td', null, Math.round(summe[c.id] / max * 100) + ' %'));
+      tb.append(tr);
+    });
+    tab.append(tb);
+    tabKnopf.addEventListener('click', function () {
+      var offen = tab.hidden;
+      tab.hidden = !offen;
+      plot.hidden = offen;
+      tabKnopf.setAttribute('aria-expanded', String(offen));
+      tabKnopf.textContent = offen ? 'Als Grafik anzeigen' : 'Als Tabelle anzeigen';
+    });
+    chart.append(kopfZeile, plot, tab, tabKnopf);
 
     var details = ergebnis.querySelector('[data-details]');
     details.replaceChildren();

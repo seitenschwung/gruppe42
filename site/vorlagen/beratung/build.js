@@ -479,7 +479,7 @@ ${seitenkopf(titel, cfg.motto, cfg.intro)}
     <h2 class="titel" id="ergebnis-titel" tabindex="-1">${betont(r.title || 'Dein Ergebnis')}</h2>
     <p class="test-lead" data-intro></p>
     <div class="test-stufe" data-stufe hidden></div>
-    <ol class="test-rang" data-rang aria-label="Ergebnis im Überblick"></ol>
+    <figure class="test-chart" data-chart></figure>
     <div class="test-details" data-details></div>
     <p class="test-lead test-outro" data-outro></p>
     <p class="test-note" data-note></p>
