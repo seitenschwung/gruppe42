@@ -58,7 +58,7 @@ const demo = s.demo_modus === true;
 const firma = s.firma || s.name;
 const adresse = s.kontakt.adresse || {};
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests']);
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'gespraechskarten']);
 const ids = [...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
@@ -89,7 +89,13 @@ const testJs = fs.readFileSync(path.join(ROOT, 'src/js/antreiber.js'), 'utf8');
 if (tests.length) fs.writeFileSync(path.join(DIST, 'js/antreiber.js'), testJs);
 const testJsUrl = `js/antreiber.js?v=${crypto.createHash('sha1').update(testJs).digest('hex').slice(0, 8)}`;
 // Ziel für Menü und Teaser: genau ein sichtbarer Test -> direkt dorthin, sonst Übersicht
-const testZiel = sichtbareTests.length === 1 ? `${sichtbareTests[0].id}.html` : 'selbsttests.html';
+// Gesprächskarten (optional, s.karten): eigene Seite, Skript nur dort geladen; sichtbar -> Karte in der Übersicht
+const kartenCfg = s.karten && liste(s.karten.kartensaetze).length ? s.karten : null;
+const kartenSichtbar = !!(kartenCfg && kartenCfg.sichtbar === true);
+const kartenJs = kartenCfg ? fs.readFileSync(path.join(ROOT, 'src/js/karten.js'), 'utf8') : '';
+if (kartenCfg) fs.writeFileSync(path.join(DIST, 'js/karten.js'), kartenJs);
+const kartenJsUrl = `js/karten.js?v=${crypto.createHash('sha1').update(kartenJs).digest('hex').slice(0, 8)}`;
+const testZiel = sichtbareTests.length === 1 && !kartenSichtbar ? `${sichtbareTests[0].id}.html` : 'selbsttests.html';
 
 // ---------------------------------------------------------------------------
 // 3. Bilder
@@ -493,13 +499,59 @@ function testUebersicht(cfg) {
           <a class="knopf knopf-dunkel" href="${seiteVon(e.id)}">Test starten<span class="sr-only">: ${esc(e.titel)}</span></a>
         </div>
       </li>`).join('');
+  const kartenKarte = kartenSichtbar ? `
+      <li class="karte">
+        <div class="karte-inhalt">
+          <ul class="schlagworte"><li>Übung für Teams</li></ul>
+          <h2>${esc(kartenCfg.titel || 'Gesprächskarten')}</h2>
+          ${kartenCfg.intro ? `<p>${esc(kartenCfg.intro)}</p>` : ''}
+          <a class="knopf knopf-dunkel" href="gespraechskarten.html">Karten öffnen<span class="sr-only">: ${esc(kartenCfg.titel || 'Gesprächskarten')}</span></a>
+        </div>
+      </li>` : '';
   return `
 ${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro)}
 <section class="abschnitt" aria-label="${esc(cfg.titel || 'Selbsttests')}">
-  <div class="container"><ul class="karten">${karten}
+  <div class="container"><ul class="karten">${karten}${kartenKarte}
   </ul></div>
 </section>`;
 }
+// Gesprächskarten: Kartensätze liegen als JSON auf der Seite; js/karten.js zieht zufällig ohne Wiederholung.
+// Ohne JavaScript bleibt die Liste aller Karten sichtbar.
+function kartenSeite(cfg) {
+  const saetze = liste(cfg.kartensaetze).filter((k) => k.id && liste(k.karten).length);
+  const daten = JSON.stringify(saetze.map((k) => ({ id: k.id, titel: k.titel, karten: k.karten }))).replace(/</g, '\\u003c');
+  const entwurf = cfg.sichtbar !== true;
+  const alle = saetze.map((k) => `
+      <section class="karten-satz-liste" aria-labelledby="ks-${esc(k.id)}">
+        <h2 id="ks-${esc(k.id)}">${esc(k.titel || k.id)}</h2>
+        <ul>${k.karten.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+      </section>`).join('');
+  return `
+${seitenkopf(cfg.titel || 'Gesprächskarten', cfg.motto, cfg.intro)}
+<section class="abschnitt gkarten" id="gkarten" aria-label="${esc(cfg.titel || 'Gesprächskarten')}">
+  <div class="container">
+    ${entwurf ? '<p class="shop-hinweis">Entwurf: Diese Seite ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
+    <div class="gkarten-app" data-karten hidden>
+      <div class="gkarten-wahl" role="group" aria-label="Kartenset wählen" data-wahl></div>
+      <div class="gkarten-buehne" data-buehne>
+        <p class="gkarten-zaehler" data-zaehler></p>
+        <p class="gkarten-text" data-text tabindex="-1">Wähle ein Kartenset und ziehe eine Karte.</p>
+      </div>
+      <p class="sr-only" role="status" aria-live="polite" data-ansage></p>
+      <div class="knoepfe gkarten-aktionen">
+        <button class="knopf knopf-dunkel" type="button" data-weiter>Nächste Karte</button>
+        <button class="knopf knopf-rand" type="button" data-neu hidden>Neu mischen</button>
+        <button class="knopf knopf-rand" type="button" data-voll hidden>Vollbild</button>
+      </div>
+      <p class="test-note">Tipp: Leertaste oder Eingabetaste zieht die nächste Karte. Nichts wird gespeichert oder gesendet.</p>
+    </div>
+    <div class="gkarten-liste" data-liste>${alle}
+    </div>
+  </div>
+</section>
+<script type="application/json" id="karten-daten">${daten}</script>`;
+}
+
 function teaser(cfg) {
   const t = cfg.teaser || {};
   return `<section class="test-teaser abschnitt" aria-labelledby="teaser-titel">
@@ -581,7 +633,7 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
         ${s.leistungen.eintraege.length ? `<li><a href="${anker('leistungen')}"${s.leistungen.eintraege.some((l) => l.id === aktiv) ? ' aria-current="page"' : ''}>Leistungen</a></li>` : ''}
         ${zielgruppenNav}
         ${s.shop && s.shop.aktiv && s.shop.sichtbar === true ? `<li><a href="shop.html"${aktiv === 'shop' ? ' aria-current="page"' : ''}>${esc(s.shop.titel || 'Seminare')}</a></li>` : ''}
-        ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${aktiv === 'selbsttests' || sichtbareTests.some((e) => e.id === aktiv) ? ' aria-current="page"' : ''}>${esc(sichtbareTests.length === 1 ? sichtbareTests[0].titel : testsCfg.titel || 'Selbsttests')}</a></li>` : ''}
+        ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${aktiv === 'selbsttests' || aktiv === 'gespraechskarten' || sichtbareTests.some((e) => e.id === aktiv) ? ' aria-current="page"' : ''}>${esc(sichtbareTests.length === 1 && !kartenSichtbar ? sichtbareTests[0].titel : testsCfg.titel || 'Selbsttests')}</a></li>` : ''}
         ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
         <li><a href="#kontakt">Kontakt</a></li>
         <li><a class="knopf knopf-dunkel" href="#kontakt">Erstgespräch vereinbaren</a></li>
@@ -672,7 +724,7 @@ if (s.shop && s.shop.aktiv) {
   });
 }
 if (testsCfg) {
-  if (sichtbareTests.length > 1) {
+  if (sichtbareTests.length + (kartenSichtbar ? 1 : 0) > 1) {
     seiten.push({
       datei: 'selbsttests.html', aktiv: 'selbsttests', inhalt: testUebersicht(testsCfg), noindex: false,
       titel: `${testsCfg.titel || 'Selbsttests'} – ${s.name}`,
@@ -687,6 +739,14 @@ if (testsCfg) {
       beschreibung: (e.intro || daten.name).slice(0, 160),
       zusatzHead: `<script src="${testJsUrl}" defer></script>`,
     });
+  });
+}
+if (kartenCfg) {
+  seiten.push({
+    datei: 'gespraechskarten.html', aktiv: 'gespraechskarten', inhalt: kartenSeite(kartenCfg), noindex: !kartenSichtbar,
+    titel: `${kartenCfg.titel || 'Gesprächskarten'} – ${s.name}`,
+    beschreibung: (kartenCfg.intro || 'Gesprächskarten für Teammeetings').slice(0, 160),
+    zusatzHead: `<script src="${kartenJsUrl}" defer></script>`,
   });
 }
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
