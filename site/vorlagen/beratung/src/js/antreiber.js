@@ -37,6 +37,14 @@
     ziel.scrollIntoView({ behavior: weich ? 'smooth' : 'auto', block: 'start' });
   }
 
+  // Nur scrollen, wenn die Testkarte nicht komplett im Bild ist (kein Hüpfen nach jeder Frage)
+  function imBild(ziel) {
+    var kopf = d.querySelector('.kopf');
+    var oben = kopf && getComputedStyle(kopf).position === 'sticky' ? kopf.offsetHeight : 0;
+    var r = ziel.getBoundingClientRect();
+    if (r.top < oben + 4 || r.bottom > window.innerHeight) nachOben(ziel);
+  }
+
   function zeigeFrage(fokus) {
     var f = DATA.questions[index];
     var n = DATA.questions.length;
@@ -295,14 +303,14 @@
   startKnopf.addEventListener('click', function () {
     zeige('frage');
     zeigeFrage(true);
-    nachOben(wurzel);
+    imBild(wurzel);
   });
   weiter.addEventListener('click', function () {
     if (antworten[index] === null) return;
     if (index === DATA.questions.length - 1) { auswerten(); return; }
     index++;
     zeigeFrage(true);
-    nachOben(wurzel);
+    imBild(wurzel);
   });
   zurueck.addEventListener('click', function () {
     if (!index) return;
