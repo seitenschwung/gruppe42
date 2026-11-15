@@ -457,7 +457,7 @@
     "note": "Jede Skala besteht aus zehn Aussagen mit Antwortwerten von 1 bis 5 (10–50 Punkte). Die Werte werden addiert und innerhalb des individuellen Profils verglichen. Es gibt keine normierten Schwellenwerte, Diagnosen oder belastbaren Aussagen über Gesundheit oder psychische Eigenschaften. Ein hoher Wert zeigt nur, dass den entsprechenden Aussagen häufiger zugestimmt wurde. Konzeptionell angelehnt an die fünf inneren Antreiber der Transaktionsanalyse nach Taibi Kahler. Eigenständig formulierte Items und Coaching-Auswertung. Nicht wissenschaftlich validiert.",
     "highlight": "Am stärksten angesprochen",
     "lead": "Besonders angesprochen haben dich die Aussagen zu: {names}. Das ist keine Festlegung auf einen Persönlichkeitstyp, sondern ein möglicher Ausgangspunkt für deine Reflexion.",
-    "tie": "Alle Bereiche liegen in deinen Antworten gleichauf. Welche der Beschreibungen sich für dich richtig anfühlt, darfst du ganz in Ruhe selbst herausfinden.",
+    "tie": "Deine Bereiche liegen nahe beieinander, keiner sticht deutlich heraus. Lies die Beschreibungen in Ruhe und prüfe, welche sich für dich stimmig anfühlt.",
     "lowLabel": "Ein Blick auf dein Profil:",
     "cta": {
       "text": "Im Erstgespräch vertiefen",

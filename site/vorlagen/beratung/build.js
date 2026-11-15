@@ -66,7 +66,7 @@ s.fallstudien.eintraege = liste(s.fallstudien.eintraege).filter((e) => e.kunde);
 const impulseSichtbar = s.impulse.sichtbar === true;
 const fallstudienSichtbar = s.fallstudien.sichtbar === true && s.fallstudien.eintraege.length > 0;
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten']);
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten', 'methodik']);
 const ids = [...s.impulse.eintraege.map((e) => e.id),...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
@@ -459,7 +459,7 @@ ${seitenkopf(titel, cfg.motto, cfg.intro)}
           <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du eine Auswertung mit Impulsen.</li>
           <li><strong>Privat:</strong> ${esc(testsCfg.datenschutz || 'Deine Antworten werden nur in deinem Browser verarbeitet und nicht gespeichert.')}</li>
         </ul>
-        <p class="test-note">${esc(daten.status || '')}. Kein Diagnoseinstrument.</p>
+        <p class="test-note">${esc(daten.status || '')}. Kein Diagnoseinstrument.${testsCfg.methodik ? ' <a href="methodik.html">So entstehen unsere Tests</a>' : ''}</p>
         <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
       </div>
       <div data-schritt="frage" hidden>
@@ -500,6 +500,31 @@ ${seitenkopf(titel, cfg.motto, cfg.intro)}
 <script type="application/json" id="antreiber-daten">${json}</script>`;
 }
 
+function methodikSeite(cfg) {
+  const m = cfg.methodik;
+  const zeilen = sichtbareTests.map((e) => {
+    const d = ladeTest(e);
+    const umg = d.questions.filter((q) => q.reverse).length;
+    const art = d.result.kind === 'levels' ? 'Stufe nach Gesamtwert' : 'Rangfolge der Bereiche';
+    return `<tr><th scope="row"><a href="${e.id}.html">${esc(e.titel)}</a></th><td>${d.questions.length}</td><td>${d.categories.length}</td><td>${umg}</td><td>${art}</td></tr>`;
+  }).join('');
+  const abschnitte = liste(m.abschnitte).map((a) => `<section class="methodik-teil"><h2>${esc(a.titel)}</h2>${h.markdown(a.text)}</section>`).join('');
+  return `
+${seitenkopf(m.titel || 'So entstehen unsere Tests', m.motto, m.intro)}
+<section class="abschnitt methodik" aria-label="${esc(m.titel || 'Methodik')}">
+  <div class="container">
+    <div class="methodik-text">${abschnitte}</div>
+    <div class="methodik-tabelle" role="region" aria-label="Die Tests im Überblick" tabindex="0">
+      <table class="test-tabelle">
+        <caption>Die Tests im Überblick</caption>
+        <thead><tr><th scope="col">Test</th><th scope="col">Aussagen</th><th scope="col">Bereiche</th><th scope="col">davon umgekehrt</th><th scope="col">Auswertung</th></tr></thead>
+        <tbody>${zeilen}</tbody>
+      </table>
+    </div>
+  </div>
+</section>`;
+}
+
 function testUebersicht(cfg) {
   const karten = sichtbareTests.map((e) => `
       <li class="karte">
@@ -523,7 +548,7 @@ function testUebersicht(cfg) {
 ${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro)}
 <section class="abschnitt" aria-label="${esc(cfg.titel || 'Selbsttests')}">
   <div class="container"><ul class="karten">${karten}${kartenKarte}
-  </ul></div>
+  </ul>${cfg.methodik ? '<p class="test-note methodik-link"><a href="methodik.html">So entstehen unsere Tests</a>: was sie können und was nicht.</p>' : ''}</div>
 </section>`;
 }
 // Gesprächskarten: Kartensätze liegen als JSON auf der Seite; js/karten.js zieht zufällig ohne Wiederholung.
@@ -864,6 +889,13 @@ if (testsCfg) {
       datei: 'selbsttests.html', aktiv: 'selbsttests', inhalt: testUebersicht(testsCfg), noindex: false,
       titel: `${testsCfg.titel || 'Selbsttests'} – ${s.name}`,
       beschreibung: (testsCfg.intro || 'Selbsttests und Reflexion').slice(0, 160),
+    });
+  }
+  if (testsCfg.methodik && sichtbareTests.length) {
+    seiten.push({
+      datei: 'methodik.html', aktiv: 'selbsttests', inhalt: methodikSeite(testsCfg), noindex: false,
+      titel: `${testsCfg.methodik.titel || 'So entstehen unsere Tests'} – ${s.name}`,
+      beschreibung: (testsCfg.methodik.intro || 'Methodik der Selbsttests').slice(0, 160),
     });
   }
   tests.forEach((e) => {
