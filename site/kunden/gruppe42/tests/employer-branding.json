@@ -1,0 +1,70 @@
+{
+  "id": "employer-branding",
+  "name": "Employer-Branding-Check",
+  "status": "Eigene, nicht validierte Kurzbefragung zur Standortbestimmung für Unternehmen",
+  "scale": {
+    "1": "Trifft gar nicht zu",
+    "2": "Trifft eher nicht zu",
+    "3": "Trifft teilweise zu",
+    "4": "Trifft eher zu",
+    "5": "Trifft voll und ganz zu"
+  },
+  "categories": [
+    {
+      "id": "identitaet",
+      "name": "Identität und Werte",
+      "sections": [
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Warum sollte sich jemand bei uns und nicht beim Mitbewerb bewerben?" }
+      ]
+    },
+    {
+      "id": "kommunikation",
+      "name": "Sichtbarkeit und Kommunikation",
+      "sections": [
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Wo begegnen potenzielle Mitarbeitende unserem Unternehmen zum ersten Mal?" }
+      ]
+    },
+    {
+      "id": "erlebnis",
+      "name": "Bewerbung und Onboarding",
+      "sections": [
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Wie fühlt sich der Weg von der Bewerbung bis zum ersten Monat aus Sicht der Neuen an?" }
+      ]
+    },
+    {
+      "id": "kultur",
+      "name": "Kultur und Bindung",
+      "sections": [
+        { "kind": "labeled", "title": "Frage für dein nächstes Führungsteam-Treffen:", "text": "Was würden unsere Mitarbeitenden Freunden über uns als Arbeitgeber erzählen?" }
+      ]
+    }
+  ],
+  "questions": [
+    { "id": 1, "category": "identitaet", "text": "Wir können in wenigen Sätzen erklären, wofür wir als Arbeitgeber stehen." },
+    { "id": 2, "category": "identitaet", "text": "Unsere Werte sind im Alltag spürbar und nicht nur auf der Website zu lesen." },
+    { "id": 3, "category": "identitaet", "text": "Wir wissen nicht genau, was uns als Arbeitgeber von anderen unterscheidet.", "reverse": true },
+    { "id": 4, "category": "kommunikation", "text": "Unsere Karriereseite zeigt echte Einblicke in die Arbeit bei uns." },
+    { "id": 5, "category": "kommunikation", "text": "Unsere Mitarbeitenden sprechen nach außen gern über ihre Arbeit." },
+    { "id": 6, "category": "kommunikation", "text": "Wir erreichen die Zielgruppen, die wir suchen, auf den richtigen Kanälen." },
+    { "id": 7, "category": "erlebnis", "text": "Bewerbende erhalten bei uns schnell und verlässlich eine Rückmeldung." },
+    { "id": 8, "category": "erlebnis", "text": "Unser Bewerbungsprozess ist verständlich und wertschätzend." },
+    { "id": 9, "category": "erlebnis", "text": "Neue Mitarbeitende haben in den ersten Wochen eine feste Ansprechperson und einen klaren Plan." },
+    { "id": 10, "category": "kultur", "text": "Wir erfahren regelmäßig, wie zufrieden unsere Mitarbeitenden sind, und handeln danach." },
+    { "id": 11, "category": "kultur", "text": "Entwicklungsmöglichkeiten sind bei uns für alle sichtbar und zugänglich." },
+    { "id": 12, "category": "kultur", "text": "Wenn Mitarbeitende kündigen, wissen wir meist erst im Nachhinein, warum.", "reverse": true }
+  ],
+  "result": {
+    "kind": "levels",
+    "kicker": "Dein Ergebnis",
+    "title": "Dein *Arbeitgeber-Profil*",
+    "intro": "PLATZHALTER: Einleitungstext liefert die Kundin.",
+    "outro": "Nutze die Fragen als Einstieg für ein Gespräch im Führungsteam. Ein Ergebnis ist eine Einladung zum Nachdenken, kein Urteil.",
+    "note": "Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
+    "levels": [
+      { "min": 0, "title": "Viel Potenzial zum Entwickeln", "text": "PLATZHALTER: Es gibt mehrere Bereiche, in denen sich ein genauer Blick lohnt. Ein guter Ausgangspunkt." },
+      { "min": 50, "title": "Gute Basis mit Lücken", "text": "PLATZHALTER: Vieles funktioniert bereits. Einzelne Bereiche verdienen gezielte Aufmerksamkeit." },
+      { "min": 80, "title": "Starke Arbeitgebermarke", "text": "PLATZHALTER: Du bist gut aufgestellt. Pflege, was funktioniert, und prüfe regelmäßig nach." }
+    ],
+    "cta": { "text": "Employer Branding besprechen", "href": "#kontakt" }
+  }
+}

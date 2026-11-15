@@ -1,0 +1,150 @@
+{
+  "id": "teamklima",
+  "name": "Teamklima-Schnellcheck",
+  "status": "Eigene, nicht validierte Kurzbefragung zur Reflexion im Team",
+  "scale": {
+    "1": "Trifft gar nicht zu",
+    "2": "Trifft eher nicht zu",
+    "3": "Trifft teilweise zu",
+    "4": "Trifft eher zu",
+    "5": "Trifft voll und ganz zu"
+  },
+  "categories": [
+    {
+      "id": "vertrauen",
+      "name": "Vertrauen",
+      "sections": [
+        {
+          "kind": "labeled",
+          "title": "Gesprächsfrage fürs nächste Teammeeting:",
+          "text": "Wann haben wir zuletzt einen Fehler gemeinsam besprochen, ohne nach Schuld zu suchen?"
+        }
+      ]
+    },
+    {
+      "id": "kommunikation",
+      "name": "Kommunikation",
+      "sections": [
+        {
+          "kind": "labeled",
+          "title": "Gesprächsfrage fürs nächste Teammeeting:",
+          "text": "Welche Information fehlt uns im Alltag am häufigsten?"
+        }
+      ]
+    },
+    {
+      "id": "rollen",
+      "name": "Rollenklarheit",
+      "sections": [
+        {
+          "kind": "labeled",
+          "title": "Gesprächsfrage fürs nächste Teammeeting:",
+          "text": "Wo sind bei uns Zuständigkeiten oder Entscheidungen unklar?"
+        }
+      ]
+    },
+    {
+      "id": "zusammenarbeit",
+      "name": "Zusammenarbeit",
+      "sections": [
+        {
+          "kind": "labeled",
+          "title": "Gesprächsfrage fürs nächste Teammeeting:",
+          "text": "Wobei würden wir uns diese Woche gerne gegenseitig entlasten?"
+        }
+      ]
+    },
+    {
+      "id": "wertschaetzung",
+      "name": "Wertschätzung",
+      "sections": [
+        {
+          "kind": "labeled",
+          "title": "Gesprächsfrage fürs nächste Teammeeting:",
+          "text": "Wofür möchte ich jemandem im Team heute Danke sagen?"
+        }
+      ]
+    }
+  ],
+  "questions": [
+    {
+      "id": 1,
+      "category": "vertrauen",
+      "text": "In unserem Team kann man Fehler offen ansprechen."
+    },
+    {
+      "id": 2,
+      "category": "vertrauen",
+      "text": "Ich verlasse mich darauf, dass Absprachen gelten."
+    },
+    {
+      "id": 3,
+      "category": "kommunikation",
+      "text": "Wichtige Informationen erreichen mich rechtzeitig."
+    },
+    {
+      "id": 4,
+      "category": "kommunikation",
+      "text": "Meinungsverschiedenheiten werden bei uns direkt und respektvoll geklärt."
+    },
+    {
+      "id": 5,
+      "category": "rollen",
+      "text": "Ich weiß, wofür ich im Team verantwortlich bin."
+    },
+    {
+      "id": 6,
+      "category": "rollen",
+      "text": "Im Team ist klar, wer was entscheidet."
+    },
+    {
+      "id": 7,
+      "category": "zusammenarbeit",
+      "text": "Wir unterstützen uns, wenn jemand überlastet ist."
+    },
+    {
+      "id": 8,
+      "category": "zusammenarbeit",
+      "text": "Wir arbeiten auf gemeinsame Ziele hin."
+    },
+    {
+      "id": 9,
+      "category": "wertschaetzung",
+      "text": "Gute Arbeit wird bei uns sichtbar gewürdigt."
+    },
+    {
+      "id": 10,
+      "category": "wertschaetzung",
+      "text": "Ich fühle mich im Team als Mensch gesehen."
+    }
+  ],
+  "result": {
+    "kind": "levels",
+    "kicker": "Dein Ergebnis",
+    "title": "Das *Klima* in deinem Team",
+    "intro": "PLATZHALTER: Einleitungstext liefert der Kunde.",
+    "outro": "Nutze die Gesprächsfragen als Einstieg für ein offenes Teamgespräch. Ein Ergebnis ist eine Einladung zum Reden, kein Urteil.",
+    "note": "Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
+    "levels": [
+      {
+        "min": 0,
+        "title": "Hier lohnt sich ein Gespräch",
+        "text": "PLATZHALTER: Es gibt Bereiche, in denen sich das Team mehr Klarheit oder Rückhalt wünscht. Das ist ein guter Ausgangspunkt."
+      },
+      {
+        "min": 50,
+        "title": "Solide mit Luft nach oben",
+        "text": "PLATZHALTER: Vieles funktioniert. Einzelne Bereiche verdienen Aufmerksamkeit."
+      },
+      {
+        "min": 80,
+        "title": "Ein starkes Fundament",
+        "text": "PLATZHALTER: Das Team erlebt viel Vertrauen und Zusammenarbeit. Pflege, was funktioniert."
+      }
+    ],
+    "cta": {
+      "text": "Teamentwicklung besprechen",
+      "href": "#kontakt"
+    }
+  }
+}

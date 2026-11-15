@@ -58,8 +58,16 @@ const demo = s.demo_modus === true;
 const firma = s.firma || s.name;
 const adresse = s.kontakt.adresse || {};
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop']);
-const ids = [...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
+// Impulse (Blog) und Praxisbeispiele: optional, standardmäßig unsichtbar
+s.impulse = s.impulse || {};
+s.impulse.eintraege = liste(s.impulse.eintraege).filter((e) => e.id && e.titel);
+s.fallstudien = s.fallstudien || {};
+s.fallstudien.eintraege = liste(s.fallstudien.eintraege).filter((e) => e.kunde);
+const impulseSichtbar = s.impulse.sichtbar === true;
+const fallstudienSichtbar = s.fallstudien.sichtbar === true && s.fallstudien.eintraege.length > 0;
+
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten']);
+const ids = [...s.impulse.eintraege.map((e) => e.id),...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
   if (ids.indexOf(id) !== ids.lastIndexOf(id)) { console.error(`✖ id "${id}" kommt doppelt vor.`); process.exit(1); }
@@ -80,6 +88,22 @@ for (const f of fs.readdirSync(path.join(ROOT, 'fonts'))) {
 const mainJs = fs.readFileSync(path.join(ROOT, 'src/js/main.js'), 'utf8');
 fs.writeFileSync(path.join(DIST, 'js/main.js'), mainJs);
 const mainJsUrl = `js/main.js?v=${crypto.createHash('sha1').update(mainJs).digest('hex').slice(0, 8)}`;
+// Antreiber-Test: eigenes Skript, nur auf dieser Seite geladen
+const testsCfg = s.tests && s.tests.aktiv ? s.tests : null;
+const tests = testsCfg ? liste(testsCfg.eintraege).filter((e) => e.id && e.daten && e.titel) : [];
+const sichtbareTests = tests.filter((e) => e.sichtbar === true);
+tests.forEach((e) => { if (reserviert.has(e.id)) { console.error(`✖ Test-id "${e.id}" ist reserviert.`); process.exit(1); } });
+const testJs = fs.readFileSync(path.join(ROOT, 'src/js/antreiber.js'), 'utf8');
+if (tests.length) fs.writeFileSync(path.join(DIST, 'js/antreiber.js'), testJs);
+const testJsUrl = `js/antreiber.js?v=${crypto.createHash('sha1').update(testJs).digest('hex').slice(0, 8)}`;
+// Ziel für Menü und Teaser: genau ein sichtbarer Test -> direkt dorthin, sonst Übersicht
+// Gesprächskarten (optional, s.karten): eigene Seite, Skript nur dort geladen; sichtbar -> Karte in der Übersicht
+const kartenCfg = s.karten && liste(s.karten.kartensaetze).length ? s.karten : null;
+const kartenSichtbar = !!(kartenCfg && kartenCfg.sichtbar === true);
+const kartenJs = kartenCfg ? fs.readFileSync(path.join(ROOT, 'src/js/karten.js'), 'utf8') : '';
+if (kartenCfg) fs.writeFileSync(path.join(DIST, 'js/karten.js'), kartenJs);
+const kartenJsUrl = `js/karten.js?v=${crypto.createHash('sha1').update(kartenJs).digest('hex').slice(0, 8)}`;
+const testZiel = sichtbareTests.length === 1 && !kartenSichtbar ? `${sichtbareTests[0].id}.html` : 'selbsttests.html';
 
 // ---------------------------------------------------------------------------
 // 3. Bilder
@@ -155,7 +179,7 @@ function kontaktband() {
   return `<section class="kontaktband abschnitt" id="kontakt" aria-labelledby="kontakt-titel">
   <div class="container">
     <div class="kontaktband-text">
-      <h2 id="kontakt-titel">${betont(kb.titel || 'Sprechen wir über Ihr Vorhaben.')}</h2>
+      <h2 id="kontakt-titel">${betont(kb.titel || 'Sprechen wir über dein Vorhaben.')}</h2>
       ${kb.text ? `<p>${esc(kb.text)}</p>` : ''}
     </div>
     <div class="knoepfe">
@@ -269,6 +293,8 @@ ${liste(s.ablauf.schritte).length ? `<section class="sand abschnitt" aria-labell
   </div>
 </section>` : ''}
 
+${fallstudienAbschnitt()}
+
 ${s.stimmen.haupt || liste(s.stimmen.weitere).length ? `<section class="abschnitt" aria-label="${esc(s.stimmen.kicker || 'Stimmen')}">
   <div class="container">
     ${s.stimmen.kicker ? `<p class="kicker">${esc(s.stimmen.kicker)}</p>` : ''}
@@ -278,6 +304,8 @@ ${s.stimmen.haupt || liste(s.stimmen.weitere).length ? `<section class="abschnit
     </div>
   </div>
 </section>` : ''}
+
+${testsCfg && sichtbareTests.length ? teaser(testsCfg) : ''}
 
 ${p.name ? `<section class="sand abschnitt person" id="ueber" aria-labelledby="person-titel">
   <div class="container">
@@ -292,6 +320,7 @@ ${p.name ? `<section class="sand abschnitt person" id="ueber" aria-labelledby="p
   </div>
 </section>` : ''}
 
+${faqAbschnitt()}
 ${kontaktband()}`;
 }
 
@@ -340,7 +369,7 @@ ${seitenkopf(z.titel, z.motto, z.intro, z.bild)}
 </section>
 ${s.rahmen.length ? `<section class="rahmen abschnitt" aria-labelledby="rahmen-titel">
   <div class="container">
-    <h2 class="titel" id="rahmen-titel">Abgestimmt auf <em>Ihr</em> Unternehmen.</h2>
+    <h2 class="titel" id="rahmen-titel">Abgestimmt auf <em>dein</em> Unternehmen.</h2>
     <ul>${s.rahmen.map((r) => `<li><strong>${esc(r.titel)}</strong>${esc(r.text || '')}</li>`).join('')}</ul>
   </div>
 </section>` : ''}
@@ -394,6 +423,235 @@ ${seitenkopf(cfg.titel || 'Seminare', cfg.motto, cfg.intro)}
 </section>`;
 }
 
+// Tests: Fragen, Skala, Auswertungstexte liegen je Test in einer JSON-Datei (cfg.daten, neben der Inhalts-JSON).
+// Die Seite liefert nur Gerüst und Daten; Ablauf, Auswertung und Ergebnis erzeugt js/antreiber.js im Browser
+// (nichts wird übertragen). Auswertung: result.kind "ranking" (Rangfolge je Kategorie) oder "levels" (Stufe nach Gesamtpunkten).
+function ladeTest(cfg) {
+  const daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), cfg.daten), 'utf8'));
+  const kennung = `Test "${cfg.id}"`;
+  const fehler = (m) => { console.error(`✖ ${kennung}: ${m}`); process.exit(1); };
+  const kat = new Set(liste(daten.categories).map((c) => c.id));
+  if (!kat.size || !liste(daten.questions).length || !daten.scale || !daten.result) fehler('categories, questions, scale und result sind Pflicht.');
+  daten.questions.forEach((f) => { if (!kat.has(f.category)) fehler(`Frage ${f.id}: unbekannte Kategorie "${f.category}".`); });
+  if (!['ranking', 'levels'].includes(daten.result.kind)) fehler('result.kind muss "ranking" oder "levels" sein.');
+  if (daten.result.kind === 'levels' && !liste(daten.result.levels).length) fehler('result.levels fehlt.');
+  return daten;
+}
+
+function testSeite(cfg, daten, testsCfg) {
+  const titel = cfg.titel;
+  const json = JSON.stringify(daten).replace(/</g, '\\u003c');
+  const entwurf = cfg.sichtbar !== true;
+  const r = daten.result;
+  const dauer = cfg.kurz ? esc(cfg.kurz) : `${daten.questions.length} Aussagen`;
+  return `
+${seitenkopf(titel, cfg.motto, cfg.intro)}
+<section class="abschnitt test" id="test" aria-label="${esc(titel)}">
+  <div class="container">
+    <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
+    ${entwurf ? '<p class="shop-hinweis">Entwurf: Dieser Test ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
+    <div class="test-karte" data-test>
+      <div data-schritt="intro">
+        <p class="kicker">Vorab</p>
+        <h2 class="test-titel">So funktioniert es</h2>
+        <ul class="test-hinweise">
+          <li><strong>${dauer}.</strong> Antworte spontan und denke an deinen Alltag.</li>
+          <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du eine Auswertung mit Impulsen.</li>
+          <li><strong>Privat:</strong> ${esc(testsCfg.datenschutz || 'Deine Antworten werden nur in deinem Browser verarbeitet und nicht gespeichert.')}</li>
+        </ul>
+        <p class="test-note">${esc(daten.status || '')}. Kein Diagnoseinstrument.</p>
+        <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
+      </div>
+      <div data-schritt="frage" hidden>
+        <div class="test-kopf">
+          <p class="test-zaehler" data-zaehler aria-live="polite"></p>
+          <div class="test-balken" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="${daten.questions.length}" aria-valuenow="0" data-balken><span></span></div>
+        </div>
+        <fieldset class="test-frage">
+          <legend tabindex="-1" data-frage></legend>
+          <div class="test-optionen" data-optionen></div>
+        </fieldset>
+        <div class="test-aktionen">
+          <button class="knopf knopf-rand" type="button" data-zurueck>Zurück</button>
+          <button class="knopf knopf-dunkel" type="button" data-weiter disabled>Weiter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="sand abschnitt test-ergebnis" id="ergebnis" aria-labelledby="ergebnis-titel" data-ergebnis hidden>
+  <div class="container">
+    <p class="kicker" data-kicker>${esc(r.kicker || 'Dein Ergebnis')}</p>
+    <h2 class="titel" id="ergebnis-titel" tabindex="-1">${betont(r.title || 'Dein Ergebnis')}</h2>
+    <p class="test-lead" data-intro></p>
+    <div class="test-stufe" data-stufe hidden></div>
+    <figure class="test-chart" data-chart></figure>
+    <div class="test-details" data-details></div>
+    <p class="test-lead test-outro" data-outro></p>
+    <p class="test-note" data-note></p>
+    <div class="knoepfe test-ende">
+      ${r.cta && r.cta.href ? `<a class="knopf knopf-honig" href="${esc(r.cta.href)}">${esc(r.cta.text || 'Im Erstgespräch vertiefen')}</a>` : ''}
+      <button class="knopf knopf-rand" type="button" data-mail>Per E-Mail an mich senden</button>
+      <button class="knopf knopf-rand" type="button" data-neu>Neu starten</button>
+      <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
+    </div>
+  </div>
+</section>
+<script type="application/json" id="antreiber-daten">${json}</script>`;
+}
+
+function testUebersicht(cfg) {
+  const karten = sichtbareTests.map((e) => `
+      <li class="karte">
+        <div class="karte-inhalt">
+          ${e.kurz ? `<ul class="schlagworte"><li>${esc(e.kurz)}</li></ul>` : ''}
+          <h2>${esc(e.titel)}</h2>
+          ${e.beschreibung ? `<p>${esc(e.beschreibung)}</p>` : ''}
+          <a class="knopf knopf-dunkel" href="${seiteVon(e.id)}">Test starten<span class="sr-only">: ${esc(e.titel)}</span></a>
+        </div>
+      </li>`).join('');
+  const kartenKarte = kartenSichtbar ? `
+      <li class="karte">
+        <div class="karte-inhalt">
+          <ul class="schlagworte"><li>Übung für Teams</li></ul>
+          <h2>${esc(kartenCfg.titel || 'Gesprächskarten')}</h2>
+          ${kartenCfg.intro ? `<p>${esc(kartenCfg.intro)}</p>` : ''}
+          <a class="knopf knopf-dunkel" href="gespraechskarten.html">Karten öffnen<span class="sr-only">: ${esc(kartenCfg.titel || 'Gesprächskarten')}</span></a>
+        </div>
+      </li>` : '';
+  return `
+${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro)}
+<section class="abschnitt" aria-label="${esc(cfg.titel || 'Selbsttests')}">
+  <div class="container"><ul class="karten">${karten}${kartenKarte}
+  </ul></div>
+</section>`;
+}
+// Gesprächskarten: Kartensätze liegen als JSON auf der Seite; js/karten.js zieht zufällig ohne Wiederholung.
+// Ohne JavaScript bleibt die Liste aller Karten sichtbar.
+function kartenSeite(cfg) {
+  const saetze = liste(cfg.kartensaetze).filter((k) => k.id && liste(k.karten).length);
+  const daten = JSON.stringify(saetze.map((k) => ({ id: k.id, titel: k.titel, karten: k.karten }))).replace(/</g, '\\u003c');
+  const entwurf = cfg.sichtbar !== true;
+  const alle = saetze.map((k) => `
+      <section class="karten-satz-liste" aria-labelledby="ks-${esc(k.id)}">
+        <h2 id="ks-${esc(k.id)}">${esc(k.titel || k.id)}</h2>
+        <ul>${k.karten.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+      </section>`).join('');
+  return `
+${seitenkopf(cfg.titel || 'Gesprächskarten', cfg.motto, cfg.intro)}
+<section class="abschnitt gkarten" id="gkarten" aria-label="${esc(cfg.titel || 'Gesprächskarten')}">
+  <div class="container">
+    ${entwurf ? '<p class="shop-hinweis">Entwurf: Diese Seite ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
+    <div class="gkarten-app" data-karten hidden>
+      <div class="gkarten-wahl" role="group" aria-label="Kartenset wählen" data-wahl></div>
+      <div class="gkarten-buehne" data-buehne>
+        <p class="gkarten-zaehler" data-zaehler></p>
+        <p class="gkarten-text" data-text tabindex="-1">Wähle ein Kartenset und ziehe eine Karte.</p>
+      </div>
+      <p class="sr-only" role="status" aria-live="polite" data-ansage></p>
+      <div class="knoepfe gkarten-aktionen">
+        <button class="knopf knopf-dunkel" type="button" data-weiter>Nächste Karte</button>
+        <button class="knopf knopf-rand" type="button" data-neu hidden>Neu mischen</button>
+        <button class="knopf knopf-rand" type="button" data-voll hidden>Vollbild</button>
+      </div>
+      <p class="test-note">Tipp: Leertaste oder Eingabetaste zieht die nächste Karte. Nichts wird gespeichert oder gesendet.</p>
+    </div>
+    <div class="gkarten-liste" data-liste>${alle}
+    </div>
+  </div>
+</section>
+<script type="application/json" id="karten-daten">${daten}</script>`;
+}
+
+function teaser(cfg) {
+  const t = cfg.teaser || {};
+  return `<section class="test-teaser abschnitt" aria-labelledby="teaser-titel">
+  <div class="container">
+    <div class="test-teaser-text">
+      ${t.kicker ? `<p class="kicker">${esc(t.kicker)}</p>` : ''}
+      <h2 class="titel" id="teaser-titel">${betont(t.titel || cfg.titel)}</h2>
+      ${t.text ? `<p>${esc(t.text)}</p>` : ''}
+    </div>
+    <a class="knopf knopf-dunkel" href="${testZiel}">${esc(t.knopf || 'Test starten')}</a>
+  </div>
+</section>`;
+}
+
+// --- Impulse (Blog) und Praxisbeispiele ---
+const datumDe = (iso) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) ? '' : new Intl.DateTimeFormat('de-AT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+};
+const impulseSortiert = () => [...s.impulse.eintraege].sort((a, b) => String(b.datum || '').localeCompare(String(a.datum || '')));
+
+function impulseUebersicht() {
+  const cfg = s.impulse;
+  return `
+${seitenkopf(cfg.titel || 'Impulse', cfg.motto, cfg.intro)}
+<section class="abschnitt" aria-label="Artikel">
+  <div class="container">
+    <ul class="karten">${impulseSortiert().map((e) => `
+      <li class="karte"><article class="karte-inhalt">
+        ${e.kategorie ? `<ul class="schlagworte"><li>${esc(e.kategorie)}</li></ul>` : ''}
+        <h2><a href="${esc(seiteVon(e.id))}">${esc(e.titel)}</a></h2>
+        ${e.teaser ? `<p>${esc(e.teaser)}</p>` : ''}
+        <p class="impuls-meta">${e.datum ? `<time datetime="${esc(e.datum)}">${esc(datumDe(e.datum))}</time>` : ''}${e.lesezeit ? ` · ${esc(e.lesezeit)} Lesezeit` : ''}</p>
+      </article></li>`).join('')}
+    </ul>
+  </div>
+</section>
+${kontaktband()}`;
+}
+
+function impulseArtikel(e) {
+  return `
+<section class="seitenkopf">
+  <div class="container">
+    <nav class="brotkrumen" aria-label="Brotkrumen"><ol><li><a href="./">Start</a></li><li><a href="impulse.html">${esc(s.impulse.titel || 'Impulse')}</a></li><li aria-current="page">${esc(e.titel)}</li></ol></nav>
+    <div class="seitenkopf-inhalt"><div class="seitenkopf-text impuls-kopf">
+      ${e.kategorie ? `<p class="kicker">${esc(e.kategorie)}</p>` : ''}
+      <h1>${esc(e.titel)}</h1>
+      <p class="impuls-meta">${e.datum ? `<time datetime="${esc(e.datum)}">${esc(datumDe(e.datum))}</time>` : ''}${s.person.name ? ` · ${esc(s.person.name)}` : ''}${e.lesezeit ? ` · ${esc(e.lesezeit)} Lesezeit` : ''}</p>
+    </div></div>
+  </div>
+</section>
+<article class="abschnitt impuls-artikel">
+  <div class="container">
+    <div class="impuls-text">${liste(e.absaetze).map((a) => `<p>${betont(a)}</p>`).join('')}</div>
+    <p class="impuls-zurueck"><a href="impulse.html">&larr; Alle ${esc(s.impulse.titel || 'Impulse')}</a></p>
+  </div>
+</article>
+${kontaktband()}`;
+}
+
+function impulseJsonLd(e) {
+  return `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'Article', headline: e.titel,
+    description: e.teaser || undefined, datePublished: e.datum || undefined,
+    author: s.person.name ? { '@type': 'Person', name: s.person.name } : undefined,
+    publisher: { '@type': 'Organization', name: firma },
+    mainEntityOfPage: websiteUrl ? `${websiteUrl}/${seiteVon(e.id)}` : undefined,
+  }).replace(/</g, '\\u003c')}</script>`;
+}
+
+function fallstudienAbschnitt() {
+  if (!fallstudienSichtbar) return '';
+  const f = s.fallstudien;
+  const teil = (titel, text) => text ? `<div class="fall-teil"><h4>${titel}</h4><p>${esc(text)}</p></div>` : '';
+  return `<section class="sand abschnitt" id="praxisbeispiele" aria-labelledby="praxis-titel">
+  <div class="container">
+    <div class="kopfzeile"><div>${f.kicker ? `<p class="kicker">${esc(f.kicker)}</p>` : ''}<h2 class="titel" id="praxis-titel">${betont(f.titel || 'Praxisbeispiele')}</h2></div></div>
+    <ul class="karten fallstudien">${f.eintraege.map((e) => `
+      <li class="karte"><article class="karte-inhalt">
+        <p class="fall-kunde"><strong>${esc(e.kunde)}</strong>${e.branche ? ` · ${esc(e.branche)}` : ''}</p>
+        ${teil('Ausgangslage', e.ausgangslage)}${teil('Ansatz', e.ansatz)}${teil('Ergebnis', e.ergebnis)}
+        ${e.zahl && e.zahl.wert ? `<p class="fall-zahl"><strong>${esc(e.zahl.wert)}</strong><span>${esc(e.zahl.label || '')}</span></p>` : ''}
+      </article></li>`).join('')}
+    </ul>
+  </div>
+</section>`;
+}
+
 function rechtsSeite(datei, ueberschrift, quelle) {
   if (!quelle) warn(`${ueberschrift} ist leer – bitte ergänzen, bevor die Seite online geht.`);
   const nachweise = datei === 'impressum.html' ? [...benutzt.values()].filter((b) => b.credit) : [];
@@ -404,6 +662,54 @@ function rechtsSeite(datei, ueberschrift, quelle) {
     datei, titel: `${ueberschrift} – ${s.name}`, beschreibung: `${ueberschrift} der Website von ${firma}.`,
     inhalt: `<section class="abschnitt rechtliches"><div class="container"><h1>${ueberschrift}</h1><div class="rechtstext">${quelle ? h.markdown(quelle) : '<p>Dieser Text wird noch ergänzt.</p>'}${liste2}</div></div></section>`,
   };
+}
+
+// --- FAQ + strukturierte Daten (JSON-LD) -------------------------------------
+// FAQ erscheint nur bei faq.sichtbar === true (Texte sprechen für die Inhaberin, bis dahin Platzhalter).
+const faqEintraege = () => liste((s.faq || {}).eintraege).filter((e) => e.frage && e.antwort);
+const faqSichtbar = () => (s.faq || {}).sichtbar === true && faqEintraege().length > 0;
+function faqAbschnitt() {
+  if (!faqSichtbar()) return '';
+  const f = s.faq;
+  return `<section class="faq abschnitt" id="faq" aria-labelledby="faq-titel">
+  <div class="container">
+    <div class="kopfzeile"><div>${f.kicker ? `<p class="kicker">${esc(f.kicker)}</p>` : ''}<h2 class="titel" id="faq-titel">${betont(f.titel || 'Häufige Fragen')}</h2></div></div>
+    <div class="faq-liste">${faqEintraege().map((e) => `
+      <details><summary>${esc(e.frage)}</summary><div class="faq-antwort"><p>${esc(e.antwort)}</p></div></details>`).join('')}
+    </div>
+  </div>
+</section>`;
+}
+const ldTag = (obj) => `<script type="application/ld+json">${JSON.stringify(obj).replace(/</g, '\\u003c')}</script>`;
+// Ergänzt jede indexierbare Seite um JSON-LD. Nur Daten, die vorhanden sind (keine Preise/Bewertungen).
+function ergaenzeStrukturdaten(seitenListe) {
+  for (const seite of seitenListe) {
+    if (seite.noindex) continue;
+    const start = seite.datei === 'index.html';
+    const tags = [];
+    if (start && faqSichtbar()) {
+      tags.push(ldTag({ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqEintraege().map((e) => ({ '@type': 'Question', name: e.frage, acceptedAnswer: { '@type': 'Answer', text: e.antwort } })) }));
+    }
+    if (!start && websiteUrl && !['impressum.html', 'datenschutz.html'].includes(seite.datei)) {
+      const url = `${websiteUrl}/${seite.datei}`;
+      const name = seite.titel.split(' – ')[0].split(':')[0];
+      const graph = [
+        { '@type': 'BreadcrumbList', itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Start', item: `${websiteUrl}/` },
+          { '@type': 'ListItem', position: 2, name, item: url },
+        ] },
+        { '@type': 'WebPage', '@id': url, url, name: seite.titel, description: seite.beschreibung, inLanguage: 'de-AT', isPartOf: { '@type': 'WebSite', name: s.name, url: `${websiteUrl}/` } },
+      ];
+      const z = s.zielgruppen.find((x) => seiteVon(x.id) === seite.datei);
+      if (z) {
+        for (const w of z.workshops) {
+          graph.push({ '@type': 'Course', name: w.titel, description: w.text || undefined, inLanguage: 'de-AT', provider: { '@type': 'Organization', name: firma, url: `${websiteUrl}/` }, url });
+        }
+      }
+      tags.push(ldTag({ '@context': 'https://schema.org', '@graph': graph }));
+    }
+    if (tags.length) seite.zusatzHead = (seite.zusatzHead || '') + tags.join('');
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -461,6 +767,8 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
         ${s.leistungen.eintraege.length ? `<li><a href="${anker('leistungen')}"${s.leistungen.eintraege.some((l) => l.id === aktiv) ? ' aria-current="page"' : ''}>Leistungen</a></li>` : ''}
         ${zielgruppenNav}
         ${s.shop && s.shop.aktiv && s.shop.sichtbar === true ? `<li><a href="shop.html"${aktiv === 'shop' ? ' aria-current="page"' : ''}>${esc(s.shop.titel || 'Seminare')}</a></li>` : ''}
+        ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${aktiv === 'selbsttests' || aktiv === 'gespraechskarten' || sichtbareTests.some((e) => e.id === aktiv) ? ' aria-current="page"' : ''}>${esc(sichtbareTests.length === 1 && !kartenSichtbar ? sichtbareTests[0].titel : testsCfg.titel || 'Selbsttests')}</a></li>` : ''}
+        ${impulseSichtbar && s.impulse.eintraege.length ? `<li><a href="impulse.html"${aktiv === 'impulse' ? ' aria-current="page"' : ''}>${esc(s.impulse.titel || 'Impulse')}</a></li>` : ''}
         ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
         <li><a href="#kontakt">Kontakt</a></li>
         <li><a class="knopf knopf-dunkel" href="#kontakt">Erstgespräch vereinbaren</a></li>
@@ -550,7 +858,50 @@ if (s.shop && s.shop.aktiv) {
     beschreibung: (s.shop.intro || `Seminare von ${s.name}`).slice(0, 160),
   });
 }
+if (testsCfg) {
+  if (sichtbareTests.length + (kartenSichtbar ? 1 : 0) > 1) {
+    seiten.push({
+      datei: 'selbsttests.html', aktiv: 'selbsttests', inhalt: testUebersicht(testsCfg), noindex: false,
+      titel: `${testsCfg.titel || 'Selbsttests'} – ${s.name}`,
+      beschreibung: (testsCfg.intro || 'Selbsttests und Reflexion').slice(0, 160),
+    });
+  }
+  tests.forEach((e) => {
+    const daten = ladeTest(e);
+    seiten.push({
+      datei: seiteVon(e.id), aktiv: e.id, inhalt: testSeite(e, daten, testsCfg), noindex: e.sichtbar !== true,
+      titel: daten.name && daten.name !== e.titel ? `${e.titel}: ${daten.name} – ${s.name}` : `${e.titel} – ${s.name}`,
+      beschreibung: (e.intro || daten.name).slice(0, 160),
+      zusatzHead: `<script src="${testJsUrl}" defer></script>`,
+    });
+  });
+}
+// Impulse: Seiten werden immer gebaut; unsichtbar = noindex, kein Menü, keine Sitemap
+if (s.impulse.eintraege.length) {
+  seiten.push({
+    datei: 'impulse.html', aktiv: 'impulse', inhalt: impulseUebersicht(), noindex: !impulseSichtbar,
+    titel: `${s.impulse.titel || 'Impulse'} – ${s.name}`,
+    beschreibung: (s.impulse.intro || `Impulse von ${s.name}`).slice(0, 160),
+  });
+  for (const e of s.impulse.eintraege) {
+    seiten.push({
+      datei: seiteVon(e.id), aktiv: 'impulse', inhalt: impulseArtikel(e), noindex: !impulseSichtbar,
+      titel: `${e.titel} – ${s.name}`,
+      beschreibung: (e.teaser || e.titel).slice(0, 160),
+      zusatzHead: impulseJsonLd(e),
+    });
+  }
+}
+if (kartenCfg) {
+  seiten.push({
+    datei: 'gespraechskarten.html', aktiv: 'gespraechskarten', inhalt: kartenSeite(kartenCfg), noindex: !kartenSichtbar,
+    titel: `${kartenCfg.titel || 'Gesprächskarten'} – ${s.name}`,
+    beschreibung: (kartenCfg.intro || 'Gesprächskarten für Teammeetings').slice(0, 160),
+    zusatzHead: `<script src="${kartenJsUrl}" defer></script>`,
+  });
+}
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
+ergaenzeStrukturdaten(seiten);
 for (const seite of seiten) fs.writeFileSync(path.join(DIST, seite.datei), layout(seite));
 
 // ---------------------------------------------------------------------------
