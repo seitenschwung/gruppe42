@@ -1,0 +1,20 @@
+{
+  "global": [
+    "site/vorlagen/*/build.js",
+    "site/vorlagen/*/schema.json",
+    "site/lib/**",
+    "site/vorlagen/*/src/css/**",
+    "site/vorlagen/*/src/js/main.js",
+    "site/vorlagen/*/fonts/**",
+    "server/server.js"
+  ],
+  "ignore": [
+    "server/*.test.js",
+    "server/checkout.js",
+    "server/webhook.js",
+    "server/orders.js"
+  ],
+  "variants": [
+    { "name": "ergebnis", "query": "?vorschau=3", "match": "js/antreiber\\.js" }
+  ]
+}
