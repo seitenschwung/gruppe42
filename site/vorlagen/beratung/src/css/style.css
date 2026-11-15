@@ -337,3 +337,12 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .test-stufe h3 { font-family: var(--titel); font-weight: 400; font-size: clamp(26px, 3vw, 34px); margin: 8px 0 12px; }
 .test-stufe p:last-child { color: var(--text-2); }
 @media print { .test-stufe { break-inside: avoid; } }
+/* FAQ */
+.faq-liste { margin-top: 40px; max-width: 820px; border-top: 1px solid var(--linie-2); }
+.faq details { border-bottom: 1px solid var(--linie-2); }
+.faq summary { cursor: pointer; list-style: none; padding: 20px 48px 20px 0; position: relative; font-family: var(--titel); font-size: clamp(20px, 2.4vw, 26px); line-height: 1.25; color: var(--espresso); min-height: 44px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; position: absolute; right: 8px; top: 50%; transform: translateY(-50%); font-family: var(--text); font-size: 28px; color: var(--terrakotta); }
+.faq details[open] summary::after { content: "\2212"; }
+.faq summary:focus-visible { outline: 3px solid var(--wald); outline-offset: 2px; border-radius: 4px; }
+.faq-antwort { padding: 0 48px 24px 0; color: var(--text-2); font-size: 17px; line-height: 1.6; }
