@@ -757,6 +757,39 @@ const css = minifyCss(fs.readFileSync(path.join(ROOT, 'src/css/style.css'), 'utf
 const heroInfo = s.hero.bild ? verarbeiteBild(normBild(s.hero.bild).datei) : null;
 const ogBild = heroInfo ? absolut(heroInfo.src) : '';
 
+// Hauptmenü: "Angebot" als aufklappbare Liste (<details>, funktioniert auch ohne JavaScript), darunter Workshops nach
+// Zielgruppe, Leistungen und Seminare als echte Links. Ein Knopf "Kontakt aufnehmen" statt Text-Link plus Knopf.
+function hauptnav({ aktiv, anker, kontaktZiel }) {
+  const aktuell = (id) => (aktiv === id ? ' aria-current="page"' : '');
+  const leistungsSeiten = s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length);
+  const shopSichtbar = s.shop && s.shop.aktiv && s.shop.sichtbar === true;
+  const gruppen = [
+    s.zielgruppen.length && { titel: 'Workshops', links: s.zielgruppen.map((z) => ({ id: z.id, href: seiteVon(z.id), text: z.titel })) },
+    leistungsSeiten.length && { titel: 'Leistungen', links: leistungsSeiten.map((l) => ({ id: l.id, href: seiteVon(l.id), text: l.titel })) },
+    shopSichtbar && { titel: esc(s.shop.titel || 'Seminare') === 'Seminare' ? 'Seminare' : esc(s.shop.titel), links: [{ id: 'shop', href: 'shop.html', text: `${s.shop.titel || 'Seminare'} buchen` }] },
+  ].filter(Boolean);
+  const imAngebot = gruppen.some((g) => g.links.some((l) => l.id === aktiv));
+  const angebot = gruppen.length ? `<li class="nav-gruppe"><details${imAngebot ? ' class="ist-aktiv"' : ''}>
+          <summary>Angebot</summary>
+          <div class="nav-panel">${gruppen.map((g) => `
+            <div><p class="nav-titel">${g.titel}</p><ul>${g.links.map((l) => `<li><a href="${l.href}"${aktuell(l.id)}>${esc(l.text)}</a></li>`).join('')}</ul></div>`).join('')}
+            ${s.leistungen.eintraege.length ? `<p class="nav-alle"><a href="${anker('leistungen')}">Alle Leistungen im Überblick</a></p>` : ''}
+          </div>
+        </details></li>` : '';
+  const testLabel = sichtbareTests.length === 1 && !kartenSichtbar ? sichtbareTests[0].titel : (testsCfg && testsCfg.titel) || 'Selbsttests';
+  const testAktiv = aktiv === 'selbsttests' || aktiv === 'gespraechskarten' || sichtbareTests.some((e) => e.id === aktiv);
+  return `<nav class="hauptnav" aria-label="Hauptmenü">
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-liste" hidden>Menü<span class="nav-toggle-strich" aria-hidden="true"></span></button>
+      <ul id="nav-liste">
+        ${angebot}
+        ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${testAktiv ? ' aria-current="page"' : ''}>${esc(testLabel)}</a></li>` : ''}
+        ${impulseSichtbar && s.impulse.eintraege.length ? `<li><a href="impulse.html"${aktuell('impulse')}>${esc(s.impulse.titel || 'Impulse')}</a></li>` : ''}
+        ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
+        <li><a class="knopf knopf-dunkel" href="${kontaktZiel}">Kontakt aufnehmen</a></li>
+      </ul>
+    </nav>`;
+}
+
 function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false }) {
   const start = datei === 'index.html';
   const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei}` : '';
@@ -768,7 +801,6 @@ function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '
     ['og:title', titel], ['og:description', beschreibung],
     seitenUrl && ['og:url', seitenUrl], ogBild && ['og:image', ogBild],
   ].filter(Boolean).map(([p, v]) => `<meta property="${p}" content="${esc(v)}">`).join('\n');
-  const zielgruppenNav = s.zielgruppen.length ? `<li><a href="${anker('zielgruppen')}"${s.zielgruppen.some((z) => z.id === aktiv) ? ' aria-current="page"' : ''}>Workshops</a></li>` : '';
   return `<!doctype html>
 <html lang="de">
 <head>
@@ -794,18 +826,7 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
 <header class="kopf">
   <div class="container kopf-innen">
     ${marke('./', start)}
-    <nav class="hauptnav" aria-label="Hauptmenü">
-      <ul>
-        ${s.leistungen.eintraege.length ? `<li><a href="${anker('leistungen')}"${s.leistungen.eintraege.some((l) => l.id === aktiv) ? ' aria-current="page"' : ''}>Leistungen</a></li>` : ''}
-        ${zielgruppenNav}
-        ${s.shop && s.shop.aktiv && s.shop.sichtbar === true ? `<li><a href="shop.html"${aktiv === 'shop' ? ' aria-current="page"' : ''}>${esc(s.shop.titel || 'Seminare')}</a></li>` : ''}
-        ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${aktiv === 'selbsttests' || aktiv === 'gespraechskarten' || sichtbareTests.some((e) => e.id === aktiv) ? ' aria-current="page"' : ''}>${esc(sichtbareTests.length === 1 && !kartenSichtbar ? sichtbareTests[0].titel : testsCfg.titel || 'Selbsttests')}</a></li>` : ''}
-        ${impulseSichtbar && s.impulse.eintraege.length ? `<li><a href="impulse.html"${aktiv === 'impulse' ? ' aria-current="page"' : ''}>${esc(s.impulse.titel || 'Impulse')}</a></li>` : ''}
-        ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
-        <li><a href="${kontaktZiel}">Kontakt</a></li>
-        <li><a class="knopf knopf-dunkel" href="${kontaktZiel}">Erstgespräch vereinbaren</a></li>
-      </ul>
-    </nav>
+    ${hauptnav({ aktiv, anker, kontaktZiel })}
   </div>
 </header>
 <main id="inhalt">
