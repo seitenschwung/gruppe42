@@ -156,7 +156,7 @@
     "note": "Jede Skala besteht aus zehn Aussagen (10–50 Punkte), die Werte werden addiert und innerhalb deines Profils verglichen. Es gibt keine Normwerte und keine Diagnose. Selbstbild, nicht Fremdbild. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
     "highlight": "Dein Schwerpunkt",
     "lead": "Deine Antworten liegen besonders bei: {names}. Das ist keine Festlegung, sondern ein Ausgangspunkt für deine Reflexion.",
-    "tie": "Beide Orientierungen liegen in deinen Antworten gleichauf. Das kann auf einen ausgewogenen Stil hindeuten.",
+    "tie": "Deine Bereiche liegen nahe beieinander, keiner sticht deutlich heraus. Lies die Beschreibungen in Ruhe und prüfe, welche sich für dich stimmig anfühlt.",
     "lowLabel": "Ein Blick auf dein Profil:",
     "cta": {
       "text": "Führungsentwicklung besprechen",

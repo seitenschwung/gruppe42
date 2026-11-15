@@ -751,8 +751,8 @@
         "sichtbar": true,
         "titel": "Teamklima-Schnellcheck",
         "motto": "Wie ist das *Klima* in deinem Team?",
-        "intro": "Zehn Aussagen, drei Minuten: Wie erlebst du das Klima in deinem Team? Am Ende bekommst du Gesprächsfragen für das nächste Teammeeting.",
-        "kurz": "10 Aussagen · 3 Minuten",
+        "intro": "Zwanzig Aussagen, fünf Minuten: Wie erlebst du das Klima in deinem Team? Am Ende bekommst du Gesprächsfragen für das nächste Teammeeting.",
+        "kurz": "20 Aussagen · 5 Minuten",
         "beschreibung": "Kurzer Check mit Gesprächsfragen fürs nächste Teammeeting."
       },
       {
@@ -771,11 +771,42 @@
         "sichtbar": true,
         "titel": "Employer-Branding-Check",
         "motto": "Wie attraktiv ist dein *Unternehmen* als Arbeitgeber?",
-        "intro": "Zwölf Aussagen, vier Bereiche, drei Minuten: eine erste Standortbestimmung zur Arbeitgebermarke deines Unternehmens.",
-        "kurz": "12 Aussagen · 3 Minuten",
+        "intro": "Sechzehn Aussagen, vier Bereiche, vier Minuten: eine erste Standortbestimmung zur Arbeitgebermarke deines Unternehmens.",
+        "kurz": "16 Aussagen · 4 Minuten",
         "beschreibung": "Erste Standortbestimmung zur Arbeitgebermarke deines Unternehmens."
       }
-    ]
+    ],
+    "methodik": {
+      "titel": "So entstehen unsere Tests",
+      "motto": "So entstehen unsere *Tests*",
+      "intro": "Was die Tests können, was nicht und wie die Ergebnisse zustande kommen: offen und ohne Fachchinesisch.",
+      "abschnitte": [
+        {
+          "titel": "Wofür die Tests gedacht sind",
+          "text": "Die Tests sind Reflexionshilfen. Sie geben dir einen strukturierten Anlass, über dein Erleben nachzudenken, im Alltag, im Team oder im Unternehmen. Sie ersetzen weder eine Diagnostik noch eine Beratung."
+        },
+        {
+          "titel": "Wie sie entstanden sind",
+          "text": "Alle Aussagen haben wir eigenständig formuliert, in Anlehnung an bekannte Konzepte: die fünf inneren Antreiber der Transaktionsanalyse (nach Taibi Kahler), das klassische Zwei-Dimensionen-Modell von Aufgaben- und Beziehungsorientierung in der Führung sowie unsere Praxiserfahrung in Teams und Unternehmen. Geschützte Fragebögen übernehmen wir nicht."
+        },
+        {
+          "titel": "Wie ausgewertet wird",
+          "text": "Du antwortest auf einer Skala von 1 bis 5. Die Punkte je Bereich werden addiert; einzelne Aussagen sind bewusst umgekehrt formuliert und werden entsprechend gedreht. Bei Rangfolge-Tests (z. B. Antreiber-Test) siehst du, was bei dir vergleichsweise stärker hervortritt. Liegen die Bereiche nahe beieinander, heben wir keinen hervor. Bei Stufen-Tests ordnet dein Gesamtwert in Prozent eine von drei Stufen zu; die Schwellen sind Orientierungswerte, keine Normen. Antwortest du fast überall gleich, weisen wir darauf hin, dass das Ergebnis dann wenig aussagt."
+        },
+        {
+          "titel": "Was die Tests nicht können",
+          "text": "Die Tests sind nicht wissenschaftlich validiert: Wir haben weder Zuverlässigkeit noch Aussagekraft an einer größeren Stichprobe geprüft, und es gibt keine Vergleichswerte. Die Ergebnisse sind Selbsteinschätzungen und hängen von Tagesform und Kontext ab. Mit wenigen Aussagen je Bereich sind einzelne Werte nur grob. Es sind keine Diagnosen und keine Aussagen über Gesundheit, Eignung oder deinen Wert."
+        },
+        {
+          "titel": "Datenschutz",
+          "text": "Deine Antworten bleiben in deinem Browser. Sie werden nicht an uns übertragen und nicht gespeichert. Mehr dazu in der [Datenschutzerklärung](datenschutz.html)."
+        },
+        {
+          "titel": "Deine Rückmeldung",
+          "text": "Hat sich ein Ergebnis stimmig angefühlt, oder gar nicht? Schreib uns an [info@gruppe42.at](mailto:info@gruppe42.at). Solche Rückmeldungen helfen uns, die Tests weiterzuentwickeln."
+        }
+      ]
+    }
   },
   "karten": {
     "sichtbar": true,

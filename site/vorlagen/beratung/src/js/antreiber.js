@@ -121,10 +121,23 @@
     if (ranking) sortiert.sort(function (a, b) { return summe[b.id] / maxVon(b) - summe[a.id] / maxVon(a); });
     var hochW = sortiert.length ? summe[sortiert[0].id] / maxVon(sortiert[0]) : 0;
     var tiefW = sortiert.length ? summe[sortiert[sortiert.length - 1].id] / maxVon(sortiert[sortiert.length - 1]) : 0;
-    var gleich = hochW === tiefW;
+    // Unterschiede unter minSpread (Anteil der Maximalpunkte, Standard 10 %) gelten als gleichauf: kein Spitzenreiter
+    var gleich = ranking ? (hochW - tiefW) < (typeof R.minSpread === 'number' ? R.minSpread : 0.1) : hochW === tiefW;
     var spitze = sortiert.filter(function (c) { return summe[c.id] / maxVon(c) === hochW; });
 
     ergebnis.querySelector('[data-intro]').textContent = R.intro || '';
+    // Hinweis bei auffälligem Antwortmuster (fast überall dieselbe Antwort): das Ergebnis sagt dann wenig aus
+    var alt = ergebnis.querySelector('[data-muster]');
+    if (alt) alt.remove();
+    var haeufig = {};
+    antworten.forEach(function (a) { haeufig[a] = (haeufig[a] || 0) + 1; });
+    var meiste = Math.max.apply(null, Object.keys(haeufig).map(function (k) { return haeufig[k]; }));
+    if (antworten.length >= 10 && meiste / antworten.length >= 0.9) {
+      var hinweis = el('p', 'shop-hinweis test-muster', 'Du hast fast überall dieselbe Antwort gewählt. Dann sagt das Ergebnis wenig aus. Wenn du magst, starte neu und wäge die Aussagen einzeln ab.');
+      hinweis.setAttribute('data-muster', '');
+      hinweis.setAttribute('role', 'note');
+      ergebnis.querySelector('[data-intro]').after(hinweis);
+    }
     ergebnis.querySelector('[data-outro]').textContent = R.outro || '';
     ergebnis.querySelector('[data-note]').textContent = R.note || '';
 

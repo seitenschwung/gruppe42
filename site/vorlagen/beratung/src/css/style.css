@@ -454,3 +454,14 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
 .test-zeile-label { min-width: 0; }
 .test-zeile-name { min-width: 0; overflow-wrap: anywhere; hyphens: auto; }
 @media (max-width: 640px) { .test-zeile, .test-chart-achsenzeile { grid-template-columns: 1fr 48px; } }
+
+/* Methodik */
+.methodik-text { max-width: 720px; display: grid; gap: 36px; }
+.methodik-teil h2 { font-family: var(--titel); font-weight: 400; font-size: clamp(24px, 2.8vw, 32px); line-height: 1.15; margin-bottom: 10px; }
+.methodik-teil p { color: var(--text-2); }
+.methodik-teil a { color: var(--espresso); }
+.methodik-tabelle { margin-top: 48px; overflow-x: auto; max-width: 880px; border: 1px solid var(--linie); border-radius: 20px; background: #fff; padding: 8px 16px; }
+.methodik-tabelle .test-tabelle { margin-top: 0; min-width: 560px; }
+.methodik-tabelle caption { text-align: left; padding: 14px 12px 6px; font-family: var(--titel); font-size: 22px; }
+.methodik-tabelle th:first-child, .methodik-tabelle td:last-child { text-align: left; }
+.methodik-link { margin-top: 28px; }

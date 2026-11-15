@@ -74,55 +74,110 @@
     },
     {
       "id": 2,
-      "category": "vertrauen",
-      "text": "Ich verlasse mich darauf, dass Absprachen gelten."
-    },
-    {
-      "id": 3,
       "category": "kommunikation",
       "text": "Wichtige Informationen erreichen mich rechtzeitig."
     },
     {
-      "id": 4,
-      "category": "kommunikation",
-      "text": "Meinungsverschiedenheiten werden bei uns direkt und respektvoll geklärt."
-    },
-    {
-      "id": 5,
+      "id": 3,
       "category": "rollen",
       "text": "Ich weiß, wofür ich im Team verantwortlich bin."
     },
     {
-      "id": 6,
-      "category": "rollen",
-      "text": "Im Team ist klar, wer was entscheidet."
-    },
-    {
-      "id": 7,
+      "id": 4,
       "category": "zusammenarbeit",
       "text": "Wir unterstützen uns, wenn jemand überlastet ist."
     },
     {
+      "id": 5,
+      "category": "wertschaetzung",
+      "text": "Gute Arbeit wird bei uns sichtbar gewürdigt."
+    },
+    {
+      "id": 6,
+      "category": "vertrauen",
+      "text": "Ich verlasse mich darauf, dass Absprachen gelten."
+    },
+    {
+      "id": 7,
+      "category": "kommunikation",
+      "text": "Meinungsverschiedenheiten werden bei uns direkt und respektvoll geklärt."
+    },
+    {
       "id": 8,
-      "category": "zusammenarbeit",
-      "text": "Wir arbeiten auf gemeinsame Ziele hin."
+      "category": "rollen",
+      "text": "Im Team ist klar, wer was entscheidet."
     },
     {
       "id": 9,
-      "category": "wertschaetzung",
-      "text": "Gute Arbeit wird bei uns sichtbar gewürdigt."
+      "category": "zusammenarbeit",
+      "text": "Wir arbeiten auf gemeinsame Ziele hin."
     },
     {
       "id": 10,
       "category": "wertschaetzung",
       "text": "Ich fühle mich im Team als Mensch gesehen."
+    },
+    {
+      "id": 11,
+      "category": "vertrauen",
+      "text": "Ich zögere, im Team Unsicherheiten zuzugeben.",
+      "reverse": true
+    },
+    {
+      "id": 12,
+      "category": "kommunikation",
+      "text": "Wichtige Neuigkeiten erfahre ich oft erst spät oder nebenbei.",
+      "reverse": true
+    },
+    {
+      "id": 13,
+      "category": "rollen",
+      "text": "Bei uns ist oft unklar, wer wofür zuständig ist.",
+      "reverse": true
+    },
+    {
+      "id": 14,
+      "category": "zusammenarbeit",
+      "text": "Jede:r arbeitet bei uns eher für sich, statt gemeinsam.",
+      "reverse": true
+    },
+    {
+      "id": 15,
+      "category": "wertschaetzung",
+      "text": "Beiträge einzelner werden im Team schnell übersehen.",
+      "reverse": true
+    },
+    {
+      "id": 16,
+      "category": "vertrauen",
+      "text": "Bedenken oder neue Ideen kann ich bei uns ohne Sorge äußern."
+    },
+    {
+      "id": 17,
+      "category": "kommunikation",
+      "text": "Wir nehmen uns Zeit, Themen im Team wirklich zu besprechen."
+    },
+    {
+      "id": 18,
+      "category": "rollen",
+      "text": "Ich kenne die aktuellen Prioritäten des Teams."
+    },
+    {
+      "id": 19,
+      "category": "zusammenarbeit",
+      "text": "Wenn etwas schiefgeht, suchen wir gemeinsam nach Lösungen."
+    },
+    {
+      "id": 20,
+      "category": "wertschaetzung",
+      "text": "Ich fühle mich im Team respektiert."
     }
   ],
   "result": {
     "kind": "levels",
     "kicker": "Dein Ergebnis",
     "title": "Das *Klima* in deinem Team",
-    "intro": "Zehn Aussagen zu fünf Bereichen, die das Miteinander im Team prägen. Du siehst, wo es gut läuft und wo ein Gespräch lohnt.",
+    "intro": "Zwanzig Aussagen zu fünf Bereichen, die das Miteinander im Team prägen. Du siehst, wo es gut läuft und wo ein Gespräch lohnt.",
     "outro": "Nutze die Gesprächsfragen als Einstieg für ein offenes Teamgespräch. Ein Ergebnis ist eine Einladung zum Reden, kein Urteil.",
     "note": "Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.",
     "levels": [
