@@ -58,8 +58,16 @@ const demo = s.demo_modus === true;
 const firma = s.firma || s.name;
 const adresse = s.kontakt.adresse || {};
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests']);
-const ids = [...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
+// Impulse (Blog) und Praxisbeispiele: optional, standardmäßig unsichtbar
+s.impulse = s.impulse || {};
+s.impulse.eintraege = liste(s.impulse.eintraege).filter((e) => e.id && e.titel);
+s.fallstudien = s.fallstudien || {};
+s.fallstudien.eintraege = liste(s.fallstudien.eintraege).filter((e) => e.kunde);
+const impulseSichtbar = s.impulse.sichtbar === true;
+const fallstudienSichtbar = s.fallstudien.sichtbar === true && s.fallstudien.eintraege.length > 0;
+
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse']);
+const ids = [...s.impulse.eintraege.map((e) => e.id),...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
   if (ids.indexOf(id) !== ids.lastIndexOf(id)) { console.error(`✖ id "${id}" kommt doppelt vor.`); process.exit(1); }
@@ -278,6 +286,8 @@ ${liste(s.ablauf.schritte).length ? `<section class="sand abschnitt" aria-labell
     <ol class="schritte">${s.ablauf.schritte.map((x) => `<li><strong>${esc(x.titel)}</strong>${x.text ? `<span>${esc(x.text)}</span>` : ''}</li>`).join('')}</ol>
   </div>
 </section>` : ''}
+
+${fallstudienAbschnitt()}
 
 ${s.stimmen.haupt || liste(s.stimmen.weitere).length ? `<section class="abschnitt" aria-label="${esc(s.stimmen.kicker || 'Stimmen')}">
   <div class="container">
@@ -515,6 +525,81 @@ function teaser(cfg) {
 </section>`;
 }
 
+// --- Impulse (Blog) und Praxisbeispiele ---
+const datumDe = (iso) => {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return Number.isNaN(d.getTime()) ? '' : new Intl.DateTimeFormat('de-AT', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(d);
+};
+const impulseSortiert = () => [...s.impulse.eintraege].sort((a, b) => String(b.datum || '').localeCompare(String(a.datum || '')));
+
+function impulseUebersicht() {
+  const cfg = s.impulse;
+  return `
+${seitenkopf(cfg.titel || 'Impulse', cfg.motto, cfg.intro)}
+<section class="abschnitt" aria-label="Artikel">
+  <div class="container">
+    <ul class="karten">${impulseSortiert().map((e) => `
+      <li class="karte"><article class="karte-inhalt">
+        ${e.kategorie ? `<ul class="schlagworte"><li>${esc(e.kategorie)}</li></ul>` : ''}
+        <h2><a href="${esc(seiteVon(e.id))}">${esc(e.titel)}</a></h2>
+        ${e.teaser ? `<p>${esc(e.teaser)}</p>` : ''}
+        <p class="impuls-meta">${e.datum ? `<time datetime="${esc(e.datum)}">${esc(datumDe(e.datum))}</time>` : ''}${e.lesezeit ? ` · ${esc(e.lesezeit)} Lesezeit` : ''}</p>
+      </article></li>`).join('')}
+    </ul>
+  </div>
+</section>
+${kontaktband()}`;
+}
+
+function impulseArtikel(e) {
+  return `
+<section class="seitenkopf">
+  <div class="container">
+    <nav class="brotkrumen" aria-label="Brotkrumen"><ol><li><a href="./">Start</a></li><li><a href="impulse.html">${esc(s.impulse.titel || 'Impulse')}</a></li><li aria-current="page">${esc(e.titel)}</li></ol></nav>
+    <div class="seitenkopf-inhalt"><div class="seitenkopf-text impuls-kopf">
+      ${e.kategorie ? `<p class="kicker">${esc(e.kategorie)}</p>` : ''}
+      <h1>${esc(e.titel)}</h1>
+      <p class="impuls-meta">${e.datum ? `<time datetime="${esc(e.datum)}">${esc(datumDe(e.datum))}</time>` : ''}${s.person.name ? ` · ${esc(s.person.name)}` : ''}${e.lesezeit ? ` · ${esc(e.lesezeit)} Lesezeit` : ''}</p>
+    </div></div>
+  </div>
+</section>
+<article class="abschnitt impuls-artikel">
+  <div class="container">
+    <div class="impuls-text">${liste(e.absaetze).map((a) => `<p>${betont(a)}</p>`).join('')}</div>
+    <p class="impuls-zurueck"><a href="impulse.html">&larr; Alle ${esc(s.impulse.titel || 'Impulse')}</a></p>
+  </div>
+</article>
+${kontaktband()}`;
+}
+
+function impulseJsonLd(e) {
+  return `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org', '@type': 'Article', headline: e.titel,
+    description: e.teaser || undefined, datePublished: e.datum || undefined,
+    author: s.person.name ? { '@type': 'Person', name: s.person.name } : undefined,
+    publisher: { '@type': 'Organization', name: firma },
+    mainEntityOfPage: websiteUrl ? `${websiteUrl}/${seiteVon(e.id)}` : undefined,
+  }).replace(/</g, '\\u003c')}</script>`;
+}
+
+function fallstudienAbschnitt() {
+  if (!fallstudienSichtbar) return '';
+  const f = s.fallstudien;
+  const teil = (titel, text) => text ? `<div class="fall-teil"><h4>${titel}</h4><p>${esc(text)}</p></div>` : '';
+  return `<section class="sand abschnitt" id="praxisbeispiele" aria-labelledby="praxis-titel">
+  <div class="container">
+    <div class="kopfzeile"><div>${f.kicker ? `<p class="kicker">${esc(f.kicker)}</p>` : ''}<h2 class="titel" id="praxis-titel">${betont(f.titel || 'Praxisbeispiele')}</h2></div></div>
+    <ul class="karten fallstudien">${f.eintraege.map((e) => `
+      <li class="karte"><article class="karte-inhalt">
+        <p class="fall-kunde"><strong>${esc(e.kunde)}</strong>${e.branche ? ` · ${esc(e.branche)}` : ''}</p>
+        ${teil('Ausgangslage', e.ausgangslage)}${teil('Ansatz', e.ansatz)}${teil('Ergebnis', e.ergebnis)}
+        ${e.zahl && e.zahl.wert ? `<p class="fall-zahl"><strong>${esc(e.zahl.wert)}</strong><span>${esc(e.zahl.label || '')}</span></p>` : ''}
+      </article></li>`).join('')}
+    </ul>
+  </div>
+</section>`;
+}
+
 function rechtsSeite(datei, ueberschrift, quelle) {
   if (!quelle) warn(`${ueberschrift} ist leer – bitte ergänzen, bevor die Seite online geht.`);
   const nachweise = datei === 'impressum.html' ? [...benutzt.values()].filter((b) => b.credit) : [];
@@ -631,6 +716,7 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
         ${zielgruppenNav}
         ${s.shop && s.shop.aktiv && s.shop.sichtbar === true ? `<li><a href="shop.html"${aktiv === 'shop' ? ' aria-current="page"' : ''}>${esc(s.shop.titel || 'Seminare')}</a></li>` : ''}
         ${testsCfg && sichtbareTests.length ? `<li><a href="${testZiel}"${aktiv === 'selbsttests' || sichtbareTests.some((e) => e.id === aktiv) ? ' aria-current="page"' : ''}>${esc(sichtbareTests.length === 1 ? sichtbareTests[0].titel : testsCfg.titel || 'Selbsttests')}</a></li>` : ''}
+        ${impulseSichtbar && s.impulse.eintraege.length ? `<li><a href="impulse.html"${aktiv === 'impulse' ? ' aria-current="page"' : ''}>${esc(s.impulse.titel || 'Impulse')}</a></li>` : ''}
         ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
         <li><a href="#kontakt">Kontakt</a></li>
         <li><a class="knopf knopf-dunkel" href="#kontakt">Erstgespräch vereinbaren</a></li>
@@ -737,6 +823,22 @@ if (testsCfg) {
       zusatzHead: `<script src="${testJsUrl}" defer></script>`,
     });
   });
+}
+// Impulse: Seiten werden immer gebaut; unsichtbar = noindex, kein Menü, keine Sitemap
+if (s.impulse.eintraege.length) {
+  seiten.push({
+    datei: 'impulse.html', aktiv: 'impulse', inhalt: impulseUebersicht(), noindex: !impulseSichtbar,
+    titel: `${s.impulse.titel || 'Impulse'} – ${s.name}`,
+    beschreibung: (s.impulse.intro || `Impulse von ${s.name}`).slice(0, 160),
+  });
+  for (const e of s.impulse.eintraege) {
+    seiten.push({
+      datei: seiteVon(e.id), aktiv: 'impulse', inhalt: impulseArtikel(e), noindex: !impulseSichtbar,
+      titel: `${e.titel} – ${s.name}`,
+      beschreibung: (e.teaser || e.titel).slice(0, 160),
+      zusatzHead: impulseJsonLd(e),
+    });
+  }
 }
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
 ergaenzeStrukturdaten(seiten);

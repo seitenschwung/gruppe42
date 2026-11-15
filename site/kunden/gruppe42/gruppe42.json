@@ -692,11 +692,26 @@
     "kicker": "PLATZHALTER: Kicker",
     "titel": "PLATZHALTER: Häufige *Fragen*",
     "eintraege": [
-      { "frage": "PLATZHALTER: Frage 1?", "antwort": "PLATZHALTER: Antwort 1 liefert die Inhaberin." },
-      { "frage": "PLATZHALTER: Frage 2?", "antwort": "PLATZHALTER: Antwort 2 liefert die Inhaberin." },
-      { "frage": "PLATZHALTER: Frage 3?", "antwort": "PLATZHALTER: Antwort 3 liefert die Inhaberin." },
-      { "frage": "PLATZHALTER: Frage 4?", "antwort": "PLATZHALTER: Antwort 4 liefert die Inhaberin." },
-      { "frage": "PLATZHALTER: Frage 5?", "antwort": "PLATZHALTER: Antwort 5 liefert die Inhaberin." }
+      {
+        "frage": "PLATZHALTER: Frage 1?",
+        "antwort": "PLATZHALTER: Antwort 1 liefert die Inhaberin."
+      },
+      {
+        "frage": "PLATZHALTER: Frage 2?",
+        "antwort": "PLATZHALTER: Antwort 2 liefert die Inhaberin."
+      },
+      {
+        "frage": "PLATZHALTER: Frage 3?",
+        "antwort": "PLATZHALTER: Antwort 3 liefert die Inhaberin."
+      },
+      {
+        "frage": "PLATZHALTER: Frage 4?",
+        "antwort": "PLATZHALTER: Antwort 4 liefert die Inhaberin."
+      },
+      {
+        "frage": "PLATZHALTER: Frage 5?",
+        "antwort": "PLATZHALTER: Antwort 5 liefert die Inhaberin."
+      }
     ]
   },
   "shop": {
@@ -739,6 +754,79 @@
         "intro": "PLATZHALTER: Zehn Aussagen, drei Minuten, Gesprächsfragen fürs nächste Teammeeting.",
         "kurz": "10 Aussagen · 3 Minuten",
         "beschreibung": "PLATZHALTER: Kurzer Check mit Gesprächsfragen fürs nächste Teammeeting."
+      }
+    ]
+  },
+  "impulse": {
+    "sichtbar": false,
+    "titel": "Impulse",
+    "motto": "Impulse aus der *Praxis*",
+    "intro": "PLATZHALTER: Kurze Gedanken zu Führung, Zusammenarbeit und Entwicklung. Texte liefert die Kundin.",
+    "eintraege": [
+      {
+        "id": "impuls-platzhalter-1",
+        "titel": "PLATZHALTER: Warum Teams Klarheit brauchen",
+        "datum": "2026-10-01",
+        "kategorie": "Zusammenarbeit",
+        "teaser": "PLATZHALTER: Kurzer Anreißer zum Artikel.",
+        "lesezeit": "3 Min.",
+        "absaetze": [
+          "PLATZHALTER: Erster Absatz des Artikels. Der echte Text stammt von Mag. Ingrid Nirnberger.",
+          "PLATZHALTER: Zweiter Absatz des Artikels."
+        ]
+      },
+      {
+        "id": "impuls-platzhalter-2",
+        "titel": "PLATZHALTER: Feedback, das ankommt",
+        "datum": "2026-09-15",
+        "kategorie": "Führung",
+        "teaser": "PLATZHALTER: Kurzer Anreißer zum Artikel.",
+        "lesezeit": "4 Min.",
+        "absaetze": [
+          "PLATZHALTER: Erster Absatz des Artikels.",
+          "PLATZHALTER: Zweiter Absatz des Artikels."
+        ]
+      },
+      {
+        "id": "impuls-platzhalter-3",
+        "titel": "PLATZHALTER: Veränderung begleiten",
+        "datum": "2026-08-20",
+        "kategorie": "Entwicklung",
+        "teaser": "PLATZHALTER: Kurzer Anreißer zum Artikel.",
+        "lesezeit": "5 Min.",
+        "absaetze": [
+          "PLATZHALTER: Erster Absatz des Artikels.",
+          "PLATZHALTER: Zweiter Absatz des Artikels."
+        ]
+      }
+    ]
+  },
+  "fallstudien": {
+    "sichtbar": false,
+    "kicker": "Praxisbeispiele",
+    "titel": "Was sich *verändert* hat",
+    "eintraege": [
+      {
+        "kunde": "PLATZHALTER: Kunde A",
+        "branche": "PLATZHALTER: Branche",
+        "ausgangslage": "PLATZHALTER: Beschreibung der Ausgangslage.",
+        "ansatz": "PLATZHALTER: Beschreibung des Vorgehens.",
+        "ergebnis": "PLATZHALTER: Beschreibung des Ergebnisses.",
+        "zahl": {
+          "wert": "XX %",
+          "label": "PLATZHALTER: Kennzahl"
+        }
+      },
+      {
+        "kunde": "PLATZHALTER: Kunde B",
+        "branche": "PLATZHALTER: Branche",
+        "ausgangslage": "PLATZHALTER: Beschreibung der Ausgangslage.",
+        "ansatz": "PLATZHALTER: Beschreibung des Vorgehens.",
+        "ergebnis": "PLATZHALTER: Beschreibung des Ergebnisses.",
+        "zahl": {
+          "wert": "XX",
+          "label": "PLATZHALTER: Kennzahl"
+        }
       }
     ]
   }

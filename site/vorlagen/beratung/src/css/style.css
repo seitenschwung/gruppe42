@@ -346,3 +346,21 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .faq details[open] summary::after { content: "\2212"; }
 .faq summary:focus-visible { outline: 3px solid var(--wald); outline-offset: 2px; border-radius: 4px; }
 .faq-antwort { padding: 0 48px 24px 0; color: var(--text-2); font-size: 17px; line-height: 1.6; }
+/* Impulse */
+.impuls-meta { font-size: 14px; color: var(--stein); }
+.karte h2 a { text-decoration: none; }
+.karte h2 a:hover { text-decoration: underline; }
+.impuls-kopf h1 { font-family: var(--titel); font-weight: 400; }
+.impuls-text { max-width: 68ch; margin-inline: auto; font-size: 19px; line-height: 1.75; }
+.impuls-text p { margin-bottom: 1.2em; color: var(--espresso); }
+.impuls-zurueck { max-width: 68ch; margin: 32px auto 0; }
+
+/* Praxisbeispiele */
+.fallstudien { margin-top: 40px; }
+.fallstudien .karte { background: var(--creme); }
+.fall-kunde { font-size: 14px; color: var(--stein); }
+.fall-kunde strong { color: var(--espresso); }
+.fall-teil h4 { font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--terrakotta); margin-bottom: 4px; }
+.fall-zahl { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--linie-2); }
+.fall-zahl strong { display: block; font-family: var(--titel); font-weight: 400; font-size: 48px; line-height: 1; color: var(--espresso); }
+.fall-zahl span { display: block; margin-top: 6px; font-size: 14px; color: var(--stein); }
