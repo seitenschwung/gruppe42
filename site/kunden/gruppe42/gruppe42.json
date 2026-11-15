@@ -694,5 +694,63 @@
     "titel": "Seminare",
     "motto": "Seminare *buchen*",
     "intro": "PLATZHALTER: Einleitungstext liefert der Kunde."
+  },
+  "impulse": {
+    "sichtbar": false,
+    "titel": "Impulse",
+    "motto": "Impulse aus der *Praxis*",
+    "intro": "PLATZHALTER: Kurze Gedanken zu Führung, Zusammenarbeit und Entwicklung. Texte liefert die Kundin.",
+    "eintraege": [
+      {
+        "id": "impuls-platzhalter-1",
+        "titel": "PLATZHALTER: Warum Teams Klarheit brauchen",
+        "datum": "2026-10-01",
+        "kategorie": "Zusammenarbeit",
+        "teaser": "PLATZHALTER: Kurzer Anreißer zum Artikel.",
+        "lesezeit": "3 Min.",
+        "absaetze": ["PLATZHALTER: Erster Absatz des Artikels. Der echte Text stammt von Mag. Ingrid Nirnberger.", "PLATZHALTER: Zweiter Absatz des Artikels."]
+      },
+      {
+        "id": "impuls-platzhalter-2",
+        "titel": "PLATZHALTER: Feedback, das ankommt",
+        "datum": "2026-09-15",
+        "kategorie": "Führung",
+        "teaser": "PLATZHALTER: Kurzer Anreißer zum Artikel.",
+        "lesezeit": "4 Min.",
+        "absaetze": ["PLATZHALTER: Erster Absatz des Artikels.", "PLATZHALTER: Zweiter Absatz des Artikels."]
+      },
+      {
+        "id": "impuls-platzhalter-3",
+        "titel": "PLATZHALTER: Veränderung begleiten",
+        "datum": "2026-08-20",
+        "kategorie": "Entwicklung",
+        "teaser": "PLATZHALTER: Kurzer Anreißer zum Artikel.",
+        "lesezeit": "5 Min.",
+        "absaetze": ["PLATZHALTER: Erster Absatz des Artikels.", "PLATZHALTER: Zweiter Absatz des Artikels."]
+      }
+    ]
+  },
+  "fallstudien": {
+    "sichtbar": false,
+    "kicker": "Praxisbeispiele",
+    "titel": "Was sich *verändert* hat",
+    "eintraege": [
+      {
+        "kunde": "PLATZHALTER: Kunde A",
+        "branche": "PLATZHALTER: Branche",
+        "ausgangslage": "PLATZHALTER: Beschreibung der Ausgangslage.",
+        "ansatz": "PLATZHALTER: Beschreibung des Vorgehens.",
+        "ergebnis": "PLATZHALTER: Beschreibung des Ergebnisses.",
+        "zahl": { "wert": "XX %", "label": "PLATZHALTER: Kennzahl" }
+      },
+      {
+        "kunde": "PLATZHALTER: Kunde B",
+        "branche": "PLATZHALTER: Branche",
+        "ausgangslage": "PLATZHALTER: Beschreibung der Ausgangslage.",
+        "ansatz": "PLATZHALTER: Beschreibung des Vorgehens.",
+        "ergebnis": "PLATZHALTER: Beschreibung des Ergebnisses.",
+        "zahl": { "wert": "XX", "label": "PLATZHALTER: Kennzahl" }
+      }
+    ]
   }
 }
