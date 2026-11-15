@@ -273,7 +273,7 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .test-teaser p:not(.kicker) { margin-top: 18px; max-width: 600px; font-size: 18px; color: var(--text-2); }
 .test-teaser .knopf { flex: 0 0 auto; }
 .test [hidden], .test-ergebnis[hidden] { display: none; }
-.test-karte { scroll-margin-top: 104px; max-width: 760px; margin: 0 auto; padding: clamp(24px, 5vw, 48px); background: var(--creme); border: 1px solid var(--linie-2); border-radius: 28px; }
+.test-karte { scroll-margin-top: 0; max-width: 760px; margin: 0 auto; padding: clamp(24px, 5vw, 48px); background: var(--creme); border: 1px solid var(--linie-2); border-radius: 28px; }
 .test-titel { font-family: var(--titel); font-weight: 400; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.12; margin-bottom: 20px; }
 .test-hinweise { list-style: none; padding: 0; display: grid; gap: 14px; margin-bottom: 24px; }
 .test-hinweise li { padding-left: 22px; position: relative; color: var(--text-2); }
@@ -498,3 +498,21 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
   .hauptnav li:last-child .knopf { width: 100%; }
 }
 @media (prefers-reduced-motion: reduce) { .nav-gruppe summary::after { transition: none; } }
+/* Kompakter Seitenkopf (Tests, Übersicht, Gesprächskarten): kein Hero, der Inhalt ist sofort sichtbar */
+.seitenkopf-kompakt .brotkrumen { padding-top: 18px; margin-bottom: 14px; }
+.seitenkopf-kompakt .seitenkopf-inhalt { padding-bottom: clamp(20px, 3vw, 32px); }
+.seitenkopf-kompakt h1 { font-size: clamp(30px, 4vw, 46px); line-height: 1.1; }
+.seitenkopf-kompakt .kicker { margin-bottom: 8px; }
+.seitenkopf-kompakt .seitenkopf-text > p:last-child { margin-top: 12px; max-width: 640px; font-size: 17px; }
+.seitenkopf-kompakt + .abschnitt { padding-top: clamp(28px, 4vw, 48px); }
+@media (max-width: 860px) { .test-karte { scroll-margin-top: -72px; } }
+
+/* Niedrige Fenster: die Testkarte (Frage, Antworten, Weiter) soll ohne Scrollen ins Bild passen */
+@media (max-height: 760px) and (min-width: 861px) {
+  .test-karte { padding: 24px 40px; }
+  .test-kopf { margin-bottom: 16px; }
+  .test-frage legend { font-size: 26px; margin-bottom: 16px; }
+  .test-optionen { gap: 8px; }
+  .test-option { min-height: 46px; padding-block: 8px; }
+  .test-aktionen { margin-top: 20px; }
+}

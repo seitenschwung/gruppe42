@@ -328,8 +328,8 @@ ${kontaktband()}`;
 // 6. Unterseiten
 // ---------------------------------------------------------------------------
 
-function seitenkopf(titel, motto, intro, bildRef) {
-  return `<section class="seitenkopf">
+function seitenkopf(titel, motto, intro, bildRef, kompakt = false) {
+  return `<section class="seitenkopf${kompakt ? ' seitenkopf-kompakt' : ''}">
   <div class="container">
     <nav class="brotkrumen" aria-label="Brotkrumen"><ol><li><a href="./">Start</a></li><li aria-current="page">${esc(titel)}</li></ol></nav>
     <div class="seitenkopf-inhalt">
@@ -446,7 +446,7 @@ function testSeite(cfg, daten, testsCfg) {
   const r = daten.result;
   const dauer = cfg.kurz ? esc(cfg.kurz) : `${daten.questions.length} Aussagen`;
   return `
-${seitenkopf(titel, cfg.motto, cfg.intro)}
+${seitenkopf(titel, cfg.motto, cfg.intro, null, true)}
 <section class="abschnitt test" id="test" aria-label="${esc(titel)}">
   <div class="container">
     <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
@@ -548,7 +548,7 @@ function testUebersicht(cfg) {
         </div>
       </li>` : '';
   return `
-${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro)}
+${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro, null, true)}
 <section class="abschnitt" aria-label="${esc(cfg.titel || 'Selbsttests')}">
   <div class="container"><ul class="karten">${karten}${kartenKarte}
   </ul>${cfg.methodik ? '<p class="test-note methodik-link"><a href="methodik.html">So entstehen unsere Tests</a>: was sie können und was nicht.</p>' : ''}</div>
@@ -567,7 +567,7 @@ function kartenSeite(cfg) {
         <ul>${k.karten.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
       </section>`).join('');
   return `
-${seitenkopf(cfg.titel || 'Gesprächskarten', cfg.motto, cfg.intro)}
+${seitenkopf(cfg.titel || 'Gesprächskarten', cfg.motto, cfg.intro, null, true)}
 <section class="abschnitt gkarten" id="gkarten" aria-label="${esc(cfg.titel || 'Gesprächskarten')}">
   <div class="container">
     ${entwurf ? '<p class="shop-hinweis">Entwurf: Diese Seite ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
