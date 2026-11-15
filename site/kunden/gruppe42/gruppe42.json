@@ -694,5 +694,20 @@
     "titel": "Seminare",
     "motto": "Seminare *buchen*",
     "intro": "PLATZHALTER: Einleitungstext liefert der Kunde."
+  },
+  "antreiber_test": {
+    "aktiv": true,
+    "sichtbar": true,
+    "daten": "antreiber.json",
+    "titel": "Antreiber-Test",
+    "motto": "Meine inneren *Antreiber*",
+    "intro": "Welche inneren Erwartungen treiben dich an – und welche Stärken stecken darin? Eine Selbstreflexion in etwa zehn Minuten.",
+    "datenschutz": "Deine Antworten werden nur in deinem Browser verarbeitet. Sie werden nicht an einen Server übertragen und nicht gespeichert.",
+    "teaser": {
+      "kicker": "Selbstreflexion",
+      "titel": "Was treibt dich *wirklich* an?",
+      "text": "50 Aussagen, etwa zehn Minuten, ein persönliches Profil deiner fünf inneren Antreiber – mit Stärken, Stolperfallen und kleinen Einladungen für den Alltag.",
+      "knopf": "Antreiber-Test starten"
+    }
   }
 }

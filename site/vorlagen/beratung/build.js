@@ -58,7 +58,7 @@ const demo = s.demo_modus === true;
 const firma = s.firma || s.name;
 const adresse = s.kontakt.adresse || {};
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop']);
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'antreiber-test']);
 const ids = [...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
@@ -80,6 +80,11 @@ for (const f of fs.readdirSync(path.join(ROOT, 'fonts'))) {
 const mainJs = fs.readFileSync(path.join(ROOT, 'src/js/main.js'), 'utf8');
 fs.writeFileSync(path.join(DIST, 'js/main.js'), mainJs);
 const mainJsUrl = `js/main.js?v=${crypto.createHash('sha1').update(mainJs).digest('hex').slice(0, 8)}`;
+// Antreiber-Test: eigenes Skript, nur auf dieser Seite geladen
+const testCfg = s.antreiber_test && s.antreiber_test.aktiv ? s.antreiber_test : null;
+const testJs = fs.readFileSync(path.join(ROOT, 'src/js/antreiber.js'), 'utf8');
+if (testCfg) fs.writeFileSync(path.join(DIST, 'js/antreiber.js'), testJs);
+const testJsUrl = `js/antreiber.js?v=${crypto.createHash('sha1').update(testJs).digest('hex').slice(0, 8)}`;
 
 // ---------------------------------------------------------------------------
 // 3. Bilder
@@ -279,6 +284,8 @@ ${s.stimmen.haupt || liste(s.stimmen.weitere).length ? `<section class="abschnit
   </div>
 </section>` : ''}
 
+${testCfg && testCfg.sichtbar === true ? teaser(testCfg) : ''}
+
 ${p.name ? `<section class="sand abschnitt person" id="ueber" aria-labelledby="person-titel">
   <div class="container">
     <div class="person-bild">${bild(p.bild, { sizes: '(min-width: 900px) 440px, 92vw' })}</div>
@@ -394,6 +401,79 @@ ${seitenkopf(cfg.titel || 'Seminare', cfg.motto, cfg.intro)}
 </section>`;
 }
 
+// Antreiber-Test: Fragen und Texte liegen in der Datei cfg.daten (neben der Inhalts-JSON). Die Seite liefert nur
+// Gerüst und Daten; Ablauf, Auswertung und Ergebnis erzeugt js/antreiber.js im Browser (nichts wird übertragen).
+function antreiberSeite(cfg) {
+  const daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), cfg.daten), 'utf8'));
+  const json = JSON.stringify(daten).replace(/</g, '\\u003c');
+  const titel = cfg.titel || 'Antreiber-Test';
+  return `
+${seitenkopf(titel, cfg.motto, cfg.intro)}
+<section class="abschnitt test" id="test" aria-label="${esc(titel)}">
+  <div class="container">
+    <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
+    <div class="test-karte" data-test>
+      <div data-schritt="intro">
+        <p class="kicker">Vorab</p>
+        <h2 class="test-titel">So funktioniert es</h2>
+        <ul class="test-hinweise">
+          <li><strong>${daten.questions.length} Aussagen</strong>, etwa 8 bis 12 Minuten. Antworte spontan und denke an deinen Alltag, privat und beruflich.</li>
+          <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du ein Profil mit Stärken, Stolperfallen und kleinen Impulsen.</li>
+          <li><strong>Privat:</strong> ${esc(cfg.datenschutz || '')}</li>
+        </ul>
+        <p class="test-note">${esc(daten.status)}. Er ist nicht wissenschaftlich validiert und liefert keine Diagnose.</p>
+        <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
+      </div>
+      <div data-schritt="frage" hidden>
+        <div class="test-kopf">
+          <p class="test-zaehler" data-zaehler aria-live="polite"></p>
+          <div class="test-balken" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="${daten.questions.length}" aria-valuenow="0" data-balken><span></span></div>
+        </div>
+        <fieldset class="test-frage">
+          <legend tabindex="-1" data-frage></legend>
+          <div class="test-optionen" data-optionen></div>
+        </fieldset>
+        <div class="test-aktionen">
+          <button class="knopf knopf-rand" type="button" data-zurueck>Zurück</button>
+          <button class="knopf knopf-dunkel" type="button" data-weiter disabled>Weiter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="sand abschnitt test-ergebnis" id="ergebnis" aria-labelledby="ergebnis-titel" data-ergebnis hidden>
+  <div class="container">
+    <p class="kicker">Dein Profil</p>
+    <h2 class="titel" id="ergebnis-titel" tabindex="-1">Dein persönliches <em>Antreiber-Profil</em></h2>
+    <p class="test-lead" data-intro></p>
+    <ol class="test-rang" data-rang aria-label="Ergebnis im Überblick"></ol>
+    <div class="test-details" data-details></div>
+    <p class="test-lead test-outro" data-outro></p>
+    <p class="test-note" data-note></p>
+    <div class="knoepfe test-ende">
+      <a class="knopf knopf-honig" href="#kontakt">Im Erstgespräch vertiefen</a>
+      <button class="knopf knopf-rand" type="button" data-neu>Neu starten</button>
+      <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
+    </div>
+  </div>
+</section>
+<script type="application/json" id="antreiber-daten">${json}</script>`;
+}
+
+function teaser(cfg) {
+  const t = cfg.teaser || {};
+  return `<section class="test-teaser abschnitt" aria-labelledby="teaser-titel">
+  <div class="container">
+    <div class="test-teaser-text">
+      ${t.kicker ? `<p class="kicker">${esc(t.kicker)}</p>` : ''}
+      <h2 class="titel" id="teaser-titel">${betont(t.titel || cfg.titel)}</h2>
+      ${t.text ? `<p>${esc(t.text)}</p>` : ''}
+    </div>
+    <a class="knopf knopf-dunkel" href="antreiber-test.html">${esc(t.knopf || 'Test starten')}</a>
+  </div>
+</section>`;
+}
+
 function rechtsSeite(datei, ueberschrift, quelle) {
   if (!quelle) warn(`${ueberschrift} ist leer – bitte ergänzen, bevor die Seite online geht.`);
   const nachweise = datei === 'impressum.html' ? [...benutzt.values()].filter((b) => b.credit) : [];
@@ -461,6 +541,7 @@ ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(
         ${s.leistungen.eintraege.length ? `<li><a href="${anker('leistungen')}"${s.leistungen.eintraege.some((l) => l.id === aktiv) ? ' aria-current="page"' : ''}>Leistungen</a></li>` : ''}
         ${zielgruppenNav}
         ${s.shop && s.shop.aktiv && s.shop.sichtbar === true ? `<li><a href="shop.html"${aktiv === 'shop' ? ' aria-current="page"' : ''}>${esc(s.shop.titel || 'Seminare')}</a></li>` : ''}
+        ${testCfg && testCfg.sichtbar === true ? `<li><a href="antreiber-test.html"${aktiv === 'antreiber-test' ? ' aria-current="page"' : ''}>${esc(testCfg.titel || 'Antreiber-Test')}</a></li>` : ''}
         ${liste(s.geschichte.stationen).length ? `<li><a href="${anker('geschichte')}">Über uns</a></li>` : ''}
         <li><a href="#kontakt">Kontakt</a></li>
         <li><a class="knopf knopf-dunkel" href="#kontakt">Erstgespräch vereinbaren</a></li>
@@ -548,6 +629,14 @@ if (s.shop && s.shop.aktiv) {
     datei: 'shop.html', aktiv: 'shop', inhalt: shopSeite(s.shop), noindex: !sichtbar,
     titel: `${s.shop.titel || 'Seminare'} – ${s.name}`,
     beschreibung: (s.shop.intro || `Seminare von ${s.name}`).slice(0, 160),
+  });
+}
+if (testCfg) {
+  seiten.push({
+    datei: 'antreiber-test.html', aktiv: 'antreiber-test', inhalt: antreiberSeite(testCfg), noindex: testCfg.sichtbar !== true,
+    titel: `${testCfg.titel || 'Antreiber-Test'}: Meine inneren Antreiber – ${s.name}`,
+    beschreibung: (testCfg.intro || 'Selbstreflexion zu den fünf inneren Antreibern').slice(0, 160),
+    zusatzHead: `<script src="${testJsUrl}" defer></script>`,
   });
 }
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));

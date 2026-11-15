@@ -265,3 +265,69 @@ figcaption strong { color: var(--espresso); font-weight: 700; }
 .karte-inhalt .knopf { align-self: flex-start; margin-top: auto; }
 .knopf:disabled { opacity: .6; cursor: not-allowed; }
 .karte h2 { font-size: 24px; line-height: 1.25; font-weight: 700; letter-spacing: -.01em; }
+
+/* Antreiber-Test: Teaser, Fragebogen, Ergebnis */
+.test-teaser { background: var(--salbei); }
+.test-teaser .container { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 32px 64px; }
+.test-teaser-text { flex: 2 1 480px; min-width: 0; }
+.test-teaser p:not(.kicker) { margin-top: 18px; max-width: 600px; font-size: 18px; color: var(--text-2); }
+.test-teaser .knopf { flex: 0 0 auto; }
+.test [hidden], .test-ergebnis[hidden] { display: none; }
+.test-karte { scroll-margin-top: 104px; max-width: 760px; margin: 0 auto; padding: clamp(24px, 5vw, 48px); background: var(--creme); border: 1px solid var(--linie-2); border-radius: 28px; }
+.test-titel { font-family: var(--titel); font-weight: 400; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.12; margin-bottom: 20px; }
+.test-hinweise { list-style: none; padding: 0; display: grid; gap: 14px; margin-bottom: 24px; }
+.test-hinweise li { padding-left: 22px; position: relative; color: var(--text-2); }
+.test-hinweise li::before { content: ""; position: absolute; left: 0; top: .6em; width: 8px; height: 8px; border-radius: 50%; background: var(--honig); }
+.test-hinweise strong { color: var(--espresso); }
+.test-note { font-size: 14px; color: var(--stein); max-width: 680px; }
+.test-karte .test-note { margin-bottom: 28px; }
+.test-kopf { margin-bottom: 28px; }
+.test-zaehler { font-size: 14px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--terrakotta); margin-bottom: 10px; }
+.test-balken { height: 8px; border-radius: 999px; background: var(--sand); overflow: hidden; }
+.test-balken span { display: block; height: 100%; width: 0; border-radius: 999px; background: var(--wald); transition: width .35s ease; }
+.test-frage { border: 0; padding: 0; margin: 0; min-width: 0; }
+.test-frage legend { padding: 0; font-family: var(--titel); font-size: clamp(26px, 3.4vw, 36px); line-height: 1.2; letter-spacing: -.01em; margin-bottom: 28px; outline-offset: 6px; }
+.test-optionen { display: grid; gap: 10px; }
+.test-option { display: flex; align-items: center; gap: 16px; min-height: 56px; padding: 12px 18px; border: 1.5px solid var(--linie-2); border-radius: 16px; background: #fff; cursor: pointer; transition: border-color .15s, background-color .15s; }
+.test-option:hover { border-color: var(--wald-linie); }
+.test-option input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.test-wert { flex: 0 0 auto; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--linie-2); font-weight: 600; font-size: 15px; color: var(--stein); background: var(--creme); }
+.test-option:has(input:checked) { border-color: var(--wald); background: var(--salbei); }
+.test-option:has(input:checked) .test-wert { background: var(--wald); border-color: var(--wald); color: #fff; }
+.test-option:has(input:focus-visible) { outline: 3px solid var(--espresso); outline-offset: 3px; }
+.test-aktionen { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; }
+.test-aktionen .knopf:disabled { opacity: .4; cursor: not-allowed; }
+.test-lead { font-size: clamp(18px, 1.6vw, 20px); color: var(--text-2); max-width: 720px; margin-top: 20px; }
+.test-rang { list-style: none; padding: 0; margin: 40px 0 56px; display: grid; gap: 20px; max-width: 820px; counter-reset: rang; }
+.test-zeile-kopf { display: flex; justify-content: space-between; gap: 16px; align-items: baseline; margin-bottom: 8px; }
+.test-zeile-name { font-family: var(--titel); font-size: clamp(22px, 2.4vw, 28px); text-decoration: none; }
+.test-zeile-name:hover { text-decoration: underline; }
+.test-zeile-wert { font-weight: 600; color: var(--stein); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.test-spur { height: 14px; border-radius: 999px; background: var(--creme); border: 1px solid var(--linie-2); overflow: hidden; }
+.test-spur span { display: block; height: 100%; border-radius: 999px; background: var(--wald-linie); }
+.ist-spitze .test-spur span { background: var(--terrakotta); }
+.test-details { display: grid; gap: 24px; margin-top: 16px; }
+.test-details > .test-lead { margin-top: 0; }
+.test-thema { padding: clamp(24px, 4vw, 40px); background: var(--creme); border: 1px solid var(--linie); border-radius: 24px; display: grid; gap: 16px; scroll-margin-top: 24px; }
+.test-thema-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+.test-thema h3 { font-family: var(--titel); font-weight: 400; font-size: clamp(28px, 3.4vw, 38px); line-height: 1.1; }
+.test-marke { font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; background: var(--honig-hell); }
+.test-headline { font-family: var(--titel); font-style: italic; font-size: clamp(20px, 2vw, 24px); color: var(--terrakotta); }
+.test-thema p { color: var(--text-2); max-width: 760px; }
+.test-thema p strong { color: var(--espresso); }
+.test-spalten { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+.test-spalte { padding: 20px 22px; border-radius: 16px; background: var(--salbei); }
+.test-spalte-druck { background: var(--sand); }
+.test-spalte h4 { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: var(--espresso); }
+.test-erlaubnis { margin: 8px 0; padding: 4px 0 4px 22px; border-left: 4px solid var(--honig); }
+.test .test-erlaubnis p, .test-thema .test-erlaubnis p { font-family: var(--titel); font-size: clamp(22px, 2.4vw, 28px); line-height: 1.25; color: var(--espresso); }
+.test-outro { margin-top: 48px; }
+.test-ergebnis > .container > .test-note { margin-top: 20px; }
+.test-ende { margin-top: 36px; display: flex; flex-wrap: wrap; gap: 12px; }
+@media (prefers-reduced-motion: reduce) { .test-balken span { transition: none; } }
+@media (max-width: 560px) { .test-aktionen .knopf { padding: 0 18px; } .test-option { padding-inline: 14px; gap: 12px; } }
+@media print {
+  .kopf, .fuss, .kontaktband, .seitenkopf, .test-ende, .skip-link, .entwurf { display: none !important; }
+  .test-ergebnis { background: #fff; padding: 0; }
+  .test-thema { break-inside: avoid; }
+}
