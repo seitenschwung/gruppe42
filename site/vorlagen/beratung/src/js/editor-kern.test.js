@@ -6,7 +6,8 @@ const path = require('node:path');
 const W = require('../../../../lib/testwaechter');
 const K = require('./editor-kern.js');
 
-const dir = path.join(__dirname, '../../../../kunden/gruppe42');
+// Beispielkopie statt echter Inhalte: Texte der Redaktion dürfen sich ändern, ohne dass dieser Test bricht.
+const dir = path.join(__dirname, '../../../../lib/__fixtures__');
 const lies = (p) => JSON.parse(fs.readFileSync(path.join(dir, p), 'utf8'));
 const gruppe = lies('gruppe42.json');
 const tests = gruppe.tests.eintraege.map((e) => ({ e, d: lies(e.daten) }));

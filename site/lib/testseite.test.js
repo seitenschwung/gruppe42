@@ -1,4 +1,5 @@
 'use strict';
+// Nach bewusster Markup-Änderung Snapshots neu erzeugen (Fixture bauen, <main id="inhalt"> mit ?v=X nach __snapshots__/<seite>.html schreiben); nach Strukturänderung: node site/lib/struktur-erzeugen.js site/lib/__fixtures__/gruppe42.json
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
