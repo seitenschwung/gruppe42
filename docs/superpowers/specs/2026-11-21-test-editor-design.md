@@ -114,8 +114,12 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
 - Neue Datei `server/editor-auth.js` nach dem Muster von `checkout.js`:
   - `GET /api/editor/login` → Redirect zum GitHub-Login der App mit zufälligem `state`
     (signiertes, kurzlebiges Cookie nur für Pfad `/api/editor`, `HttpOnly`, `Secure`, `SameSite=Lax`).
-  - `GET /api/editor/callback` → prüft `state`, tauscht `code` serverseitig gegen das User-Token und leitet zu `/editor/#token=…` weiter
-    (Fragment, damit das Token nicht in Server-Logs landet). Das Token wird serverseitig **nicht** gespeichert.
+  - `GET /api/editor/callback` → prüft `state`, tauscht `code` serverseitig gegen das User-Token und setzt es als Cookie `g42_token`
+    (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/editor/token`, 60 s) und leitet zu `/editor/#angemeldet` weiter. Das Token steht nie in einer URL
+    (auch nicht im Fragment); ein `#token=` in der URL wird nicht angenommen (kein Login-CSRF). Das Token wird serverseitig **nicht** gespeichert.
+  - `POST /api/editor/token` (Header `X-G42-Editor: 1` Pflicht, `Origin` fehlt oder ist der eigene) liefert das Token einmal als `{token, ablauf}` (`no-store`)
+    und löscht das Cookie; ohne Cookie `401`.
+  - `POST /api/editor/abmelden` (gleiche Header-Pflicht, Body `{token}`) widerruft das Token bei GitHub (`DELETE /applications/<client_id>/token`); `204` auch bei GitHub-Fehler.
   - Ohne `EDITOR_GITHUB_CLIENT_ID`/`EDITOR_GITHUB_CLIENT_SECRET` → `503` (Pipeline-Test bleibt grün).
   - Rate-Limit wie bei `/api/checkout`; nie Tokens loggen. Das Access-Log in `server.js` (Zeile ~44, loggt heute `req.url` komplett)
     so ändern, dass für `/api/editor/*` der Query-String entfällt.
@@ -125,8 +129,8 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
 ### 4. Editor-Seite `/editor/`
 - Statisch, vom Build erzeugt (neue Funktion in `build.js`), gleiche Fonts/CSS-Tokens; `noindex`, nicht im Menü,
   nicht in `sitemap.xml`, in `robots.txt` ausgeschlossen. Eigenes Skript `src/js/editor.js`, keine Fremdbibliotheken.
-- Token nur im Speicher (Variable); beim Laden aus dem Fragment lesen und das Fragment sofort per `history.replaceState` entfernen.
-  Kein `localStorage` für das Token. Ungesendete Entwürfe dürfen in `localStorage` liegen (ohne Token).
+- Token nur im Speicher (Variable); beim Laden mit `#angemeldet` einmal per `POST /api/editor/token` holen (siehe 3.), `fetch` wird beim Laden festgehalten.
+  Kein `localStorage` für das Token. „Abmelden“ widerruft es bei GitHub. Ungesendete Entwürfe dürfen in `localStorage` liegen (ohne Token).
 - Alle GitHub-Zugriffe direkt aus dem Browser gegen `api.github.com`: Dateien von `main` lesen, Branch anlegen, Commit, PR.
 - Ablauf für Ingrid:
   1. „Anmelden“ → GitHub-Login → zurück im Editor.
@@ -175,5 +179,10 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
   (auch mit Workflow-Änderungen) anlegen. Er kommt aber weder an `main` (Ruleset + `CODEOWNERS` für das ganze Repo: jeder PR braucht
   die Freigabe des Owners, eine alte Freigabe verfällt mit jedem neuen Push) noch an die Deploy-Secrets (Environment nur für `main`).
   Ein Branch-Workflow hat höchstens das `GITHUB_TOKEN` des PR-Laufs. 2FA senkt das Risiko.
+- Die Schreibrolle (Write) erlaubt über die Weboberfläche oder ein gestohlenes Token auch Branch-Workflows (nur mit dem `GITHUB_TOKEN` des Laufs),
+  Pushes nach GHCR (der Deploy nutzt heute einen veränderlichen Tag), das Setzen von Labels und das Löschen ungeschützter Branches.
+  Gegenmaßnahmen (Checkliste in `CLAUDE.md`): Actions-Token nur lesend, Actions dürfen keine PRs erstellen/freigeben, keine weiteren Secrets, benannte Pflicht-Checks,
+  immer den ganzen Diff prüfen, Template-Deploy per Digest und GHCR-Zugriff nur für Actions. Strukturelle Lösung: Umbau B
+  (`2026-11-22-test-editor-umbau-b-design.md`), der Ingrids Schreibrolle entfernt.
 - Bypass für den Automerge-Akteur (falls der Owner ihn einrichtet): dieser Akteur kann dann ohne Review mergen; ohne Bypass braucht jeder Bot-PR einen Klick.
 - Inhaltliche Fehler in Texten: die Freigabe durch Seitenschwung ist die Kontrolle.
