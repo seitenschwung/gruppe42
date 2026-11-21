@@ -1,0 +1,79 @@
+
+
+<section class="seitenkopf seitenkopf-kompakt">
+  <div class="container">
+    <nav class="brotkrumen" aria-label="Brotkrumen"><ol><li><a href="./">Start</a></li><li aria-current="page">Employer-Branding-Check</li></ol></nav>
+    <div class="seitenkopf-inhalt">
+      <div class="seitenkopf-text">
+        <p class="kicker">Employer-Branding-Check</p>
+        <h1>Wie attraktiv ist dein <em>Unternehmen</em> als Arbeitgeber?</h1>
+        <p>Sechzehn Aussagen, vier Bereiche, vier Minuten: eine erste Standortbestimmung zur Arbeitgebermarke deines Unternehmens.</p>
+      </div>
+      
+    </div>
+  </div>
+</section>
+<section class="abschnitt test" id="test" aria-label="Employer-Branding-Check">
+  <div class="container">
+    <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
+    
+    <div class="test-karte" data-test>
+      <div data-schritt="intro">
+        <p class="kicker">Vorab</p>
+        <h2 class="test-titel">So funktioniert es</h2>
+        <ul class="test-hinweise">
+          <li><strong>16 Aussagen · 4 Minuten.</strong> Antworte spontan und denke an deinen Alltag.</li>
+          <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du eine Auswertung mit Impulsen.</li>
+          <li><strong>Privat:</strong> Deine Antworten werden nur in deinem Browser verarbeitet. Sie werden nicht an einen Server übertragen und nicht gespeichert.</li>
+        </ul>
+        <p class="test-note">Eigene, nicht validierte Kurzbefragung zur Standortbestimmung für Unternehmen. Kein Diagnoseinstrument. <a href="methodik.html">So entstehen unsere Tests</a></p>
+        <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
+      </div>
+      <div data-schritt="frage" hidden>
+        <div class="test-kopf">
+          <p class="test-zaehler" data-zaehler aria-live="polite"></p>
+          <div class="test-balken" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="16" aria-valuenow="0" data-balken><span></span></div>
+        </div>
+        <fieldset class="test-frage">
+          <legend tabindex="-1" data-frage></legend>
+          <div class="test-optionen" data-optionen></div>
+        </fieldset>
+        <div class="test-aktionen">
+          <button class="knopf knopf-rand" type="button" data-zurueck>Zurück</button>
+          <button class="knopf knopf-dunkel" type="button" data-weiter disabled>Weiter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="sand abschnitt test-ergebnis" id="ergebnis" aria-labelledby="ergebnis-titel" data-ergebnis hidden>
+  <div class="container">
+    <p class="kicker" data-kicker>Dein Ergebnis</p>
+    <h2 class="titel" id="ergebnis-titel" tabindex="-1">Dein <em>Arbeitgeber-Profil</em></h2>
+    <p class="test-lead" data-intro></p>
+    <div class="test-stufe" data-stufe hidden></div>
+    <figure class="test-chart" data-chart></figure>
+    <div class="test-details" data-details></div>
+    <p class="test-lead test-outro" data-outro></p>
+    <p class="test-note" data-note></p>
+    <div class="knoepfe test-ende">
+      <a class="knopf knopf-honig" href="#kontakt">Employer Branding besprechen</a>
+      <button class="knopf knopf-rand" type="button" data-mail>Per E-Mail an mich senden</button>
+      <button class="knopf knopf-rand" type="button" data-neu>Neu starten</button>
+      <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
+    </div>
+  </div>
+</section>
+<section class="kontaktband abschnitt" id="kontakt" aria-labelledby="kontakt-titel">
+  <div class="container">
+    <div class="kontaktband-text">
+      <h2 id="kontakt-titel">Dein Unternehmen ist einzigartig. <em>Deine Lösung auch.</em></h2>
+      <p>Vereinbare ein unverbindliches Gespräch. Wir hören zu, stellen Fragen und sagen dir ehrlich, ob wir die Richtigen für dich sind.</p>
+    </div>
+    <div class="knoepfe">
+      <a class="knopf knopf-dunkel" href="mailto:info@gruppe42.at?subject=Anfrage%20Erstgespr%C3%A4ch"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v12H3z"/><path d="m3 7 9 7 9-7"/></svg>Erstgespräch vereinbaren</a>
+      <a class="knopf knopf-rand" href="tel:+4369911159870"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>+43 699 111 59 870</a>
+    </div>
+  </div>
+</section>
+<script type="application/json" id="antreiber-daten">{"id":"employer-branding","name":"Employer-Branding-Check","status":"Eigene, nicht validierte Kurzbefragung zur Standortbestimmung für Unternehmen","scale":{"1":"Trifft gar nicht zu","2":"Trifft eher nicht zu","3":"Trifft teilweise zu","4":"Trifft eher zu","5":"Trifft voll und ganz zu"},"categories":[{"id":"identitaet","name":"Identität und Werte","sections":[{"kind":"labeled","title":"Frage für dein nächstes Führungsteam-Treffen:","text":"Warum sollte sich jemand bei uns und nicht beim Mitbewerb bewerben?"}]},{"id":"kommunikation","name":"Sichtbarkeit und Kommunikation","sections":[{"kind":"labeled","title":"Frage für dein nächstes Führungsteam-Treffen:","text":"Wo begegnen potenzielle Mitarbeitende unserem Unternehmen zum ersten Mal?"}]},{"id":"erlebnis","name":"Bewerbung und Onboarding","sections":[{"kind":"labeled","title":"Frage für dein nächstes Führungsteam-Treffen:","text":"Wie fühlt sich der Weg von der Bewerbung bis zum ersten Monat aus Sicht der Neuen an?"}]},{"id":"kultur","name":"Kultur und Bindung","sections":[{"kind":"labeled","title":"Frage für dein nächstes Führungsteam-Treffen:","text":"Was würden unsere Mitarbeitenden Freunden über uns als Arbeitgeber erzählen?"}]}],"questions":[{"id":1,"category":"identitaet","text":"Wir können in wenigen Sätzen erklären, wofür wir als Arbeitgeber stehen."},{"id":2,"category":"kommunikation","text":"Unsere Karriereseite zeigt echte Einblicke in die Arbeit bei uns."},{"id":3,"category":"erlebnis","text":"Bewerbende erhalten bei uns schnell und verlässlich eine Rückmeldung."},{"id":4,"category":"kultur","text":"Wir erfahren regelmäßig, wie zufrieden unsere Mitarbeitenden sind, und handeln danach."},{"id":5,"category":"identitaet","text":"Unsere Werte sind im Alltag spürbar und nicht nur auf der Website zu lesen."},{"id":6,"category":"kommunikation","text":"Unsere Mitarbeitenden sprechen nach außen gern über ihre Arbeit."},{"id":7,"category":"erlebnis","text":"Unser Bewerbungsprozess ist verständlich und wertschätzend."},{"id":8,"category":"kultur","text":"Entwicklungsmöglichkeiten sind bei uns für alle sichtbar und zugänglich."},{"id":9,"category":"identitaet","text":"Wir wissen nicht genau, was uns als Arbeitgeber von anderen unterscheidet.","reverse":true},{"id":10,"category":"kommunikation","text":"Wir erreichen die Zielgruppen, die wir suchen, auf den richtigen Kanälen."},{"id":11,"category":"erlebnis","text":"Neue Mitarbeitende haben in den ersten Wochen eine feste Ansprechperson und einen klaren Plan."},{"id":12,"category":"kultur","text":"Wenn Mitarbeitende kündigen, wissen wir meist erst im Nachhinein, warum.","reverse":true},{"id":13,"category":"identitaet","text":"Unsere Führungskräfte leben vor, wofür wir als Arbeitgeber stehen."},{"id":14,"category":"kommunikation","text":"Wie wir uns als Arbeitgeber nach außen darstellen, ist über alle Kanäle stimmig."},{"id":15,"category":"erlebnis","text":"Wir fragen Bewerbende und Neue systematisch, wie sie den Einstieg erlebt haben."},{"id":16,"category":"kultur","text":"Gute Leute gehen bei uns häufiger wegen der Führung oder Kultur als wegen des Gehalts.","reverse":true}],"result":{"kind":"levels","kicker":"Dein Ergebnis","title":"Dein *Arbeitgeber-Profil*","intro":"Sechzehn Aussagen zu vier Bereichen: Wie klar, sichtbar und erlebbar ist dein Unternehmen als Arbeitgeber? Ein erster Überblick, wo ein genauer Blick lohnt.","outro":"Nutze die Fragen als Einstieg für ein Gespräch im Führungsteam. Ein Ergebnis ist eine Einladung zum Nachdenken, kein Urteil.","note":"Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.","levels":[{"min":0,"title":"Viel Potenzial zum Entwickeln","text":"Es gibt mehrere Bereiche, in denen sich ein genauer Blick lohnt: Was macht dein Unternehmen als Arbeitgeber aus, und wie erfahren das Bewerbende? Das ist ein guter Ausgangspunkt, kein Rückstand."},{"min":50,"title":"Gute Basis mit Lücken","text":"Vieles funktioniert bereits. Einzelne Bereiche verdienen gezielte Aufmerksamkeit; die Aufschlüsselung zeigt, welche."},{"min":80,"title":"Starke Arbeitgebermarke","text":"Dein Unternehmen ist als Arbeitgeber gut aufgestellt. Pflege, was funktioniert, und prüfe regelmäßig, ob Anspruch und Alltag noch zusammenpassen."}],"cta":{"text":"Employer Branding besprechen","href":"#kontakt"}}}</script>

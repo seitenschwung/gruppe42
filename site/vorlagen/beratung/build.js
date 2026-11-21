@@ -17,6 +17,7 @@ const crypto = require('crypto');
 const h = require('../../lib/helfer');
 const { bildVerarbeitung, bildTag, vorladen } = require('../../lib/bilder');
 const W = require('../../lib/testwaechter');
+const T = require('../../lib/testseite');
 const { abdruckPfad, ABDRUCK_DATEI } = require('../../lib/struktur-erzeugen');
 
 const ROOT = __dirname;
@@ -500,66 +501,9 @@ function ladeTest(cfg) {
 }
 
 function testSeite(cfg, daten, testsCfg) {
-  const titel = cfg.titel;
-  const json = JSON.stringify(daten).replace(/</g, '\\u003c');
-  const entwurf = cfg.sichtbar !== true;
-  const r = daten.result;
-  const dauer = cfg.kurz ? esc(cfg.kurz) : `${daten.questions.length} Aussagen`;
   return `
-${seitenkopf(titel, cfg.motto, cfg.intro, null, true)}
-<section class="abschnitt test" id="test" aria-label="${esc(titel)}">
-  <div class="container">
-    <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
-    ${entwurf ? '<p class="shop-hinweis">Entwurf: Dieser Test ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
-    <div class="test-karte" data-test>
-      <div data-schritt="intro">
-        <p class="kicker">Vorab</p>
-        <h2 class="test-titel">So funktioniert es</h2>
-        <ul class="test-hinweise">
-          <li><strong>${dauer}.</strong> Antworte spontan und denke an deinen Alltag.</li>
-          <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du eine Auswertung mit Impulsen.</li>
-          <li><strong>Privat:</strong> ${esc(testsCfg.datenschutz || 'Deine Antworten werden nur in deinem Browser verarbeitet und nicht gespeichert.')}</li>
-        </ul>
-        <p class="test-note">${esc(daten.status || '')}. Kein Diagnoseinstrument.${testsCfg.methodik ? ' <a href="methodik.html">So entstehen unsere Tests</a>' : ''}</p>
-        <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
-      </div>
-      <div data-schritt="frage" hidden>
-        <div class="test-kopf">
-          <p class="test-zaehler" data-zaehler aria-live="polite"></p>
-          <div class="test-balken" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="${daten.questions.length}" aria-valuenow="0" data-balken><span></span></div>
-        </div>
-        <fieldset class="test-frage">
-          <legend tabindex="-1" data-frage></legend>
-          <div class="test-optionen" data-optionen></div>
-        </fieldset>
-        <div class="test-aktionen">
-          <button class="knopf knopf-rand" type="button" data-zurueck>Zurück</button>
-          <button class="knopf knopf-dunkel" type="button" data-weiter disabled>Weiter</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<section class="sand abschnitt test-ergebnis" id="ergebnis" aria-labelledby="ergebnis-titel" data-ergebnis hidden>
-  <div class="container">
-    <p class="kicker" data-kicker>${esc(r.kicker || 'Dein Ergebnis')}</p>
-    <h2 class="titel" id="ergebnis-titel" tabindex="-1">${betont(r.title || 'Dein Ergebnis')}</h2>
-    <p class="test-lead" data-intro></p>
-    <div class="test-stufe" data-stufe hidden></div>
-    <figure class="test-chart" data-chart></figure>
-    <div class="test-details" data-details></div>
-    <p class="test-lead test-outro" data-outro></p>
-    <p class="test-note" data-note></p>
-    <div class="knoepfe test-ende">
-      ${r.cta && r.cta.href ? `<a class="knopf knopf-honig" href="${esc(r.cta.href)}">${esc(r.cta.text || 'Im Erstgespräch vertiefen')}</a>` : ''}
-      <button class="knopf knopf-rand" type="button" data-mail>Per E-Mail an mich senden</button>
-      <button class="knopf knopf-rand" type="button" data-neu>Neu starten</button>
-      <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
-    </div>
-  </div>
-</section>
-${kontaktband()}
-<script type="application/json" id="antreiber-daten">${json}</script>`;
+${T.kopf(cfg)}
+${T.abschnitte(cfg, daten, testsCfg, kontaktband())}`;
 }
 
 function methodikSeite(cfg) {
@@ -589,15 +533,7 @@ ${kontaktband()}`;
 }
 
 function testUebersicht(cfg) {
-  const karten = sichtbareTests.map((e) => `
-      <li class="karte">
-        <div class="karte-inhalt">
-          ${e.kurz ? `<ul class="schlagworte"><li>${esc(e.kurz)}</li></ul>` : ''}
-          <h2>${esc(e.titel)}</h2>
-          ${e.beschreibung ? `<p>${esc(e.beschreibung)}</p>` : ''}
-          <a class="knopf knopf-dunkel" href="${seiteVon(e.id)}">Test starten<span class="sr-only">: ${esc(e.titel)}</span></a>
-        </div>
-      </li>`).join('');
+  const karten = sichtbareTests.map((e) => T.kachel(e, seiteVon(e.id))).join('');
   const kartenKarte = kartenSichtbar ? `
       <li class="karte">
         <div class="karte-inhalt">
