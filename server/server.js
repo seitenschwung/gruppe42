@@ -145,6 +145,7 @@ if (require.main === module) {
     api: {
       routes: {
         ...require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }).routes,
+        ...require('./editor-auth').createEditorAuth({ env: process.env, fetch }).routes,
         ...require('./webhook').createWebhook({
           env: process.env,
           log: console.log,
