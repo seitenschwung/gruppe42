@@ -1,4 +1,4 @@
-// Editor-Kern: Felderliste, Änderungen und PR-Text für den Test-Editor. Ohne DOM, ohne Node-APIs.
+// Editor-Kern: Felderliste, Labels, Änderungen und Entwürfe für den Test-Editor. Ohne DOM, ohne Node-APIs.
 (function (root, factory) {
   'use strict';
   if (typeof module === 'object' && module.exports) module.exports = factory(require('../../../../lib/testwaechter'));
@@ -130,9 +130,13 @@
     return !s || normal(feld.label).includes(s) || normal(wert).includes(s);
   }
 
+  // Live nicht änderbar (nur als Info gezeigt): Name des Tests und Titel des Eintrags.
+  const FEST = ['test|name', 'eintrag|titel'];
+
   function baueFeld(datei, pfad, wert, kern) {
     const betont = Testwaechter.BETONT_ERLAUBT.includes(muster(pfad));
-    return Object.assign({ datei, pfad, gruppe: 'start', label: pfad, wert, zeilen: zeilen(wert), betont }, kern);
+    const fest = FEST.includes(datei + '|' + pfad);
+    return Object.assign({ datei, pfad, gruppe: 'start', label: pfad, wert, zeilen: zeilen(wert), betont, fest }, kern);
   }
 
   // Alle bearbeitbaren Textfelder (Test-JSON und Eintrag in gruppe42.json), genau die, die der Wächter freigibt.
@@ -149,33 +153,18 @@
     return aus.sort((a, b) => GRUPPEN.indexOf(a.gruppe) - GRUPPEN.indexOf(b.gruppe));
   }
 
-  // vorher/nachher: je ein Objekt, oder {test, eintrag} wenn die Felder beide Dateien betreffen.
+  // vorher/nachher: je ein Objekt, oder {test, eintrag} wenn die Felder beide Dateien betreffen. Feste Felder zählen nicht.
   function aenderungen(vorher, nachher, felderListe) {
     const paar = (o) => o && (o.test !== undefined || o.eintrag !== undefined) && !('categories' in o);
     const quelle = (o, datei) => (paar(o) ? o[datei] : o);
     const aus = [];
     for (const f of felderListe) {
+      if (f.fest) continue;
       const alt = hole(quelle(vorher, f.datei), f.pfad);
       const neu = hole(quelle(nachher, f.datei), f.pfad);
-      if (alt !== neu) aus.push({ label: f.label, alt, neu });
+      if (alt !== neu) aus.push({ datei: f.datei, pfad: f.pfad, label: f.label, alt, neu });
     }
     return aus;
-  }
-
-  // Eigene Änderungen (start -> jetzt) auf einen frisch geladenen Stand anwenden. Alles andere im frischen Stand
-  // bleibt erhalten. Hat sich ein geändertes Feld inzwischen auch dort geändert (oder fehlt es), gibt es {konflikt: pfad}.
-  function wendeAn(frisch, start, jetzt, felderListe) {
-    let daten = frisch;
-    for (const f of felderListe) {
-      const alt = hole(start, f.pfad);
-      const neu = hole(jetzt, f.pfad);
-      if (alt === neu) continue;
-      const da = hole(frisch, f.pfad);
-      if (da === neu) continue; // dort steht schon der eigene neue Wert
-      if (da !== alt) return { konflikt: f.pfad };
-      daten = setze(daten, f.pfad, neu);
-    }
-    return { daten };
   }
 
   // Gespeicherten Entwurf ({werte, basis}, Schlüssel "datei|pfad") auf einen geladenen Stand {test, eintrag} anwenden.
@@ -189,6 +178,7 @@
     const basis = (entwurf && istObjekt(entwurf.basis)) ? entwurf.basis : {};
     for (const f of felderListe) {
       const k = f.datei + '|' + f.pfad;
+      if (f.fest) continue;
       if (!Object.prototype.hasOwnProperty.call(werte, k) || typeof werte[k] !== 'string') continue;
       const da = hole(daten[f.datei], f.pfad);
       if (werte[k] === da) continue;
@@ -199,24 +189,5 @@
     return { daten, angewendet, verworfen };
   }
 
-  // Verhindert Erwähnungen (@name) und Querverweise (#12, owner/repo#12) in GitHub-Texten.
-  const entschaerfe = (t) => String(t).replace(/@/g, '@\u200b').replace(/#(?=\d)/g, '#\u200b');
-  const einzeilig = (t) => entschaerfe(String(t).replace(/\s*[\r\n]+\s*/g, ' '));
-
-  function prText(testTitel, liste, notiz) {
-    const n = liste.length;
-    const titel = 'Inhalt: ' + einzeilig(testTitel) + ' (' + n + (n === 1 ? ' Änderung' : ' Änderungen') + ')';
-    const teile2 = [];
-    if (notiz && notiz.trim()) teile2.push(entschaerfe(notiz.trim()));
-    teile2.push(liste.map((a) => '- ' + einzeilig(a.label) + ': „' + einzeilig(a.alt) + '“ → „' + einzeilig(a.neu) + '“').join('\n'));
-    teile2.push('Erstellt mit dem Test-Editor.');
-    return { titel, text: teile2.join('\n\n') };
-  }
-
-  // Darf ein offener PR weiterverwendet werden? Nur wenn jeder berührte Pfad erlaubt ist. 100 Einträge = evtl. abgeschnitten.
-  function nurErlaubteDateien(dateien, erlaubt) {
-    return Array.isArray(dateien) && dateien.length < 100 && dateien.every((f) => erlaubt.includes(f));
-  }
-
-  return { felder, setze, aenderungen, wendeAn, entwurfAnwenden, prText, nurErlaubteDateien, zeilen, passt };
+  return { felder, setze, aenderungen, entwurfAnwenden, zeilen, passt };
 });

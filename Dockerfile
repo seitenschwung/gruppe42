@@ -16,7 +16,7 @@ FROM node:20-alpine AS test
 WORKDIR /app
 COPY server/ server/
 COPY site/ site/
-RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/editor-auth.test.js server/webhook.test.js server/orders.test.js server/inhalte.test.js server/seiten.test.js server/passkey.test.js server/editor-sitzung.test.js server/editor-api.test.js site/vorlagen/beratung/src/js/antreiber.test.js site/vorlagen/beratung/src/js/editor-kern.test.js site/vorlagen/beratung/src/js/editor-github.test.js
+RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/editor-auth.test.js server/webhook.test.js server/orders.test.js server/inhalte.test.js server/seiten.test.js server/passkey.test.js server/editor-sitzung.test.js server/editor-api.test.js site/vorlagen/beratung/src/js/antreiber.test.js site/vorlagen/beratung/src/js/editor-kern.test.js site/vorlagen/beratung/src/js/editor-api.test.js site/vorlagen/beratung/src/js/editor-passkey.test.js
 
 # --- 3) Serve: Node server for static files and later /api/* ---
 FROM node:20-alpine

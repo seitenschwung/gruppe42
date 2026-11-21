@@ -167,7 +167,8 @@ const editorJs = tests.length ? [
   ['testwaechter', path.join(ROOT, '../../lib/testwaechter.js')],
   ['testseite', path.join(ROOT, '../../lib/testseite.js')],
   ['editor-kern', path.join(ROOT, 'src/js/editor-kern.js')],
-  ['editor-github', path.join(ROOT, 'src/js/editor-github.js')],
+  ['editor-api', path.join(ROOT, 'src/js/editor-api.js')],
+  ['editor-passkey', path.join(ROOT, 'src/js/editor-passkey.js')],
   ['editor-vorschau', path.join(ROOT, 'src/js/editor-vorschau.js')],
   ['editor', path.join(ROOT, 'src/js/editor.js')],
 ].map(([name, quelle]) => {

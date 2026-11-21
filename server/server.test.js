@@ -72,7 +72,7 @@ test('methods, api placeholder, access log', async () => {
   assert.ok(!lines.some((l) => l.includes('/healthz')));
 });
 
-const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 test('editor_csp', async () => {
   for (const p of ['/editor/', '/editor/nope', '/editor']) {

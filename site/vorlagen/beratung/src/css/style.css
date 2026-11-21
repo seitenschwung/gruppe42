@@ -571,8 +571,19 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
 .ed-dialog > * + * { margin-top: 14px; }
 .ed-liste { padding-left: 20px; max-height: 40vh; overflow: auto; font-size: 15px; display: grid; gap: 8px; }
 .ed-alt { text-decoration: line-through; color: var(--stein); }
+.ed-info { margin-block: 4px 16px; padding: 14px 18px; border-radius: 12px; background: #fff; border: 1px solid var(--linie-2); }
+.ed-fest { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); gap: 4px 16px; margin-bottom: 8px; font-size: 15px; }
+.ed-fest dt { font-weight: 600; }
+.ed-fest dd { margin: 0; }
+.ed-info p { margin: 0; }
+.ed-verlauf { list-style: none; padding: 0; display: grid; gap: 12px; margin-block: 16px 24px; max-width: 760px; }
+.ed-verlauf-eintrag { padding: 16px 20px; border-radius: 16px; background: #fff; border: 1px solid var(--linie-2); display: grid; gap: 8px; justify-items: start; }
+.ed-verlauf-eintrag ul { padding-left: 20px; font-size: 15px; }
+.ed-wahl .knoepfe { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 899px) {
   .ed-modus.ed-umschalter { display: flex; }
+  .ed-fest { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .ed-fest dd + dt { margin-top: 8px; }
   .ed-flaeche { grid-template-columns: minmax(0, 1fr); }
   .ed-aktionen { position: static; }
   .ed-flaeche .ed-spalte-vorschau { position: static; display: none; }

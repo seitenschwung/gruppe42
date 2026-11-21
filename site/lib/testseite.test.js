@@ -72,7 +72,7 @@ test('editor_seite', () => {
     assert.doesNotMatch(editor, /rel="canonical"|og:url/);
     assert.match(editor, /Für den Editor wird JavaScript benötigt\./);
     // Editor-Skripte nur auf der Editor-Seite, je mit ?v=-Hash, und als Dateien vorhanden
-    for (const js of ['testwaechter', 'testseite', 'editor-kern', 'editor-github', 'editor-vorschau', 'editor']) {
+    for (const js of ['testwaechter', 'testseite', 'editor-kern', 'editor-api', 'editor-passkey', 'editor-vorschau', 'editor']) {
       assert.match(editor, new RegExp(`<script src="js/${js}\\.js\\?v=[0-9a-f]{8}" defer></script>`), js);
       assert.ok(fs.existsSync(path.join(dist, 'js', js + '.js')), js + '.js fehlt');
     }

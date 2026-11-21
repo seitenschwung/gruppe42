@@ -1,45 +1,35 @@
-/* Test-Editor (/editor/): Texte der Selbsttests bearbeiten, prüfen, in der Vorschau ansehen und zur Freigabe senden.
-   Ablauf: abgemeldet -> testwahl -> bearbeiten -> gesendet. Das Token liegt nur in einer Variablen (nie im Speicher
-   des Browsers); ungesendete Entwürfe (nur Texte) liegen in localStorage. Alles DOM entsteht über textContent; Markup
-   für die Vorschau kommt ausschließlich aus Testseite (maskiert). */
+/* Test-Editor (/editor/): Texte der Selbsttests bearbeiten, prüfen, in der Vorschau ansehen und live speichern.
+   Ansichten: abgemeldet, einrichten (#einladung=), testwahl, bearbeiten, verlauf. Anmeldung per Passkey; die Sitzung
+   ist ein HttpOnly-Cookie (für das Skript unsichtbar). Ungespeicherte Entwürfe (nur Texte) liegen in localStorage.
+   Alles DOM entsteht über textContent; Markup für die Vorschau kommt ausschließlich aus Testseite (maskiert). */
 (function () {
   'use strict';
   const d = document;
-  const W = window.Testwaechter, K = window.EditorKern, G = window.EditorGithub, V = window.EditorVorschau;
+  const W = window.Testwaechter, K = window.EditorKern, A = window.EditorApi, P = window.EditorPasskey, V = window.EditorVorschau;
   const app = d.querySelector('[data-ed-app]');
   const meldungEl = d.querySelector('[data-ed-meldung]');
-  if (!app || !meldungEl || !W || !K || !G || !V || !window.Testseite) return;
+  if (!app || !meldungEl || !W || !K || !A || !P || !V || !window.Testseite) return;
 
-  // fetch wird einmal beim Laden festgehalten; spätere Änderungen an window.fetch (z. B. durch Fremdskripte) wirken nicht.
-  const holeFetch = window.fetch.bind(window);
-  const REPO = 'seitenschwung/gruppe42';
-  const KUNDE = 'site/kunden/gruppe42/';
-  const PFAD_GRUPPE = KUNDE + 'gruppe42.json';
-  const PFAD_STRUKTUR = KUNDE + 'tests/struktur.json';
+  // fetch und credentials werden einmal beim Laden festgehalten; spätere Änderungen (z. B. durch Fremdskripte) wirken nicht.
+  const api = A.erstelle(window.fetch.bind(window));
+  const nav = { credentials: navigator.credentials };
+  const passkeyDa = P.unterstuetzt(window);
   const SPEICHER = 'g42-editor-entwurf-';
-  const LOGIN = '/api/editor/login';
-  const API_TOKEN = '/api/editor/token';
-  const API_ABMELDEN = '/api/editor/abmelden';
-  const MELDUNG_FREMD = 'Es gibt einen offenen Vorschlag mit weiteren Änderungen. Seitenschwung kümmert sich darum.';
   const GRUPPEN = [
     ['start', 'Startseite des Tests'], ['skala', 'Antwortskala'], ['fragen', 'Fragen'],
     ['ergebnis', 'Ergebnis: allgemein'], ['stufen', 'Ergebnis-Stufen'], ['bereiche', 'Ergebnis je Bereich'],
   ];
+  const AUS = {
+    aus: 'Der Editor ist derzeit nicht eingeschaltet. Bitte wenden Sie sich an Seitenschwung.',
+    nicht_schreibbar: 'Speichern ist gerade nicht möglich, weil der Datenspeicher nicht erreichbar ist. Ihr Entwurf bleibt erhalten. Bitte wenden Sie sich an Seitenschwung.',
+    overlay_unlesbar: 'Die gespeicherten Änderungen können gerade nicht gelesen werden. Bitte wenden Sie sich an Seitenschwung.',
+    gesperrt: 'Gerade wird an anderer Stelle gespeichert. Bitte versuchen Sie es in einem Moment erneut; Ihr Entwurf bleibt erhalten.',
+  };
 
-  const sitzung = { token: null, ablauf: 0, login: '', darfSchreiben: false };
-  let stand = null; // { gruppe, struktur } von main
+  let wer = '';
+  let stand = null; // { tests: [{id, titel, sichtbar, daten, eintrag, verwaist}], testsCfg } von /api/editor/stand
   let t = null; // aktuell bearbeiteter Test
   let zaehler = 0;
-
-  const ctx = () => ({ token: sitzung.token, fetch: holeFetch, repo: REPO, basis: 'main' });
-  async function gh(name, ...args) {
-    if (sitzung.ablauf && Date.now() > sitzung.ablauf) {
-      const e = new Error('Anmeldung abgelaufen');
-      e.art = 'abgelaufen';
-      throw e;
-    }
-    return G[name](ctx(), ...args);
-  }
 
   // --- kleine DOM-Helfer (nur textContent) -------------------------------------------------
   function el(tag, attrs, ...kinder) {
@@ -55,12 +45,15 @@
     return e;
   }
   const knopf = (text, klasse, onclick, attrs) => el('button', Object.assign({ type: 'button', klasse: 'knopf ' + klasse, text, onclick }, attrs));
-  const loginLink = (text) => el('a', { klasse: 'knopf knopf-dunkel', href: LOGIN, text: text || 'Mit GitHub anmelden' });
+  const seitenLink = (id, text) => el('a', { klasse: 'knopf knopf-rand ed-klein', href: '/' + encodeURIComponent(id) + '.html',
+    target: '_blank', rel: 'noopener', text: text || 'Testseite ansehen' });
 
   function meldung(text, art, ...extra) {
     meldungEl.replaceChildren();
     meldungEl.className = 'ed-meldung' + (text ? ' ed-meldung-' + (art || 'info') : '');
     if (text) meldungEl.append(el('p', { text }), ...extra);
+    // Die Meldung steht über dem Formular; liegt sie außerhalb des sichtbaren Bereichs, dorthin scrollen.
+    if (text && meldungEl.getBoundingClientRect().top < 0) meldungEl.scrollIntoView({ block: 'center' });
   }
   // Neue Ansicht; der Fokus geht auf die Überschrift (nicht beim ersten Aufbau der Seite).
   let ersteAnsicht = true;
@@ -71,8 +64,13 @@
     if (h && !ersteAnsicht) h.focus();
     ersteAnsicht = false;
   }
+  // Knöpfe während einer Anfrage sperren (gegen Doppelklicks).
+  async function gesperrt(knoepfe, fn) {
+    knoepfe.forEach((b) => { b.disabled = true; });
+    try { return await fn(); } finally { knoepfe.forEach((b) => { b.disabled = false; }); }
+  }
 
-  // --- Entwurf (nur Texte, nie das Token) -------------------------------------------------
+  // --- Entwurf (nur Texte) ------------------------------------------------------------------
   const schluessel = (f) => f.datei + '|' + f.pfad;
   function leseEntwurf(id) {
     try { return JSON.parse(localStorage.getItem(SPEICHER + id) || 'null'); } catch (e) { return null; }
@@ -81,6 +79,7 @@
     // basis: Wert beim Laden; beim Wiederherstellen wird ein Feld nur übernommen, wenn er noch gilt.
     const werte = {}, basis = {};
     for (const f of t.felder) {
+      if (f.fest) continue;
       const w = wert(t.jetzt, f);
       if (w !== wert(t.orig, f)) { werte[schluessel(f)] = w; basis[schluessel(f)] = wert(t.orig, f); }
     }
@@ -90,134 +89,179 @@
     } catch (e) { /* privater Modus: Entwurf bleibt nur bis zum Schließen */ }
   }
   function loescheEntwurf(id) { try { localStorage.removeItem(SPEICHER + id); } catch (e) { /* egal */ } }
-
-  // --- Fehler ---------------------------------------------------------------------------
-  function fehler(e) {
-    const art = e && e.art;
-    if (art === 'abgelaufen') {
-      sitzung.token = null;
-      zeigeAbgemeldet();
-      return meldung('Ihre Anmeldung ist abgelaufen. Bitte erneut anmelden. Ihr Entwurf bleibt gespeichert.', 'fehler', loginLink('Erneut anmelden'));
-    }
-    if (art === 'konflikt') {
-      return meldung('Ihre Änderung konnte nicht gespeichert werden, weil sich die Inhalte in der Zwischenzeit geändert haben. ' +
-        'Ihr Entwurf bleibt erhalten. Seitenschwung kümmert sich darum; bitte geben Sie kurz Bescheid.', 'fehler');
-    }
-    if (art === 'netz') return meldung('Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', 'fehler');
-    meldung('Das hat leider nicht geklappt' + (e && e.status ? ' (Fehler ' + e.status + ')' : '') +
-      '. Ihr Entwurf bleibt erhalten. Bitte versuchen Sie es später erneut oder wenden Sie sich an Seitenschwung.', 'fehler');
-  }
-
-  // --- Ansicht: abgemeldet -----------------------------------------------------------------
   function hatEntwuerfe() {
     try { return Object.keys(localStorage).some((k) => k.startsWith(SPEICHER)); } catch (e) { return false; }
   }
+
+  // --- Fehler ---------------------------------------------------------------------------
+  // Allgemeine Fehlerbehandlung; Konflikt und ungültige Texte behandeln Speichern und Rückgängig selbst.
+  function fehler(e) {
+    const art = e && e.art;
+    if (art === 'anmeldung') {
+      zeigeAbgemeldet();
+      return meldung('Bitte erneut anmelden. Ihr Entwurf bleibt in diesem Browser gespeichert.', 'fehler');
+    }
+    if (art === 'aus') return meldung(AUS[e.grund] || AUS.aus, 'fehler');
+    if (art === 'zuviele') return meldung('Zu viele Anfragen in kurzer Zeit. Bitte warten Sie eine Minute und versuchen Sie es dann erneut.', 'fehler');
+    if (art === 'herkunft') return meldung('Die Anfrage wurde abgelehnt. Bitte öffnen Sie den Editor direkt über die Adresse der Website.', 'fehler');
+    if (art === 'netz') return meldung('Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', 'fehler');
+    if (art === 'unbekannt') {
+      zurTestwahl();
+      return meldung('Diesen Test gibt es nicht mehr.', 'fehler');
+    }
+    if (art === 'konflikt') return meldung('Das Feld „' + labelFuer(e.pfad) + '“ wurde inzwischen geändert. Bitte laden Sie den Test neu.', 'fehler');
+    meldung('Das hat leider nicht geklappt' + (e && e.status ? ' (Fehler ' + e.status + ')' : '') +
+      '. Ihr Entwurf bleibt erhalten. Bitte versuchen Sie es später erneut oder wenden Sie sich an Seitenschwung.', 'fehler');
+  }
+  // Label eines Feldes für Meldungen (Pfad aus der Server-Antwort, ohne Dateiangabe).
+  function labelFuer(pfad, datei) {
+    const f = t && t.felder.find((x) => x.pfad === pfad && (!datei || x.datei === datei));
+    return f ? f.label : (pfad || 'unbekannt');
+  }
+
+  // --- Ansichten: abgemeldet und einrichten ----------------------------------------------------
+  const keinPasskey = () => !passkeyDa && el('p', { klasse: 'shop-hinweis', role: 'note', text: 'Dieser Browser unterstützt keine Passkeys.' });
+
   function zeigeAbgemeldet() {
     t = null;
+    stand = null;
+    const k = knopf('Mit Passkey anmelden', 'knopf-dunkel', () => gesperrt([k], anmelden).catch(passkeyFehler), { disabled: !passkeyDa });
     ansicht(el('div', { klasse: 'ed-karte' },
       el('h2', { text: 'Anmelden' }),
-      el('p', { text: 'Melden Sie sich mit Ihrem GitHub-Konto an, um die Texte der Selbsttests zu bearbeiten. ' +
-        'Ihre Änderungen gehen erst online, wenn Seitenschwung sie freigegeben hat.' }),
-      hatEntwuerfe() && el('p', { klasse: 'ed-leise', text: 'Ein ungesendeter Entwurf ist in diesem Browser gespeichert und nach der Anmeldung wieder da.' }),
-      loginLink()));
+      el('p', { text: 'Melden Sie sich mit Ihrem Passkey an, um die Texte der Selbsttests zu bearbeiten. ' +
+        'Gespeicherte Änderungen sind sofort auf der Website sichtbar.' }),
+      hatEntwuerfe() && el('p', { klasse: 'ed-leise', text: 'Ein ungespeicherter Entwurf ist in diesem Browser gespeichert und nach der Anmeldung wieder da.' }),
+      keinPasskey(), k));
+  }
+
+  function zeigeEinrichten(code) {
+    t = null;
+    const k = knopf('Passkey einrichten', 'knopf-dunkel', () => gesperrt([k], () => einrichten(code)).catch(passkeyFehler), { disabled: !passkeyDa });
+    ansicht(el('div', { klasse: 'ed-karte' },
+      el('h2', { text: 'Passkey einrichten' }),
+      el('p', { text: 'Mit einem Passkey melden Sie sich künftig ohne Passwort an: mit Fingerabdruck, Gesichtserkennung ' +
+        'oder der PIN Ihres Geräts. Der Passkey bleibt auf Ihrem Gerät oder in Ihrem Passwort-Manager.' }),
+      el('p', { klasse: 'ed-leise', text: 'Der Einladungslink gilt nur einmal. Danach melden Sie sich mit „Mit Passkey anmelden“ an.' }),
+      keinPasskey(),
+      el('div', { klasse: 'knoepfe' }, k, knopf('Ich habe schon einen Passkey', 'knopf-rand', () => { meldung(''); zeigeAbgemeldet(); }))));
+  }
+
+  // Fehler bei Einrichten und Anmelden: hier bedeuten 400/401 etwas anderes als "Sitzung abgelaufen".
+  function passkeyFehler(e) {
+    const art = e && e.art;
+    if (art === 'abgebrochen') return meldung('Abgebrochen. Sie können es jederzeit erneut versuchen.', 'info');
+    if (art === 'vorhanden') return meldung('Auf diesem Gerät ist bereits ein Passkey für den Editor eingerichtet. Bitte melden Sie sich damit an.', 'fehler');
+    if (art === 'passkey') return meldung('Der Passkey konnte nicht verwendet werden. Bitte versuchen Sie es erneut.', 'fehler');
+    if (art === 'anmeldung') return meldung('Die Anmeldung hat nicht geklappt. Bitte versuchen Sie es erneut.', 'fehler');
+    if (art === 'fehler' && e.code === 'einladung') {
+      zeigeAbgemeldet();
+      return meldung('Dieser Einladungslink ist ungültig, abgelaufen oder wurde schon verwendet. Bitte fordern Sie bei Seitenschwung einen neuen an.', 'fehler');
+    }
+    if (art === 'fehler' && e.code === 'registrierung') return meldung('Der Passkey konnte nicht eingerichtet werden. Bitte versuchen Sie es erneut.', 'fehler');
+    return fehler(e);
+  }
+
+  async function einrichten(code) {
+    meldung('Passkey wird eingerichtet …');
+    const s = await api.registrierenStart(code);
+    const antwort = await P.registriere(s.optionen, nav);
+    await api.registrierenEnde(code, antwort);
+    await starte('Ihr Passkey ist eingerichtet. Sie sind angemeldet.');
+  }
+
+  async function anmelden() {
+    meldung('Anmeldung läuft …');
+    const s = await api.anmeldenStart();
+    const antwort = await P.melde(s.optionen, nav);
+    await api.anmeldenEnde(antwort);
+    await starte('');
+  }
+
+  // Sitzung beim Server beenden (Ergebnis egal). Der Entwurf bleibt gespeichert.
+  async function abmelden() {
+    try { await api.abmelden(); } catch (e) { /* Abmelden gilt lokal trotzdem */ }
+    zeigeAbgemeldet();
+    meldung('Sie sind abgemeldet.', 'info');
   }
 
   // --- Ansicht: Testwahl ---------------------------------------------------------------------
   function kopfleiste() {
     return el('div', { klasse: 'ed-leiste' },
-      el('p', { klasse: 'ed-leise', text: 'Angemeldet als ' + sitzung.login }),
+      el('p', { klasse: 'ed-leise', text: 'Angemeldet als ' + wer }),
       knopf('Abmelden', 'knopf-rand ed-klein', abmelden));
-  }
-  // Token beim Server widerrufen (Ergebnis egal), dann lokal vergessen. Der Entwurf bleibt gespeichert.
-  async function abmelden() {
-    const tok = sitzung.token;
-    sitzung.token = null;
-    sitzung.ablauf = 0;
-    meldung('');
-    zeigeAbgemeldet();
-    if (!tok) return;
-    try {
-      await holeFetch(API_ABMELDEN, {
-        method: 'POST', credentials: 'same-origin',
-        headers: { 'X-G42-Editor': '1', 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tok }),
-      });
-    } catch (e) { /* Abmelden gilt lokal trotzdem */ }
-  }
-  function keinZugriff() {
-    return !sitzung.darfSchreiben && el('p', { klasse: 'shop-hinweis', role: 'note',
-      text: 'Kein Zugriff: Ihr Konto darf keine Änderungen senden. Sie können die Texte ansehen und ausprobieren; ' +
-        'zum Senden wenden Sie sich bitte an Seitenschwung.' });
   }
 
   function zeigeTestwahl() {
     t = null;
     const liste = el('ul', { klasse: 'karten ed-wahl' });
-    stand.gruppe.tests.eintraege.forEach((e, i) => {
+    stand.tests.forEach((x) => {
+      const e = x.eintrag || {};
       const marken = el('ul', { klasse: 'schlagworte' },
         e.kurz && el('li', { text: e.kurz }),
-        e.sichtbar !== true && el('li', { text: 'Nicht veröffentlicht' }),
-        leseEntwurf(e.id) && el('li', { text: 'Entwurf gespeichert' }));
+        x.sichtbar !== true && el('li', { text: 'Nicht veröffentlicht' }),
+        leseEntwurf(x.id) && el('li', { text: 'Entwurf gespeichert' }));
       liste.append(el('li', { klasse: 'karte' }, el('div', { klasse: 'karte-inhalt' }, marken,
-        el('h3', { text: e.titel }),
+        el('h3', { text: x.titel }),
         e.beschreibung && el('p', { text: e.beschreibung }),
-        knopf('Bearbeiten', 'knopf-dunkel', () => oeffneTest(i).catch(fehler), { 'aria-label': 'Bearbeiten: ' + e.titel }))));
+        el('div', { klasse: 'knoepfe' },
+          knopf('Bearbeiten', 'knopf-dunkel', () => { meldung(''); oeffneTest(x.id); }, { 'aria-label': 'Bearbeiten: ' + x.titel }),
+          knopf('Verlauf', 'knopf-rand', () => zeigeVerlauf(x.id).catch(fehler), { 'aria-label': 'Verlauf: ' + x.titel })))));
     });
-    ansicht(kopfleiste(), keinZugriff(), el('h2', { text: 'Welchen Test möchten Sie bearbeiten?' }), liste);
+    ansicht(kopfleiste(), el('h2', { text: 'Welchen Test möchten Sie bearbeiten?' }), liste);
   }
 
-  // --- Test laden ------------------------------------------------------------------------
+  // --- Test öffnen ------------------------------------------------------------------------
   const wert = (stand_, f) => {
     let w = stand_[f.datei];
     f.pfad.replace(/([^.[\]]+)|\[(\d+)\]/g, (_, n, i) => { w = w == null ? w : w[n !== undefined ? n : Number(i)]; return ''; });
     return w;
   };
 
-  // Ein offener Vorschlag wird nur weiterverwendet, wenn er ausschließlich diesen Test (JSON + Liste) ändert.
-  async function istEigenerPr(pr, pfadDaten) {
-    const erlaubt = [pfadDaten, PFAD_GRUPPE];
-    const dateien = await gh('prDateien', pr.nummer);
-    return K.nurErlaubteDateien(dateien, erlaubt);
-  }
-
-  async function oeffneTest(i) {
-    meldung('Test wird geladen …');
-    const basisEintrag = stand.gruppe.tests.eintraege[i];
-    let pr = await gh('offenerPr', basisEintrag.id);
-    let gesperrt = false;
-    if (pr && !(await istEigenerPr(pr, KUNDE + basisEintrag.daten.replace(/^\.\//, '')))) { pr = null; gesperrt = true; }
-    // Wartet schon eine Änderung auf Freigabe, wird auf deren Stand weitergearbeitet (derselbe PR, neuer Commit).
-    const ref = pr ? pr.branch : undefined;
-    const gruppe = pr ? JSON.parse((await gh('ladeDatei', PFAD_GRUPPE, ref)).text) : stand.gruppe;
-    const eintrag = gruppe.tests.eintraege[i];
-    const pfadDaten = KUNDE + eintrag.daten.replace(/^\.\//, '');
-    const daten = JSON.parse((await gh('ladeDatei', pfadDaten, ref)).text);
+  // Öffnet den Test mit dem Stand aus /stand; vorspann: Meldungen, die vor den Entwurfshinweisen stehen;
+  // ohne: Label, das schon im Vorspann genannt ist (nicht noch einmal als verworfen melden).
+  function oeffneTest(id, vorspann, ohne) {
+    const x = stand.tests.find((y) => y.id === id);
+    if (!x) return fehler({ art: 'unbekannt' });
+    const orig = { test: x.daten, eintrag: x.eintrag };
     t = {
-      index: i, id: eintrag.id, pfadDaten, gruppe, pr, gesperrt, ansicht: 'fragen', spec: '', frage: null, timer: null,
-      orig: { test: daten, eintrag }, jetzt: { test: daten, eintrag }, felder: K.felder(daten, eintrag),
+      id, titel: x.titel, ansicht: 'fragen', spec: '', frage: null, timer: null, server: new Map(),
+      verwaist: Array.isArray(x.verwaist) ? x.verwaist : [],
+      orig, jetzt: orig, felder: K.felder(x.daten, x.eintrag),
+      // Struktur-Abdruck vom geladenen Stand: nur Texte sind änderbar, die Struktur bleibt wie sie ist.
+      soll: { test: W.struktur(x.daten, W.TEXTFELDER_TEST), eintrag: W.struktur(x.eintrag, W.TEXTFELDER_EINTRAG) },
     };
     const r = K.entwurfAnwenden(t.jetzt, leseEntwurf(t.id), t.felder);
     t.jetzt = r.daten;
-    const teile = [];
+    const teile = (vorspann || []).slice();
     if (r.angewendet) {
       teile.push('Ihr gespeicherter Entwurf wurde wiederhergestellt (' + r.angewendet +
         (r.angewendet === 1 ? ' geändertes Feld).' : ' geänderte Felder).'));
     }
-    if (r.verworfen.length) {
-      teile.push('Diese Felder wurden inzwischen geändert; Ihr Entwurf wurde dort nicht übernommen: ' + r.verworfen.join(', ') + '.');
+    const verworfen = r.verworfen.filter((l) => l !== ohne);
+    if (verworfen.length) {
+      teile.push('Diese Felder wurden inzwischen geändert; Ihr Entwurf wurde dort nicht übernommen: ' + verworfen.join(', ') + '.');
     }
-    if (gesperrt) teile.unshift(MELDUNG_FREMD + ' Senden ist derzeit nicht möglich.');
-    meldung(teile.join(' '), r.verworfen.length || gesperrt ? 'fehler' : 'info');
+    meldung(teile.join(' '), verworfen.length || (vorspann && vorspann.length) ? 'fehler' : 'info');
     zeigeBearbeiten();
   }
 
   // --- Ansicht: bearbeiten -----------------------------------------------------------------
+  // Name des Tests und Titel: live nicht änderbar, nur als Info.
+  function festInfo() {
+    const fest = t.felder.filter((f) => f.fest);
+    if (!fest.length) return null;
+    const liste = el('dl', { klasse: 'ed-fest' });
+    fest.forEach((f) => liste.append(el('dt', { text: f.label }), el('dd', { text: wert(t.jetzt, f) })));
+    return el('div', { klasse: 'ed-info' }, liste,
+      el('p', { klasse: 'ed-leise', text: 'Diese Angaben lassen sich hier nicht ändern. Bitte wenden Sie sich dafür an Seitenschwung.' }));
+  }
+
   function zeigeBearbeiten() {
     const formular = el('div', { klasse: 'ed-formular', id: 'ed-formular' });
     const istStufen = t.jetzt.test.result.kind === 'levels';
     t.dom = { felder: new Map(), gruppen: new Map() };
     for (const [g, titel] of GRUPPEN) {
-      const liste = t.felder.filter((f) => f.gruppe === g)
+      const liste = t.felder.filter((f) => f.gruppe === g && !f.fest)
         .sort((a, b) => (a.datei === b.datei ? 0 : a.datei === 'eintrag' ? -1 : 1));
       if (!liste.length) continue;
       const zahl = el('span', { klasse: 'ed-zahl' });
@@ -232,14 +276,14 @@
     }
 
     const suche = sucheBereich();
-    const sendeKnopf = knopf('Zur Freigabe senden', 'knopf-dunkel', oeffneDialog);
+    const sendeKnopf = knopf('Speichern und veröffentlichen', 'knopf-dunkel', oeffneDialog);
     t.dom.senden = sendeKnopf;
     t.dom.offen = el('p', { klasse: 'ed-leise', 'aria-live': 'polite' });
     t.dom.hinweise = el('ul', { klasse: 'ed-hinweise' });
     const aktionen = el('div', { klasse: 'ed-aktionen' },
       t.dom.hinweise, t.dom.offen,
-      t.gesperrt && el('p', { klasse: 'shop-hinweis', role: 'note', text: MELDUNG_FREMD + ' Senden ist derzeit nicht möglich; Sie können die Texte trotzdem bearbeiten und ansehen.' }),
-      el('div', { klasse: 'knoepfe' }, sitzung.darfSchreiben && !t.gesperrt && sendeKnopf,
+      el('div', { klasse: 'knoepfe' }, sendeKnopf,
+        knopf('Verlauf', 'knopf-rand', () => zeigeVerlauf(t.id).catch(fehler)),
         knopf('Anderen Test wählen', 'knopf-rand', zurTestwahl)));
 
     const vorschau = vorschauBereich();
@@ -253,9 +297,11 @@
       }, { 'aria-pressed': String(!zeigt) }));
     });
 
-    ansicht(kopfleiste(), keinZugriff(),
-      el('h2', { text: t.jetzt.eintrag.titel }),
-      t.pr && statusBox(true),
+    ansicht(kopfleiste(),
+      el('h2', { text: t.titel }),
+      festInfo(),
+      t.verwaist.length && el('p', { klasse: 'shop-hinweis', role: 'note', text: 'Einige früher gespeicherte Änderungen passen nicht mehr ' +
+        'zum aktuellen Stand der Website und werden nicht angezeigt. Seitenschwung kümmert sich darum.' }),
       umschalter, flaeche, dialog());
     waehleAnsicht(t.ansicht);
     pruefe();
@@ -353,12 +399,13 @@
 
   function setzeWert(f, w) {
     t.jetzt = Object.assign({}, t.jetzt, { [f.datei]: K.setze(t.jetzt[f.datei], f.pfad, w) });
+    t.server.delete(schluessel(f)); // Meldung des Servers gilt nur bis zur nächsten Änderung des Feldes
     speichereEntwurf();
     pruefe();
     planeVorschau();
   }
 
-  // Meldungen von Textregeln und Struktur, je Feld zugeordnet.
+  // Meldungen von Textregeln, Struktur und (nach einem abgelehnten Speichern) vom Server, je Feld zugeordnet.
   function meldungen() {
     const je = new Map();
     const allgemein = [];
@@ -370,7 +417,6 @@
     W.pruefeTexte(t.jetzt.test, W.TEXTFELDER_TEST).forEach((m) => dazu('test', m.pfad, m.meldung));
     W.pruefeTexte(t.jetzt.eintrag, W.TEXTFELDER_EINTRAG).forEach((m) => dazu('eintrag', m.pfad, m.meldung));
     const struktur = (datei, daten, soll, felder) => {
-      if (!soll) return allgemein.push('Für diesen Test fehlt der Abdruck der Struktur. Bitte wenden Sie sich an Seitenschwung.');
       W.pruefeStruktur(daten, soll, felder).forEach((m) => {
         const [pfad, ...rest] = m.split(': ');
         const platzhalter = m.includes('{names}');
@@ -380,9 +426,25 @@
         dazu(datei, pfad, text);
       });
     };
-    struktur('test', t.jetzt.test, (stand.struktur.tests || {})[t.jetzt.test.id], W.TEXTFELDER_TEST);
-    struktur('eintrag', t.jetzt.eintrag, (stand.struktur.eintraege || [])[t.index], W.TEXTFELDER_EINTRAG);
+    struktur('test', t.jetzt.test, t.soll.test, W.TEXTFELDER_TEST);
+    struktur('eintrag', t.jetzt.eintrag, t.soll.eintrag, W.TEXTFELDER_EINTRAG);
+    for (const [k, liste] of t.server) {
+      const [datei, pfad] = [k.slice(0, k.indexOf('|')), k.slice(k.indexOf('|') + 1)];
+      liste.forEach((text) => {
+        const schon = (je.get(k) || []).includes(text);
+        if (!schon) dazu(datei, pfad, text);
+      });
+    }
     return { je, allgemein };
+  }
+
+  // Meldungen aus einer 422-Antwort ({pfad, meldung}, ohne Datei) den Feldern zuordnen.
+  function serverMeldungen(liste) {
+    t.server = new Map();
+    for (const m of liste) {
+      const k = t.dom.felder.has('test|' + m.pfad) ? 'test|' + m.pfad : t.dom.felder.has('eintrag|' + m.pfad) ? 'eintrag|' + m.pfad : '|' + m.pfad;
+      (t.server.get(k) || t.server.set(k, []).get(k)).push(m.meldung);
+    }
   }
 
   function pruefe() {
@@ -420,10 +482,10 @@
     }
     const anzahl = K.aenderungen(t.orig, t.jetzt, t.felder).length;
     t.dom.senden.disabled = offen > 0 || anzahl === 0;
-    t.dom.senden.textContent = offen > 0 ? 'Noch ' + offen + (offen === 1 ? ' Hinweis offen' : ' Hinweise offen') : 'Zur Freigabe senden';
+    t.dom.senden.textContent = offen > 0 ? 'Noch ' + offen + (offen === 1 ? ' Hinweis offen' : ' Hinweise offen') : 'Speichern und veröffentlichen';
     // Live-Region nur bei geändertem Inhalt neu setzen (sonst Ansage bei jedem Tastendruck)
     const offenText = offen > 0 ? 'Noch ' + offen + (offen === 1 ? ' Hinweis' : ' Hinweise') + ' offen. Bitte beheben Sie zuerst die markierten Stellen.'
-      : anzahl === 0 ? 'Noch keine Änderungen.' : anzahl + (anzahl === 1 ? ' Änderung' : ' Änderungen') + ' bereit zum Senden.';
+      : anzahl === 0 ? 'Noch keine Änderungen.' : anzahl + (anzahl === 1 ? ' Änderung' : ' Änderungen') + ' bereit zum Veröffentlichen.';
     if (t.dom.offen.textContent !== offenText) t.dom.offen.textContent = offenText;
   }
 
@@ -504,7 +566,7 @@
       v.status.textContent = 'Die Vorschau ist gerade nicht verfügbar (die veröffentlichte Testseite konnte nicht geladen werden).';
       return;
     }
-    const doc = V.dokument(html, t.jetzt.eintrag, t.jetzt.test, t.gruppe.tests, t.ansicht, t.spec);
+    const doc = V.dokument(html, t.jetzt.eintrag, t.jetzt.test, stand.testsCfg, t.ansicht, t.spec);
     const frage = t.ansicht === 'fragen' && t.frage !== null ? t.frage : undefined;
     V.zeige(v.iframe, doc, { frage, halten: t.ansicht !== 'fragen' && v.zuletzt === t.ansicht + t.spec });
     v.zuletzt = t.ansicht + t.spec;
@@ -513,204 +575,172 @@
         : frage !== undefined ? 'Die Vorschau zeigt Frage ' + (frage + 1) + '.' : 'Startseite des Tests.';
   }
 
-  // --- Senden ---------------------------------------------------------------------------------
+  // --- Speichern und veröffentlichen ------------------------------------------------------------
   function dialog() {
-    const notiz = el('textarea', { id: 'ed-notiz', rows: '3', maxlength: '500' });
     const liste = el('ul', { klasse: 'ed-liste' });
     const fehlerP = el('p', { klasse: 'ed-fehler', role: 'alert' });
-    const dlg = el('dialog', { klasse: 'ed-dialog', 'aria-labelledby': 'ed-dialog-titel' },
-      el('h2', { id: 'ed-dialog-titel', text: 'Zur Freigabe senden' }),
-      el('p', { text: 'Diese Änderungen gehen an Seitenschwung. Sie werden online sichtbar, sobald sie freigegeben sind.' }),
-      liste,
-      el('label', { for: 'ed-notiz', text: 'Notiz an Seitenschwung (optional)' }), notiz, fehlerP,
-      el('div', { klasse: 'knoepfe' },
-        knopf('Jetzt senden', 'knopf-dunkel', () => sende(dlg, notiz.value).catch((e) => { dlg.close(); fehler(e); })),
-        knopf('Abbrechen', 'knopf-rand', () => dlg.close())));
+    const dlg = el('dialog', { klasse: 'ed-dialog', 'aria-labelledby': 'ed-dialog-titel' });
+    const ja = knopf('Speichern und veröffentlichen', 'knopf-dunkel', () => gesperrt([ja, nein], () => speichere(dlg)).catch((e) => { dlg.close(); fehler(e); }));
+    const nein = knopf('Abbrechen', 'knopf-rand', () => dlg.close());
+    dlg.append(
+      el('h2', { id: 'ed-dialog-titel', text: 'Speichern und veröffentlichen' }),
+      el('p', { text: 'Diese Änderungen sind nach dem Speichern sofort auf der Website sichtbar:' }),
+      liste, fehlerP, el('div', { klasse: 'knoepfe' }, ja, nein));
     t.dom.dialog = { dlg, liste, fehlerP };
     dlg.addEventListener('close', () => { if (t && t.dom.senden.isConnected) t.dom.senden.focus(); });
     return dlg;
   }
 
+  const altNeu = (a, vorher, nachher) => el('li', {}, el('strong', { text: a.label }), el('br'),
+    el('span', { klasse: 'ed-alt', text: vorher }), ' → ', el('span', { text: nachher }));
+
   function oeffneDialog() {
     const x = t.dom.dialog;
-    x.liste.replaceChildren(...K.aenderungen(t.orig, t.jetzt, t.felder).map((a) =>
-      el('li', {}, el('strong', { text: a.label }), el('br'), el('span', { klasse: 'ed-alt', text: a.alt }), ' → ', el('span', { text: a.neu }))));
+    x.liste.replaceChildren(...K.aenderungen(t.orig, t.jetzt, t.felder).map((a) => altNeu(a, a.alt, a.neu)));
     x.fehlerP.textContent = '';
     x.dlg.showModal();
   }
 
-  function konflikt() {
-    const e = new Error('Konflikt');
-    e.art = 'konflikt';
-    return e;
+  // Meldung nach Speichern oder Rückgängig: "Ist live." nur, wenn der Server die Seite neu erzeugt hat.
+  function erfolg(id, live, vorne) {
+    meldung((vorne ? vorne + ' ' : '') + (live ? 'Ist live.' : 'Gespeichert, wird gerade veröffentlicht – bitte Seite in einer Minute prüfen.'),
+      'info', seitenLink(id));
   }
 
-  // Eigene Änderungen auf den frisch gelesenen Stand anwenden; dieselben Regeln wie beim Bearbeiten prüfen.
-  function anwenden(gruppeFrisch, datenFrisch, strukturFrisch) {
-    const eintragFrisch = gruppeFrisch.tests && gruppeFrisch.tests.eintraege && gruppeFrisch.tests.eintraege[t.index];
-    if (!eintragFrisch || eintragFrisch.id !== t.id || eintragFrisch.daten !== t.orig.eintrag.daten) throw konflikt();
-    const nur = (datei) => t.felder.filter((f) => f.datei === datei);
-    const rT = K.wendeAn(datenFrisch, t.orig.test, t.jetzt.test, nur('test'));
-    const rE = K.wendeAn(eintragFrisch, t.orig.eintrag, t.jetzt.eintrag, nur('eintrag'));
-    if (rT.konflikt || rE.konflikt) throw konflikt();
-    const sollT = (strukturFrisch.tests || {})[rT.daten.id];
-    const sollE = (strukturFrisch.eintraege || [])[t.index];
-    const meldungen = !sollT || !sollE ? ['Abdruck fehlt'] : [].concat(
-      W.pruefeTexte(rT.daten, W.TEXTFELDER_TEST), W.pruefeTexte(rE.daten, W.TEXTFELDER_EINTRAG),
-      W.pruefeStruktur(rT.daten, sollT, W.TEXTFELDER_TEST), W.pruefeStruktur(rE.daten, sollE, W.TEXTFELDER_EINTRAG));
-    if (meldungen.length) throw konflikt();
-    const gruppe = rE.daten === eintragFrisch ? gruppeFrisch
-      : K.setze(gruppeFrisch, 'tests.eintraege[' + t.index + ']', rE.daten);
-    return { test: rT.daten, eintrag: rE.daten, gruppe };
-  }
-
-  async function sende(dlg, notiz) {
-    const knoepfe = dlg.querySelectorAll('button');
-    knoepfe.forEach((b) => { b.disabled = true; });
+  async function speichere(dlg) {
+    const liste = K.aenderungen(t.orig, t.jetzt, t.felder);
+    if (!liste.length) return dlg.close();
+    const id = t.id;
+    let r;
     try {
-      const liste = K.aenderungen(t.orig, t.jetzt, t.felder);
-      if (!liste.length) return dlg.close();
-      // Hat sich inzwischen etwas geändert (anderer PR offen oder der alte schon erledigt), nicht blind weiterschreiben.
-      const offen = await gh('offenerPr', t.id);
-      if ((offen && offen.nummer) !== (t.pr && t.pr.nummer)) {
-        dlg.close();
-        return meldung('In der Zwischenzeit hat sich der Stand dieses Tests geändert. Bitte öffnen Sie den Test erneut; ' +
-          'Ihr Entwurf bleibt erhalten.', 'fehler', knopf('Test neu öffnen', 'knopf-dunkel', () => oeffneTest(t.index).catch(fehler)));
-      }
-      if (offen && !(await istEigenerPr(offen, t.pfadDaten))) {
-        dlg.close();
-        t.gesperrt = true;
-        zeigeBearbeiten();
-        return meldung(MELDUNG_FREMD + ' Senden ist derzeit nicht möglich.', 'fehler');
-      }
-      // Frisch vom Ziel lesen (PR-Branch oder main, fester Commit), eigene Änderungen darauf anwenden, neu prüfen.
-      // So überschreibt der PR keine Änderungen, die inzwischen von anderer Seite gemacht wurden.
-      const kopf = await gh('kopf', t.pr ? t.pr.branch : 'main');
-      const lies = async (pfad) => JSON.parse((await gh('ladeDatei', pfad, kopf)).text);
-      const [gruppeFrisch, datenFrisch, strukturFrisch] = await Promise.all([lies(PFAD_GRUPPE), lies(t.pfadDaten), lies(PFAD_STRUKTUR)]);
-      const neu = anwenden(gruppeFrisch, datenFrisch, strukturFrisch);
-      const dateien = [];
-      if (neu.test !== datenFrisch) dateien.push({ pfad: t.pfadDaten, text: JSON.stringify(neu.test, null, 2) + '\n' });
-      if (neu.gruppe !== gruppeFrisch) dateien.push({ pfad: PFAD_GRUPPE, text: JSON.stringify(neu.gruppe, null, 2) + '\n' });
-      const text = K.prText(t.jetzt.eintrag.titel, liste, notiz);
-      const pr = await gh('sende', { testId: t.id, dateien, titel: text.titel, text: text.text, pr: t.pr || undefined, erwartet: kopf });
-      loescheEntwurf(t.id);
-      t.pr = pr;
-      t.gruppe = neu.gruppe;
-      t.orig = { test: neu.test, eintrag: neu.eintrag };
-      t.jetzt = t.orig;
-      t.felder = K.felder(neu.test, neu.eintrag);
-      dlg.close();
-      await ladeStand().catch(() => {});
-      zeigeGesendet();
-    } finally {
-      knoepfe.forEach((b) => { b.disabled = false; });
-    }
-  }
-
-  // --- Status und Ansicht: gesendet ---------------------------------------------------------
-  function statusBox(vorhanden) {
-    const zustand = el('strong', { text: 'Wird abgefragt …' });
-    const box = el('div', { klasse: 'ed-status', role: 'status' },
-      el('p', { text: vorhanden ? 'Für diesen Test wartet bereits eine Änderung auf Freigabe. Sie bearbeiten diesen Stand weiter; ' +
-        'beim Senden kommt Ihre Änderung dazu.' : 'Ihre Änderungen wurden zur Freigabe gesendet. Vielen Dank!' }),
-      el('p', {}, 'Stand: ', zustand),
-      el('div', { klasse: 'knoepfe' },
-        el('a', { klasse: 'knopf knopf-rand ed-klein', href: t.pr.url, target: '_blank', rel: 'noopener noreferrer', text: 'Änderung auf GitHub ansehen' }),
-        knopf('Status aktualisieren', 'knopf-rand ed-klein', () => aktualisiere(zustand))));
-    aktualisiere(zustand);
-    return box;
-  }
-
-  async function aktualisiere(zustand) {
-    zustand.textContent = 'Wird abgefragt …';
-    try {
-      const s = await gh('status', t.pr.nummer);
-      let text = s.zustand === 'offen' ? 'Wartet auf Freigabe' : s.zustand === 'gemergt' ? 'Freigegeben, geht live' : 'Geschlossen, nicht freigegeben';
-      if (s.zustand === 'gemergt' && s.mergeSha) {
-        try {
-          const r = await fetch('/version.txt', { cache: 'no-store' });
-          const v = r.ok ? (await r.text()).trim() : '';
-          if (v && v.startsWith(s.mergeSha)) text = 'Live';
-        } catch (e) { /* Seite gerade nicht erreichbar: bleibt bei „geht live“ */ }
-      }
-      zustand.textContent = text;
+      r = await api.speichern(id, liste.map((a) => ({ datei: a.datei, pfad: a.pfad, alt: a.alt, neu: a.neu })));
     } catch (e) {
-      zustand.textContent = 'Unbekannt';
-      fehler(e);
+      dlg.close();
+      if (e.art === 'konflikt') {
+        // Neu laden; der Entwurf bleibt und wird auf den neuen Stand angewendet (wo möglich).
+        const label = labelFuer(e.pfad);
+        const eigen = liste.find((a) => a.pfad === e.pfad);
+        await ladeStand();
+        return oeffneTest(id, ['Nicht gespeichert: Das Feld „' + label + '“ wurde inzwischen von anderer Seite geändert. Der aktuelle Stand wurde geladen.' +
+          (eigen ? ' Ihr Text dafür war: „' + eigen.neu + '“.' : '') + (liste.length > 1 ? ' Ihre übrigen Änderungen sind noch da.' : '')], label);
+      }
+      if (e.art === 'ungueltig') {
+        serverMeldungen(e.meldungen);
+        pruefe();
+        return meldung('Nicht gespeichert: Bitte beheben Sie zuerst die markierten Stellen.', 'fehler');
+      }
+      throw e;
     }
+    loescheEntwurf(id);
+    dlg.close();
+    await ladeStand();
+    oeffneTest(id);
+    erfolg(id, r.live === true, 'Gespeichert.');
   }
 
-  function zeigeGesendet() {
+  // --- Ansicht: Verlauf -------------------------------------------------------------------
+  const zeitText = (z) => {
+    const dt = new Date(z);
+    return isNaN(dt) ? String(z || '') : dt.toLocaleString('de-AT', { dateStyle: 'medium', timeStyle: 'short' });
+  };
+
+  async function zeigeVerlauf(id) {
+    const x = stand.tests.find((y) => y.id === id);
+    if (!x) return fehler({ art: 'unbekannt' });
+    meldung('Verlauf wird geladen …');
+    const v = await api.verlauf(id);
     meldung('');
-    ansicht(kopfleiste(), el('h2', { text: t.jetzt.eintrag.titel + ': gesendet' }), statusBox(false),
+    const felder = K.felder(x.daten, x.eintrag);
+    const label = (a) => { const f = felder.find((y) => y.datei === a.datei && y.pfad === a.pfad); return f ? f.label : a.pfad; };
+    const eintraege = Array.isArray(v.verlauf) ? v.verlauf : [];
+    const dlg = el('dialog', { klasse: 'ed-dialog', 'aria-labelledby': 'ed-rg-titel' });
+    const liste = el('ol', { klasse: 'ed-verlauf' });
+    eintraege.forEach((z) => {
+      const aend = Array.isArray(z.aenderungen) ? z.aenderungen : [];
+      const k = knopf('Rückgängig', 'knopf-rand ed-klein', () => fragRueckgaengig(dlg, id, z, aend, label, k),
+        { 'aria-label': 'Rückgängig: Änderung vom ' + zeitText(z.zeit) });
+      liste.append(el('li', { klasse: 'ed-verlauf-eintrag' },
+        el('p', {}, el('strong', { text: zeitText(z.zeit) }), ' · ' + (z.wer || 'unbekannt')),
+        el('ul', {}, ...aend.map((a) => el('li', { text: label(a) }))),
+        k));
+    });
+    ansicht(kopfleiste(),
+      el('h2', { text: 'Verlauf: ' + x.titel }),
+      eintraege.length ? el('p', { klasse: 'ed-leise', text: 'Die letzten gespeicherten Änderungen, neueste zuerst.' })
+        : el('p', { text: 'Für diesen Test wurde noch nichts gespeichert.' }),
+      liste,
       el('div', { klasse: 'knoepfe' },
-        knopf('Weiter bearbeiten', 'knopf-dunkel', zeigeBearbeiten),
-        knopf('Anderen Test wählen', 'knopf-rand', zurTestwahl)));
+        knopf('Bearbeiten', 'knopf-dunkel', () => { meldung(''); oeffneTest(id); }),
+        knopf('Anderen Test wählen', 'knopf-rand', zurTestwahl)),
+      dlg);
+  }
+
+  function fragRueckgaengig(dlg, id, z, aend, label, ausloeser) {
+    const fehlerP = el('p', { klasse: 'ed-fehler', role: 'alert' });
+    const ja = knopf('Rückgängig machen', 'knopf-dunkel', () => gesperrt([ja, nein], () => rueckgaengig(dlg, id, z.nr)).catch((e) => { dlg.close(); fehler(e); }));
+    const nein = knopf('Abbrechen', 'knopf-rand', () => dlg.close());
+    dlg.replaceChildren(
+      el('h2', { id: 'ed-rg-titel', text: 'Änderung rückgängig machen' }),
+      el('p', { text: 'Diese Felder bekommen wieder ihren vorherigen Text; das ist sofort auf der Website sichtbar:' }),
+      el('ul', { klasse: 'ed-liste' }, ...aend.map((a) => altNeu({ label: label(a) }, a.neu, a.alt))),
+      fehlerP, el('div', { klasse: 'knoepfe' }, ja, nein));
+    dlg.onclose = () => { if (ausloeser.isConnected) ausloeser.focus(); };
+    dlg.showModal();
+  }
+
+  async function rueckgaengig(dlg, id, nr) {
+    let r;
+    try {
+      r = await api.rueckgaengig(nr);
+    } catch (e) {
+      dlg.close();
+      if (e.art === 'konflikt') {
+        const x = stand.tests.find((y) => y.id === id);
+        const f = x && K.felder(x.daten, x.eintrag).find((y) => y.pfad === e.pfad);
+        return meldung('Rückgängig ist nicht möglich: Das Feld „' + (f ? f.label : e.pfad) + '“ wurde danach noch einmal geändert.', 'fehler');
+      }
+      if (e.art === 'ungueltig') return meldung('Rückgängig ist nicht möglich, weil der frühere Text heute nicht mehr gültig wäre.', 'fehler');
+      throw e;
+    }
+    dlg.close();
+    await ladeStand();
+    oeffneTest(id);
+    erfolg(id, r.live === true, 'Rückgängig gemacht.');
   }
 
   // --- Start --------------------------------------------------------------------------------
   async function ladeStand() {
-    const [g, s] = await Promise.all([gh('ladeDatei', PFAD_GRUPPE), gh('ladeDatei', PFAD_STRUKTUR)]);
-    stand = { gruppe: JSON.parse(g.text), struktur: JSON.parse(s.text) };
+    const s = await api.stand();
+    if (!s || !Array.isArray(s.tests)) throw Object.assign(new Error('Stand'), { art: 'fehler' });
+    stand = s;
+    wer = typeof s.wer === 'string' ? s.wer : '';
   }
   // Zurück zur Testwahl mit frischem Stand (Titel, Kurzinfos); scheitert das Laden, bleibt der bisherige.
   function zurTestwahl() {
     meldung('');
     ladeStand()
-      .catch((e) => { if (e && e.art === 'abgelaufen') throw e; })
-      .then(() => { if (sitzung.token) zeigeTestwahl(); })
+      .catch((e) => { if (e && e.art === 'anmeldung') throw e; })
+      .then(() => { if (stand) zeigeTestwahl(); })
       .catch(fehler);
   }
 
-  async function starte() {
-    meldung('Anmeldung wird geprüft …');
-    const z = await gh('zugriff');
-    sitzung.login = z.login;
-    sitzung.darfSchreiben = z.darfSchreiben;
+  async function starte(text) {
     await ladeStand();
-    meldung('');
+    meldung(text || '', 'info');
     zeigeTestwahl();
   }
 
-  // Token holen: das Cookie aus dem Login (HttpOnly, 60 s) wird einmal gegen das Token getauscht.
-  async function holeToken() {
-    meldung('Anmeldung wird geprüft …');
-    let a;
-    try {
-      a = await holeFetch(API_TOKEN, { method: 'POST', credentials: 'same-origin', headers: { 'X-G42-Editor': '1' } });
-    } catch (e) {
-      zeigeAbgemeldet();
-      return meldung('Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', 'fehler', loginLink('Erneut anmelden'));
-    }
-    if (a.status === 503) {
-      zeigeAbgemeldet();
-      return meldung('Der Editor ist noch nicht eingerichtet.', 'fehler');
-    }
-    let daten = null;
-    if (a.ok) { try { daten = await a.json(); } catch (e) { daten = null; } }
-    if (!daten || typeof daten.token !== 'string' || !daten.token) {
-      zeigeAbgemeldet();
-      return meldung('Anmeldung abgelaufen, bitte erneut anmelden.', 'fehler', loginLink('Erneut anmelden'));
-    }
-    sitzung.token = daten.token;
-    if (Number(daten.ablauf) > 0) sitzung.ablauf = Date.now() + Number(daten.ablauf) * 1000;
-    await starte();
-  }
-
-  // Das Fragment wird sofort entfernt. Ein Token im Fragment (#token=) wird nie angenommen.
+  // Einladung: Fragment sofort entfernen (Code nur in einer Variablen). Sonst: besteht schon eine Sitzung?
   const frag = new URLSearchParams(location.hash.slice(1));
-  const angemeldet = location.hash === '#angemeldet';
+  const einladung = frag.get('einladung');
   if (location.hash) history.replaceState(null, '', location.pathname + location.search);
-  if (angemeldet) {
-    holeToken().catch(fehler);
+  if (einladung) {
+    zeigeEinrichten(einladung);
   } else {
     zeigeAbgemeldet();
-    const f = frag.get('fehler');
-    if (f) {
-      meldung(f === 'state'
-        ? 'Die Anmeldung konnte nicht bestätigt werden (zu lange gewartet oder in einem anderen Fenster begonnen). Bitte melden Sie sich erneut an.'
-        : 'Die Anmeldung bei GitHub hat nicht geklappt. Bitte versuchen Sie es erneut.', 'fehler', loginLink('Erneut anmelden'));
-    }
+    starte('').catch((e) => {
+      zeigeAbgemeldet();
+      if (e && e.art !== 'anmeldung') fehler(e);
+    });
   }
 })();
