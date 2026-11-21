@@ -13,7 +13,6 @@ RUN node site/vorlagen/beratung/build.js site/kunden/gruppe42/gruppe42.json \
 
 # --- 2) Test: server unit tests (pipeline runs this stage; it is not in the final image) ---
 FROM node:20-alpine AS test
-RUN apk add --no-cache libwebp-tools
 WORKDIR /app
 COPY server/ server/
 COPY site/ site/
