@@ -87,22 +87,28 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
   kein `<`. Formatierung nur, was heute wirklich dargestellt wird: `*Wort*` in `result.title` und `motto`; in allen anderen Feldern
   ist es reiner Text (`*`, `[`…`](`…`)` werden abgelehnt, damit nichts wörtlich auf der Seite landet). Die Engine wird nicht um Markdown erweitert.
 - Der Abdruck wird nur von Seitenschwung bewusst neu erzeugt (Strukturänderung = Entwickler-PR). Der Editor schreibt ihn nie;
-  ein PR, der ihn ändert, fällt im Review auf. Optional: `CODEOWNERS` für `struktur.json`.
+  ein PR, der ihn ändert, fällt im Review auf (wie jeder PR nach `main` braucht er die Code-Owner-Freigabe). Der Ort ist fest
+  (`tests/struktur.json` neben der Inhalts-JSON) und hängt nicht von `tests.eintraege` ab.
 - Tests dafür mit `node --test`, u. a.: geänderte `reverse`/`min`/Kategorie/Fragenanzahl → Fehler; reine Textänderung → ok.
   Damit sie in CI laufen, die Docker-Stufe `test` erweitern (zusätzlich `site/` kopieren und die neue Testdatei aufrufen).
   Unabhängig davon bricht der Build selbst (Stufe 1) bei Verstößen ab.
 
 ### 2. GitHub-Absicherung (Owner, einmalig)
 - Ruleset für `main`: Änderungen nur per PR, erforderlicher Status-Check = Pipeline-Job, Code-Owner-Review (siehe unten), kein Force-Push/Löschen.
+  Dazu „Dismiss stale pull request approvals when new commits are pushed“ und „Require approval of the most recent reviewable push“:
+  Der Editor schiebt Folge-Commits in einen offenen PR; eine frühere Freigabe darf dafür nicht weiter gelten.
   Bypass nur für den Owner. Vorher prüfen, dass der Ablauf des Bots damit weiter passt.
 - GitHub App „Gruppe 42 Editor“: nur auf `seitenschwung/gruppe42` installiert; Rechte: Contents read/write, Pull requests read/write,
   Metadata read, sonst nichts. User-Tokens mit Ablauf (Standard 8 h) aktiv.
 - Ingrid: eigenes GitHub-Konto, 2FA, Collaborator mit Rolle „Write“ (nötig für Branches im Repo; `main` bleibt durch das Ruleset zu).
 - **Environment `production` auf Branch `main` beschränken** (Deployment branches: nur `main`). Erst danach Ingrid als Collaborator hinzufügen.
   Damit kommt ein geänderter Workflow auf einem Branch nicht an die Deploy-Secrets. Gleiches für `preview`, falls dort Secrets liegen.
-- Freigabe über `CODEOWNERS`: `site/kunden/gruppe42/tests/` und `site/kunden/gruppe42/gruppe42.json` (sowie `struktur.json`, `.github/`) gehören
-  dem freigebenden Konto `@Nirnberger` (Seitenschwung, Owner); Ruleset mit „Require review from Code Owners“, 0 allgemeine Approvals. So brauchen Editor-PRs die Freigabe,
-  Dependabot-/Bot-PRs ohne diese Dateien laufen wie bisher per `dev automerge`. Ingrid und der Bot können sich nicht gegenseitig freigeben.
+- Freigabe über `CODEOWNERS`: eine Zeile `* @Nirnberger`, das ganze Repo gehört dem freigebenden Konto (Seitenschwung, Owner);
+  Ruleset mit „Require review from Code Owners“, 0 allgemeine Approvals. So braucht jeder PR nach `main` die Freigabe, nicht nur Editor-PRs:
+  Ein Konto mit Schreibrecht (Ingrids Konto oder ein gestohlenes Editor-Token mit Contents RW) kann auch keine Änderung an
+  `build.js`, `testwaechter.js`, `server/*.js`, `Dockerfile` o. Ä. ohne Freigabe mergen. Ingrid und der Bot können sich nicht gegenseitig freigeben.
+  Preis: Dependabot-/Bot-PRs brauchen einen Freigabe-Klick des Owners, bevor `dev automerge` mergt, außer der Owner nimmt den Automerge-Akteur
+  in die Bypass-Liste des Rulesets auf (Entscheidung des Owners: kein Klick, dafür kann dieser Akteur alles ohne Review mergen).
 
 ### 3. Login-Endpunkt im Server
 - Neue Datei `server/editor-auth.js` nach dem Muster von `checkout.js`:
@@ -166,6 +172,8 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
 
 ## Restrisiken
 - Übernahme von Ingrids GitHub-Konto: Über die Weboberfläche kann ein Angreifer mehr als Text-PRs, nämlich beliebige Branches und PRs
-  (auch mit Workflow-Änderungen) anlegen. Er kommt aber weder an `main` (Ruleset + Code-Owner) noch an die Deploy-Secrets
-  (Environment nur für `main`). Ein Branch-Workflow hat höchstens das `GITHUB_TOKEN` des PR-Laufs. 2FA senkt das Risiko.
+  (auch mit Workflow-Änderungen) anlegen. Er kommt aber weder an `main` (Ruleset + `CODEOWNERS` für das ganze Repo: jeder PR braucht
+  die Freigabe des Owners, eine alte Freigabe verfällt mit jedem neuen Push) noch an die Deploy-Secrets (Environment nur für `main`).
+  Ein Branch-Workflow hat höchstens das `GITHUB_TOKEN` des PR-Laufs. 2FA senkt das Risiko.
+- Bypass für den Automerge-Akteur (falls der Owner ihn einrichtet): dieser Akteur kann dann ohne Review mergen; ohne Bypass braucht jeder Bot-PR einen Klick.
 - Inhaltliche Fehler in Texten: die Freigabe durch Seitenschwung ist die Kontrolle.

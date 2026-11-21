@@ -1,3 +1,2 @@
-/site/kunden/gruppe42/tests/ @Nirnberger
-/site/kunden/gruppe42/gruppe42.json @Nirnberger
-/.github/ @Nirnberger
+# Jede Änderung an main braucht die Freigabe des Owners (Ruleset: "Require review from Code Owners").
+* @Nirnberger
