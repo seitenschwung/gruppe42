@@ -153,6 +153,8 @@ module.exports = { createServer, headersFor };
 if (require.main === module) {
   // TODO(Task 5): createInhalte + createSeiten hier verdrahten und seiten an createServer übergeben.
   const orders = require('./orders').createOrderStore({ dir: process.env.DATA_DIR || '/data' });
+  // Editor login (invitation, passkey, session); pruefe(req) is for the editor API (Task 5).
+  const sitzung = require('./editor-sitzung').createSitzung({ env: process.env });
   const server = createServer({
     root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
     version: process.env.APP_VERSION || 'dev',
@@ -161,6 +163,8 @@ if (require.main === module) {
       routes: {
         ...require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }).routes,
         ...require('./editor-auth').createEditorAuth({ env: process.env, fetch }).routes,
+        // After editor-auth on purpose: its /api/editor/abmelden is replaced (editor-auth goes in Task 7).
+        ...sitzung.routes,
         ...require('./webhook').createWebhook({
           env: process.env,
           log: console.log,
