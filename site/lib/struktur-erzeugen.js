@@ -11,12 +11,10 @@ const ABDRUCK_DATEI = 'struktur.json';
 
 const liste = (x) => (Array.isArray(x) ? x : []);
 
-// Ordner der Test-JSONs (neben den daten-Dateien der Einträge; Standard: tests/ neben der Inhalts-JSON)
+// Fester Ort: tests/struktur.json neben der Inhalts-JSON (nicht aus den Daten abgeleitet, damit eine
+// Änderung an tests.eintraege den Abdruck nicht umlenken kann).
 function abdruckPfad(inhaltsDatei) {
-  const dir = path.dirname(path.resolve(inhaltsDatei));
-  const s = JSON.parse(fs.readFileSync(inhaltsDatei, 'utf8'));
-  const erster = liste(s.tests && s.tests.eintraege).find((e) => e && e.daten);
-  return path.join(erster ? path.dirname(path.resolve(dir, erster.daten)) : path.join(dir, 'tests'), ABDRUCK_DATEI);
+  return path.join(path.dirname(path.resolve(inhaltsDatei)), 'tests', ABDRUCK_DATEI);
 }
 
 function erzeuge(inhaltsDatei) {

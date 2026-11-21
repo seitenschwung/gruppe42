@@ -51,3 +51,22 @@ test('build_ohne_abdruck', () => {
   assert.strictEqual(r.status, 1);
   assert.match(r.stderr, /struktur\.json/);
 });
+
+test('abdruck_pfad_fest: immer tests/struktur.json neben der Inhalts-JSON, nicht aus den Daten', () => {
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'g42-'));
+  const datei = path.join(tmp, 'gruppe42.json');
+  fs.writeFileSync(datei, JSON.stringify({ tests: { eintraege: [{ id: 'x', daten: '../woanders/x.json' }] } }));
+  assert.strictEqual(abdruckPfad(datei), path.join(tmp, 'tests', 'struktur.json'));
+  fs.rmSync(tmp, { recursive: true, force: true });
+});
+
+test('build_leere_eintraege: Abdruck erwartet Tests -> Abbruch mit Anzahl', () => {
+  const r = baueKopie((k) => {
+    const p = path.join(k, 'gruppe42.json');
+    const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+    j.tests.eintraege = [];
+    fs.writeFileSync(p, JSON.stringify(j, null, 2) + '\n');
+  });
+  assert.strictEqual(r.status, 1);
+  assert.match(r.stderr, /tests\.eintraege: Anzahl 0 statt \d+/);
+});

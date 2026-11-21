@@ -61,7 +61,8 @@
       return aus;
     }
     if (typeof daten === 'string' && textfelder.includes(muster(pfad))) {
-      return daten.includes(PLATZHALTER) ? MARKER + PLATZHALTER : MARKER;
+      // Anzahl der Platzhalter zählt mit: die Engine ersetzt nur den ersten, daher ist genau einer erlaubt.
+      return MARKER + PLATZHALTER.repeat(daten.split(PLATZHALTER).length - 1);
     }
     return daten;
   }
@@ -87,8 +88,11 @@
       return;
     }
     if (ist === soll) return;
+    const istText = typeof ist === 'string' && ist.startsWith(MARKER);
     if (soll === MARKER + PLATZHALTER && ist === MARKER) aus.push(bez + ': Platzhalter ' + PLATZHALTER + ' fehlt');
-    else if (soll === MARKER && ist === MARKER + PLATZHALTER) aus.push(bez + ': Platzhalter ' + PLATZHALTER + ' unerwartet');
+    else if (soll === MARKER + PLATZHALTER && istText && ist.length > soll.length) {
+      aus.push(bez + ': Platzhalter ' + PLATZHALTER + ' mehrfach (nur einmal erlaubt)');
+    } else if (soll === MARKER && istText) aus.push(bez + ': Platzhalter ' + PLATZHALTER + ' unerwartet');
     else aus.push(bez + ': geändert');
   }
 

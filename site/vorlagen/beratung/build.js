@@ -104,7 +104,8 @@ function testMeldungen(daten, abdruck) {
 // Läuft vor jeder Bildverarbeitung: prüft alle Tests und die Einträge in tests.eintraege, sammelt alle Meldungen.
 function pruefeTests() {
   const liste_ = liste(s.tests && s.tests.eintraege);
-  if (!liste_.length) return;
+  // Ohne Tests und ohne Abdruck: nichts zu prüfen. Gibt es einen Abdruck, zählt er auch bei leerer Liste.
+  if (!liste_.length && !fs.existsSync(abdruckPfad(DATEI))) return;
   const abdruck = ladeAbdruck();
   const aus = [];
   const sollEintraege = liste(abdruck.eintraege);
@@ -828,8 +829,7 @@ function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '
   return `<!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8">
-${basis ? '<base href="/">' : ''}
+<meta charset="utf-8">${basis ? '\n<base href="/">' : ''}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(titel)}</title>
 <meta name="description" content="${esc(beschreibung)}">

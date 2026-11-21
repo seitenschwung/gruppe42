@@ -105,6 +105,15 @@ test('platzhalter_fehlt', () => mit('antreiber', (d, S) => {
   assert.match(meldungen(d, S).join(), /result\.lead: Platzhalter \{names\} fehlt/);
 }));
 
+test('platzhalter_genau_einmal', () => mit('antreiber', (d, S) => {
+  d.result.lead = 'Bei dir: {names}. Nochmal: {names}.';
+  assert.match(meldungen(d, S).join(), /result\.lead: Platzhalter \{names\} mehrfach/);
+  d.result.lead = 'Einmal {names} reicht.';
+  assert.deepStrictEqual(meldungen(d, S), []);
+  d.result.intro = 'Hier {names} und {names}';
+  assert.match(meldungen(d, S).join(), /result\.intro: Platzhalter \{names\} unerwartet/);
+}));
+
 test('optionales_feld_hinzufuegen_ist_strukturaenderung', () => mit('teamklima', (d, S) => {
   d.categories[0].lowContext = 'Neu';
   assert.match(meldungen(d, S).join(), /categories\[0\]\.lowContext: unbekanntes Feld/);
