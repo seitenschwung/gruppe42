@@ -1,7 +1,98 @@
 /* Antreiber-Test – läuft komplett im Browser, nichts wird gespeichert oder gesendet.
-   Die Seite (build.js) liefert Gerüst und Daten (#antreiber-daten); hier: Ablauf, Auswertung, Ergebnis. */
+   Die Seite (build.js) liefert Gerüst und Daten (#antreiber-daten); hier: Ablauf, Auswertung, Ergebnis.
+   Die reine Rechnung (auswertenWerte, vorschauAntworten) ist in Node testbar; im Browser entsteht keine globale Variable. */
 (function () {
-  'use strict';
+'use strict';
+
+function skalaGrenzen(DATA) {
+  var w = Object.keys(DATA.scale).map(Number);
+  return { werte: w.slice().sort(function (a, b) { return a - b; }), max: Math.max.apply(null, w), min: Math.min.apply(null, w) };
+}
+
+// Punkte und Anteil je Kategorie, Rangfolge, Gleichstand, Stufe – die Rechnung hinter dem Ergebnis
+function auswertenWerte(DATA, antworten) {
+  var R = DATA.result;
+  var sk = skalaGrenzen(DATA);
+  var summe = {}, anzahl = {};
+  DATA.categories.forEach(function (c) { summe[c.id] = 0; anzahl[c.id] = 0; });
+  DATA.questions.forEach(function (f, i) {
+    var a = antworten[i];
+    summe[f.category] += f.reverse ? sk.max + sk.min - a : a;
+    anzahl[f.category]++;
+  });
+  function maxVon(c) { return anzahl[c.id] * sk.max; }
+  var ranking = R.kind === 'ranking';
+  var gesamt = 0, gesamtMax = 0;
+  DATA.categories.forEach(function (c) { gesamt += summe[c.id]; gesamtMax += maxVon(c); });
+  var prozent = gesamt / gesamtMax * 100;
+
+  var sortiert = DATA.categories.slice();
+  if (ranking) sortiert.sort(function (a, b) { return summe[b.id] / maxVon(b) - summe[a.id] / maxVon(a); });
+  var hochW = sortiert.length ? summe[sortiert[0].id] / maxVon(sortiert[0]) : 0;
+  var tiefW = sortiert.length ? summe[sortiert[sortiert.length - 1].id] / maxVon(sortiert[sortiert.length - 1]) : 0;
+  // Unterschiede unter minSpread (Anteil der Maximalpunkte, Standard 10 %) gelten als gleichauf: kein Spitzenreiter
+  var gleich = ranking ? (hochW - tiefW) < (typeof R.minSpread === 'number' ? R.minSpread : 0.1) : hochW === tiefW;
+
+  var stufe = -1;
+  if (!ranking) {
+    var stufen = R.levels.slice().sort(function (a, b) { return a.min - b.min; });
+    var treffer = stufen.filter(function (l) { return prozent >= l.min; }).pop() || stufen[0];
+    stufe = stufen.indexOf(treffer);
+  }
+  return { prozent: prozent, sortiert: sortiert.map(function (c) { return c.id; }), gleichauf: gleich, stufe: stufe,
+    summe: summe, anzahl: anzahl, hochW: hochW, tiefW: tiefW };
+}
+
+// Rohwert so wählen, dass nach Umkehrung (reverse) der gewertete Wert herauskommt
+function rohZu(DATA, frage, gewertet) {
+  var sk = skalaGrenzen(DATA);
+  return frage.reverse ? sk.max + sk.min - gewertet : gewertet;
+}
+
+// Hinweis „fast überall dieselbe Antwort“: nur bei einem echten Durchlauf (nicht in der Vorschau, dort wählt niemand).
+function zeigeMusterHinweis(antworten, istVorschau) {
+  if (istVorschau || antworten.length < 10) return false;
+  var haeufig = {};
+  antworten.forEach(function (a) { haeufig[a] = (haeufig[a] || 0) + 1; });
+  var meiste = Math.max.apply(null, Object.keys(haeufig).map(function (k) { return haeufig[k]; }));
+  return meiste / antworten.length >= 0.9;
+}
+
+// Antworten für die Vorschau. spec: '' zufällig | '3' alle gleich | 'bereich:<id>' | 'stufe:<i>'
+function vorschauAntworten(DATA, spec) {
+  spec = spec == null ? '' : String(spec);
+  var sk = skalaGrenzen(DATA);
+  var n = DATA.questions.length;
+  var m = /^(bereich|stufe):(.*)$/.exec(spec);
+  if (m && m[1] === 'bereich' && DATA.categories.some(function (c) { return c.id === m[2]; })) {
+    var tief = sk.werte.length > 1 ? sk.werte[1] : sk.min;
+    return DATA.questions.map(function (f) { return rohZu(DATA, f, f.category === m[2] ? sk.max : tief); });
+  }
+  if (m && m[1] === 'stufe' && DATA.result.kind === 'levels') {
+    var stufen = DATA.result.levels.slice().sort(function (a, b) { return a.min - b.min; });
+    var i = /^\d+$/.test(m[2]) ? Number(m[2]) : -1;
+    if (i >= 0 && i < stufen.length) {
+      var von = stufen[i].min, bis = i + 1 < stufen.length ? stufen[i + 1].min : Infinity;
+      var gleichmaessig = function (g) { return DATA.questions.map(function (f) { return rohZu(DATA, f, g); }); };
+      var proz = function (a) { return auswertenWerte(DATA, a).prozent; };
+      for (var k = 0; k < sk.werte.length; k++) {
+        var a = gleichmaessig(sk.werte[k]), p = proz(a);
+        if (p >= von && p < bis) return a;
+      }
+      // Kein gleichmäßiger Wert passt: ab niedrigster Wertung Frage für Frage um 1 erhöhen
+      var gew = DATA.questions.map(function () { return sk.min; });
+      var roh = function () { return DATA.questions.map(function (f, j) { return rohZu(DATA, f, gew[j]); }); };
+      for (var j = 0; j < n && proz(roh()) < von; j++) gew[j] = Math.min(sk.max, gew[j] + 1);
+      return roh();
+    }
+  }
+  var fest = Number(spec);
+  return DATA.questions.map(function () {
+    return spec !== '' && sk.werte.indexOf(fest) !== -1 ? fest : sk.werte[Math.floor(Math.random() * sk.werte.length)];
+  });
+}
+
+if (typeof document !== 'undefined') (function () {
   var d = document;
   var datenEl = d.getElementById('antreiber-daten');
   var wurzel = d.querySelector('[data-test]');
@@ -10,6 +101,7 @@
 
   var DATA = JSON.parse(datenEl.textContent);
   var antworten = new Array(DATA.questions.length).fill(null);
+  var istVorschau = false; // true, solange das Ergebnis aus Vorschau-Antworten stammt
   var index = 0;
 
   function q(sel, root) { return (root || wurzel).querySelector(sel); }
@@ -110,37 +202,20 @@
   function auswerten() {
     if (antworten.some(function (a) { return a === null; })) return;
     var R = DATA.result;
-    var skalaMax = Math.max.apply(null, Object.keys(DATA.scale).map(Number));
-    var skalaMin = Math.min.apply(null, Object.keys(DATA.scale).map(Number));
-    var summe = {}, anzahl = {};
-    DATA.categories.forEach(function (c) { summe[c.id] = 0; anzahl[c.id] = 0; });
-    DATA.questions.forEach(function (f, i) {
-      var a = antworten[i];
-      summe[f.category] += f.reverse ? skalaMax + skalaMin - a : a;
-      anzahl[f.category]++;
-    });
+    var w = auswertenWerte(DATA, antworten);
+    var summe = w.summe, anzahl = w.anzahl;
+    var skalaMax = skalaGrenzen(DATA).max;
     function maxVon(c) { return anzahl[c.id] * skalaMax; }
     var ranking = R.kind === 'ranking';
-    var gesamt = 0, gesamtMax = 0;
-    DATA.categories.forEach(function (c) { gesamt += summe[c.id]; gesamtMax += maxVon(c); });
-    var prozent = gesamt / gesamtMax * 100;
-
-    var sortiert = DATA.categories.slice();
-    if (ranking) sortiert.sort(function (a, b) { return summe[b.id] / maxVon(b) - summe[a.id] / maxVon(a); });
-    var hochW = sortiert.length ? summe[sortiert[0].id] / maxVon(sortiert[0]) : 0;
-    var tiefW = sortiert.length ? summe[sortiert[sortiert.length - 1].id] / maxVon(sortiert[sortiert.length - 1]) : 0;
-    // Unterschiede unter minSpread (Anteil der Maximalpunkte, Standard 10 %) gelten als gleichauf: kein Spitzenreiter
-    var gleich = ranking ? (hochW - tiefW) < (typeof R.minSpread === 'number' ? R.minSpread : 0.1) : hochW === tiefW;
+    var prozent = w.prozent, hochW = w.hochW, tiefW = w.tiefW, gleich = w.gleichauf;
+    var sortiert = w.sortiert.map(function (id) { return DATA.categories.filter(function (c) { return c.id === id; })[0]; });
     var spitze = sortiert.filter(function (c) { return summe[c.id] / maxVon(c) === hochW; });
 
     ergebnis.querySelector('[data-intro]').textContent = R.intro || '';
     // Hinweis bei auffälligem Antwortmuster (fast überall dieselbe Antwort): das Ergebnis sagt dann wenig aus
     var alt = ergebnis.querySelector('[data-muster]');
     if (alt) alt.remove();
-    var haeufig = {};
-    antworten.forEach(function (a) { haeufig[a] = (haeufig[a] || 0) + 1; });
-    var meiste = Math.max.apply(null, Object.keys(haeufig).map(function (k) { return haeufig[k]; }));
-    if (antworten.length >= 10 && meiste / antworten.length >= 0.9) {
+    if (zeigeMusterHinweis(antworten, istVorschau)) {
       var hinweis = el('p', 'shop-hinweis test-muster', 'Du hast fast überall dieselbe Antwort gewählt. Dann sagt das Ergebnis wenig aus. Wenn du magst, starte neu und wäge die Aussagen einzeln ab.');
       hinweis.setAttribute('data-muster', '');
       hinweis.setAttribute('role', 'note');
@@ -155,7 +230,7 @@
     var stufeTitel = '';
     if (!ranking) {
       var stufen = R.levels.slice().sort(function (a, b) { return a.min - b.min; });
-      var stufe = stufen.filter(function (l) { return prozent >= l.min; }).pop() || stufen[0];
+      var stufe = stufen[w.stufe];
       stufeTitel = stufe.title;
       stufeEl.append(el('p', 'test-stufe-wert', Math.round(prozent) + ' %'), el('h3', null, stufe.title), el('p', null, stufe.text));
       var skala = el('div', 'test-skala');
@@ -318,6 +393,7 @@
     zeigeFrage(true);
   });
   ergebnis.querySelector('[data-neu]').addEventListener('click', function () {
+    istVorschau = false;
     antworten.fill(null);
     index = 0;
     ergebnis.hidden = true;
@@ -332,15 +408,17 @@
   });
   ergebnis.querySelector('[data-druck]').addEventListener('click', function () { window.print(); });
 
-  // Vorschau der Auswertung ohne Test: ?vorschau (Zufallsantworten) oder ?vorschau=3 (alle Antworten = 3)
-  var vorschau = new URLSearchParams(location.search).get('vorschau');
+  // Vorschau der Auswertung ohne Test: data-vorschau am Test-Element (Editor, iframe) oder ?vorschau
+  // Werte: '' zufällig, '3' alle Antworten = 3, 'bereich:<id>' Bereich vorn, 'stufe:<i>' Stufe i
+  var vorschau = wurzel.getAttribute('data-vorschau');
+  if (vorschau === null) vorschau = new URLSearchParams(location.search).get('vorschau');
   if (vorschau !== null) {
-    var werte = Object.keys(DATA.scale).map(Number);
-    var fest = Number(vorschau);
-    antworten = antworten.map(function () {
-      return werte.indexOf(fest) !== -1 && vorschau !== '' ? fest : werte[Math.floor(Math.random() * werte.length)];
-    });
+    antworten = vorschauAntworten(DATA, vorschau);
+    istVorschau = true;
     index = DATA.questions.length - 1;
     auswerten();
   }
+})();
+
+if (typeof module === 'object' && module.exports) module.exports = { auswertenWerte: auswertenWerte, vorschauAntworten: vorschauAntworten, zeigeMusterHinweis: zeigeMusterHinweis };
 })();

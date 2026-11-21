@@ -1,0 +1,79 @@
+
+
+<section class="seitenkopf seitenkopf-kompakt">
+  <div class="container">
+    <nav class="brotkrumen" aria-label="Brotkrumen"><ol><li><a href="./">Start</a></li><li aria-current="page">Teamklima-Schnellcheck</li></ol></nav>
+    <div class="seitenkopf-inhalt">
+      <div class="seitenkopf-text">
+        <p class="kicker">Teamklima-Schnellcheck</p>
+        <h1>Wie ist das <em>Klima</em> in deinem Team?</h1>
+        <p>Zwanzig Aussagen, fünf Minuten: Wie erlebst du das Klima in deinem Team? Am Ende bekommst du Gesprächsfragen für das nächste Teammeeting.</p>
+      </div>
+      
+    </div>
+  </div>
+</section>
+<section class="abschnitt test" id="test" aria-label="Teamklima-Schnellcheck">
+  <div class="container">
+    <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
+    
+    <div class="test-karte" data-test>
+      <div data-schritt="intro">
+        <p class="kicker">Vorab</p>
+        <h2 class="test-titel">So funktioniert es</h2>
+        <ul class="test-hinweise">
+          <li><strong>20 Aussagen · 5 Minuten.</strong> Antworte spontan und denke an deinen Alltag.</li>
+          <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du eine Auswertung mit Impulsen.</li>
+          <li><strong>Privat:</strong> Deine Antworten werden nur in deinem Browser verarbeitet. Sie werden nicht an einen Server übertragen und nicht gespeichert.</li>
+        </ul>
+        <p class="test-note">Eigene, nicht validierte Kurzbefragung zur Reflexion im Team. Kein Diagnoseinstrument. <a href="methodik.html">So entstehen unsere Tests</a></p>
+        <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
+      </div>
+      <div data-schritt="frage" hidden>
+        <div class="test-kopf">
+          <p class="test-zaehler" data-zaehler aria-live="polite"></p>
+          <div class="test-balken" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="20" aria-valuenow="0" data-balken><span></span></div>
+        </div>
+        <fieldset class="test-frage">
+          <legend tabindex="-1" data-frage></legend>
+          <div class="test-optionen" data-optionen></div>
+        </fieldset>
+        <div class="test-aktionen">
+          <button class="knopf knopf-rand" type="button" data-zurueck>Zurück</button>
+          <button class="knopf knopf-dunkel" type="button" data-weiter disabled>Weiter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section class="sand abschnitt test-ergebnis" id="ergebnis" aria-labelledby="ergebnis-titel" data-ergebnis hidden>
+  <div class="container">
+    <p class="kicker" data-kicker>Dein Ergebnis</p>
+    <h2 class="titel" id="ergebnis-titel" tabindex="-1">Das <em>Klima</em> in deinem Team</h2>
+    <p class="test-lead" data-intro></p>
+    <div class="test-stufe" data-stufe hidden></div>
+    <figure class="test-chart" data-chart></figure>
+    <div class="test-details" data-details></div>
+    <p class="test-lead test-outro" data-outro></p>
+    <p class="test-note" data-note></p>
+    <div class="knoepfe test-ende">
+      <a class="knopf knopf-honig" href="#kontakt">Teamentwicklung besprechen</a>
+      <button class="knopf knopf-rand" type="button" data-mail>Per E-Mail an mich senden</button>
+      <button class="knopf knopf-rand" type="button" data-neu>Neu starten</button>
+      <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
+    </div>
+  </div>
+</section>
+<section class="kontaktband abschnitt" id="kontakt" aria-labelledby="kontakt-titel">
+  <div class="container">
+    <div class="kontaktband-text">
+      <h2 id="kontakt-titel">Dein Unternehmen ist einzigartig. <em>Deine Lösung auch.</em></h2>
+      <p>Vereinbare ein unverbindliches Gespräch. Wir hören zu, stellen Fragen und sagen dir ehrlich, ob wir die Richtigen für dich sind.</p>
+    </div>
+    <div class="knoepfe">
+      <a class="knopf knopf-dunkel" href="mailto:info@gruppe42.at?subject=Anfrage%20Erstgespr%C3%A4ch"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18v12H3z"/><path d="m3 7 9 7 9-7"/></svg>Erstgespräch vereinbaren</a>
+      <a class="knopf knopf-rand" href="tel:+4369911159870"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>+43 699 111 59 870</a>
+    </div>
+  </div>
+</section>
+<script type="application/json" id="antreiber-daten">{"id":"teamklima","name":"Teamklima-Schnellcheck","status":"Eigene, nicht validierte Kurzbefragung zur Reflexion im Team","scale":{"1":"Trifft gar nicht zu","2":"Trifft eher nicht zu","3":"Trifft teilweise zu","4":"Trifft eher zu","5":"Trifft voll und ganz zu"},"categories":[{"id":"vertrauen","name":"Vertrauen","sections":[{"kind":"labeled","title":"Gesprächsfrage fürs nächste Teammeeting:","text":"Wann haben wir zuletzt einen Fehler gemeinsam besprochen, ohne nach Schuld zu suchen?"}]},{"id":"kommunikation","name":"Kommunikation","sections":[{"kind":"labeled","title":"Gesprächsfrage fürs nächste Teammeeting:","text":"Welche Information fehlt uns im Alltag am häufigsten?"}]},{"id":"rollen","name":"Rollenklarheit","sections":[{"kind":"labeled","title":"Gesprächsfrage fürs nächste Teammeeting:","text":"Wo sind bei uns Zuständigkeiten oder Entscheidungen unklar?"}]},{"id":"zusammenarbeit","name":"Zusammenarbeit","sections":[{"kind":"labeled","title":"Gesprächsfrage fürs nächste Teammeeting:","text":"Wobei würden wir uns diese Woche gerne gegenseitig entlasten?"}]},{"id":"wertschaetzung","name":"Wertschätzung","sections":[{"kind":"labeled","title":"Gesprächsfrage fürs nächste Teammeeting:","text":"Wofür möchte ich jemandem im Team heute Danke sagen?"}]}],"questions":[{"id":1,"category":"vertrauen","text":"In unserem Team kann man Fehler offen ansprechen."},{"id":2,"category":"kommunikation","text":"Wichtige Informationen erreichen mich rechtzeitig."},{"id":3,"category":"rollen","text":"Ich weiß, wofür ich im Team verantwortlich bin."},{"id":4,"category":"zusammenarbeit","text":"Wir unterstützen uns, wenn jemand überlastet ist."},{"id":5,"category":"wertschaetzung","text":"Gute Arbeit wird bei uns sichtbar gewürdigt."},{"id":6,"category":"vertrauen","text":"Ich verlasse mich darauf, dass Absprachen gelten."},{"id":7,"category":"kommunikation","text":"Meinungsverschiedenheiten werden bei uns direkt und respektvoll geklärt."},{"id":8,"category":"rollen","text":"Im Team ist klar, wer was entscheidet."},{"id":9,"category":"zusammenarbeit","text":"Wir arbeiten auf gemeinsame Ziele hin."},{"id":10,"category":"wertschaetzung","text":"Ich fühle mich im Team als Mensch gesehen."},{"id":11,"category":"vertrauen","text":"Ich zögere, im Team Unsicherheiten zuzugeben.","reverse":true},{"id":12,"category":"kommunikation","text":"Wichtige Neuigkeiten erfahre ich oft erst spät oder nebenbei.","reverse":true},{"id":13,"category":"rollen","text":"Bei uns ist oft unklar, wer wofür zuständig ist.","reverse":true},{"id":14,"category":"zusammenarbeit","text":"Jede:r arbeitet bei uns eher für sich, statt gemeinsam.","reverse":true},{"id":15,"category":"wertschaetzung","text":"Beiträge einzelner werden im Team schnell übersehen.","reverse":true},{"id":16,"category":"vertrauen","text":"Bedenken oder neue Ideen kann ich bei uns ohne Sorge äußern."},{"id":17,"category":"kommunikation","text":"Wir nehmen uns Zeit, Themen im Team wirklich zu besprechen."},{"id":18,"category":"rollen","text":"Ich kenne die aktuellen Prioritäten des Teams."},{"id":19,"category":"zusammenarbeit","text":"Wenn etwas schiefgeht, suchen wir gemeinsam nach Lösungen."},{"id":20,"category":"wertschaetzung","text":"Ich fühle mich im Team respektiert."}],"result":{"kind":"levels","kicker":"Dein Ergebnis","title":"Das *Klima* in deinem Team","intro":"Zwanzig Aussagen zu fünf Bereichen, die das Miteinander im Team prägen. Du siehst, wo es gut läuft und wo ein Gespräch lohnt.","outro":"Nutze die Gesprächsfragen als Einstieg für ein offenes Teamgespräch. Ein Ergebnis ist eine Einladung zum Reden, kein Urteil.","note":"Die Auswertung ist eine grobe Orientierung und keine Diagnose. Eigenständig formulierte Items, nicht wissenschaftlich validiert.","levels":[{"min":0,"title":"Hier lohnt sich ein Gespräch","text":"In einigen Bereichen wünscht sich dein Team vermutlich mehr Klarheit, Rückhalt oder Austausch. Das ist kein Urteil, sondern ein guter Ausgangspunkt: Wenn du im Team darüber sprichst, kann sich schnell etwas bewegen."},{"min":50,"title":"Solide mit Luft nach oben","text":"Vieles funktioniert, und in einzelnen Bereichen steckt noch Potenzial. Schau dir die Bereiche mit den niedrigeren Werten an und sprich im Team darüber, was dort helfen würde."},{"min":80,"title":"Ein starkes Fundament","text":"Dein Team erlebt viel Vertrauen und Zusammenarbeit. Pflege, was funktioniert, und frag im Team regelmäßig nach, ob das so bleibt."}],"cta":{"text":"Teamentwicklung besprechen","href":"#kontakt"}}}</script>

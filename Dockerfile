@@ -15,14 +15,15 @@ RUN node site/vorlagen/beratung/build.js site/kunden/gruppe42/gruppe42.json \
 FROM node:20-alpine AS test
 WORKDIR /app
 COPY server/ server/
-RUN node --test server/server.test.js server/products.test.js server/checkout.test.js server/webhook.test.js server/orders.test.js
+COPY site/ site/
+RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/editor-auth.test.js server/webhook.test.js server/orders.test.js site/vorlagen/beratung/src/js/antreiber.test.js site/vorlagen/beratung/src/js/editor-kern.test.js site/vorlagen/beratung/src/js/editor-github.test.js
 
 # --- 3) Serve: Node server for static files and later /api/* ---
 FROM node:20-alpine
 ARG APP_VERSION=dev
 ENV NODE_ENV=production APP_VERSION=$APP_VERSION STATIC_ROOT=/app/html
 WORKDIR /app
-COPY server/server.js server/products.js server/products.json server/checkout.js server/webhook.js server/orders.js server/
+COPY server/server.js server/products.js server/products.json server/checkout.js server/editor-auth.js server/webhook.js server/orders.js server/
 COPY --from=build /out/ /app/html/
 # /data is the volume for orders.jsonl (compose mounts it; the root fs is read-only)
 RUN mkdir /data && chown node:node /data

@@ -1,0 +1,1057 @@
+{
+  "version": 1,
+  "tests": {
+    "antreiber": {
+      "id": "antreiber",
+      "name": "<text>",
+      "status": "<text>",
+      "scale": {
+        "1": "<text>",
+        "2": "<text>",
+        "3": "<text>",
+        "4": "<text>",
+        "5": "<text>"
+      },
+      "categories": [
+        {
+          "id": "perfekt",
+          "name": "<text>",
+          "headline": "<text>",
+          "lowContext": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>",
+              "tone": "pressure"
+            },
+            {
+              "kind": "quote",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "schnell",
+          "name": "<text>",
+          "headline": "<text>",
+          "lowContext": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>",
+              "tone": "pressure"
+            },
+            {
+              "kind": "quote",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "anstrengung",
+          "name": "<text>",
+          "headline": "<text>",
+          "lowContext": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>",
+              "tone": "pressure"
+            },
+            {
+              "kind": "quote",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "recht",
+          "name": "<text>",
+          "headline": "<text>",
+          "lowContext": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>",
+              "tone": "pressure"
+            },
+            {
+              "kind": "quote",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "stark",
+          "name": "<text>",
+          "headline": "<text>",
+          "lowContext": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "column",
+              "title": "<text>",
+              "text": "<text>",
+              "tone": "pressure"
+            },
+            {
+              "kind": "quote",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": 1,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 2,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 3,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 4,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 5,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 6,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 7,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 8,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 9,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 10,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 11,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 12,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 13,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 14,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 15,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 16,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 17,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 18,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 19,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 20,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 21,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 22,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 23,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 24,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 25,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 26,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 27,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 28,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 29,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 30,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 31,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 32,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 33,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 34,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 35,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 36,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 37,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 38,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 39,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 40,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 41,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 42,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 43,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 44,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 45,
+          "category": "stark",
+          "text": "<text>"
+        },
+        {
+          "id": 46,
+          "category": "perfekt",
+          "text": "<text>"
+        },
+        {
+          "id": 47,
+          "category": "recht",
+          "text": "<text>"
+        },
+        {
+          "id": 48,
+          "category": "schnell",
+          "text": "<text>"
+        },
+        {
+          "id": 49,
+          "category": "anstrengung",
+          "text": "<text>"
+        },
+        {
+          "id": 50,
+          "category": "stark",
+          "text": "<text>"
+        }
+      ],
+      "result": {
+        "kind": "ranking",
+        "kicker": "<text>",
+        "title": "<text>",
+        "intro": "<text>",
+        "outro": "<text>",
+        "note": "<text>",
+        "highlight": "<text>",
+        "lead": "<text>{names}",
+        "tie": "<text>",
+        "lowLabel": "<text>",
+        "cta": {
+          "text": "<text>",
+          "href": "#kontakt"
+        }
+      }
+    },
+    "teamklima": {
+      "id": "teamklima",
+      "name": "<text>",
+      "status": "<text>",
+      "scale": {
+        "1": "<text>",
+        "2": "<text>",
+        "3": "<text>",
+        "4": "<text>",
+        "5": "<text>"
+      },
+      "categories": [
+        {
+          "id": "vertrauen",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "kommunikation",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "rollen",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "zusammenarbeit",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "wertschaetzung",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": 1,
+          "category": "vertrauen",
+          "text": "<text>"
+        },
+        {
+          "id": 2,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 3,
+          "category": "rollen",
+          "text": "<text>"
+        },
+        {
+          "id": 4,
+          "category": "zusammenarbeit",
+          "text": "<text>"
+        },
+        {
+          "id": 5,
+          "category": "wertschaetzung",
+          "text": "<text>"
+        },
+        {
+          "id": 6,
+          "category": "vertrauen",
+          "text": "<text>"
+        },
+        {
+          "id": 7,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 8,
+          "category": "rollen",
+          "text": "<text>"
+        },
+        {
+          "id": 9,
+          "category": "zusammenarbeit",
+          "text": "<text>"
+        },
+        {
+          "id": 10,
+          "category": "wertschaetzung",
+          "text": "<text>"
+        },
+        {
+          "id": 11,
+          "category": "vertrauen",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 12,
+          "category": "kommunikation",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 13,
+          "category": "rollen",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 14,
+          "category": "zusammenarbeit",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 15,
+          "category": "wertschaetzung",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 16,
+          "category": "vertrauen",
+          "text": "<text>"
+        },
+        {
+          "id": 17,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 18,
+          "category": "rollen",
+          "text": "<text>"
+        },
+        {
+          "id": 19,
+          "category": "zusammenarbeit",
+          "text": "<text>"
+        },
+        {
+          "id": 20,
+          "category": "wertschaetzung",
+          "text": "<text>"
+        }
+      ],
+      "result": {
+        "kind": "levels",
+        "kicker": "<text>",
+        "title": "<text>",
+        "intro": "<text>",
+        "outro": "<text>",
+        "note": "<text>",
+        "levels": [
+          {
+            "min": 0,
+            "title": "<text>",
+            "text": "<text>"
+          },
+          {
+            "min": 50,
+            "title": "<text>",
+            "text": "<text>"
+          },
+          {
+            "min": 80,
+            "title": "<text>",
+            "text": "<text>"
+          }
+        ],
+        "cta": {
+          "text": "<text>",
+          "href": "#kontakt"
+        }
+      }
+    },
+    "fuehrungsstil": {
+      "id": "fuehrungsstil",
+      "name": "<text>",
+      "status": "<text>",
+      "scale": {
+        "1": "<text>",
+        "2": "<text>",
+        "3": "<text>",
+        "4": "<text>",
+        "5": "<text>"
+      },
+      "categories": [
+        {
+          "id": "aufgabe",
+          "name": "<text>",
+          "headline": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "beziehung",
+          "name": "<text>",
+          "headline": "<text>",
+          "sections": [
+            {
+              "kind": "text",
+              "text": "<text>"
+            },
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": 1,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 2,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 3,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 4,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 5,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 6,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 7,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 8,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 9,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 10,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 11,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 12,
+          "category": "beziehung",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 13,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 14,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 15,
+          "category": "aufgabe",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 16,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 17,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 18,
+          "category": "beziehung",
+          "text": "<text>"
+        },
+        {
+          "id": 19,
+          "category": "aufgabe",
+          "text": "<text>"
+        },
+        {
+          "id": 20,
+          "category": "beziehung",
+          "text": "<text>"
+        }
+      ],
+      "result": {
+        "kind": "ranking",
+        "kicker": "<text>",
+        "title": "<text>",
+        "intro": "<text>",
+        "outro": "<text>",
+        "note": "<text>",
+        "highlight": "<text>",
+        "lead": "<text>{names}",
+        "tie": "<text>",
+        "lowLabel": "<text>",
+        "cta": {
+          "text": "<text>",
+          "href": "#kontakt"
+        }
+      }
+    },
+    "employer-branding": {
+      "id": "employer-branding",
+      "name": "<text>",
+      "status": "<text>",
+      "scale": {
+        "1": "<text>",
+        "2": "<text>",
+        "3": "<text>",
+        "4": "<text>",
+        "5": "<text>"
+      },
+      "categories": [
+        {
+          "id": "identitaet",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "kommunikation",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "erlebnis",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        },
+        {
+          "id": "kultur",
+          "name": "<text>",
+          "sections": [
+            {
+              "kind": "labeled",
+              "title": "<text>",
+              "text": "<text>"
+            }
+          ]
+        }
+      ],
+      "questions": [
+        {
+          "id": 1,
+          "category": "identitaet",
+          "text": "<text>"
+        },
+        {
+          "id": 2,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 3,
+          "category": "erlebnis",
+          "text": "<text>"
+        },
+        {
+          "id": 4,
+          "category": "kultur",
+          "text": "<text>"
+        },
+        {
+          "id": 5,
+          "category": "identitaet",
+          "text": "<text>"
+        },
+        {
+          "id": 6,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 7,
+          "category": "erlebnis",
+          "text": "<text>"
+        },
+        {
+          "id": 8,
+          "category": "kultur",
+          "text": "<text>"
+        },
+        {
+          "id": 9,
+          "category": "identitaet",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 10,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 11,
+          "category": "erlebnis",
+          "text": "<text>"
+        },
+        {
+          "id": 12,
+          "category": "kultur",
+          "text": "<text>",
+          "reverse": true
+        },
+        {
+          "id": 13,
+          "category": "identitaet",
+          "text": "<text>"
+        },
+        {
+          "id": 14,
+          "category": "kommunikation",
+          "text": "<text>"
+        },
+        {
+          "id": 15,
+          "category": "erlebnis",
+          "text": "<text>"
+        },
+        {
+          "id": 16,
+          "category": "kultur",
+          "text": "<text>",
+          "reverse": true
+        }
+      ],
+      "result": {
+        "kind": "levels",
+        "kicker": "<text>",
+        "title": "<text>",
+        "intro": "<text>",
+        "outro": "<text>",
+        "note": "<text>",
+        "levels": [
+          {
+            "min": 0,
+            "title": "<text>",
+            "text": "<text>"
+          },
+          {
+            "min": 50,
+            "title": "<text>",
+            "text": "<text>"
+          },
+          {
+            "min": 80,
+            "title": "<text>",
+            "text": "<text>"
+          }
+        ],
+        "cta": {
+          "text": "<text>",
+          "href": "#kontakt"
+        }
+      }
+    }
+  },
+  "eintraege": [
+    {
+      "id": "antreiber-test",
+      "daten": "tests/antreiber.json",
+      "sichtbar": true,
+      "titel": "<text>",
+      "motto": "<text>",
+      "intro": "<text>",
+      "kurz": "<text>",
+      "beschreibung": "<text>"
+    },
+    {
+      "id": "teamklima-check",
+      "daten": "tests/teamklima.json",
+      "sichtbar": true,
+      "titel": "<text>",
+      "motto": "<text>",
+      "intro": "<text>",
+      "kurz": "<text>",
+      "beschreibung": "<text>"
+    },
+    {
+      "id": "fuehrungsstil-check",
+      "daten": "tests/fuehrungsstil.json",
+      "sichtbar": true,
+      "titel": "<text>",
+      "motto": "<text>",
+      "intro": "<text>",
+      "kurz": "<text>",
+      "beschreibung": "<text>"
+    },
+    {
+      "id": "employer-branding-check",
+      "daten": "tests/employer-branding.json",
+      "sichtbar": true,
+      "titel": "<text>",
+      "motto": "<text>",
+      "intro": "<text>",
+      "kurz": "<text>",
+      "beschreibung": "<text>"
+    }
+  ]
+}

@@ -16,6 +16,9 @@ const path = require('path');
 const crypto = require('crypto');
 const h = require('../../lib/helfer');
 const { bildVerarbeitung, bildTag, vorladen } = require('../../lib/bilder');
+const W = require('../../lib/testwaechter');
+const T = require('../../lib/testseite');
+const { abdruckPfad, ABDRUCK_DATEI } = require('../../lib/struktur-erzeugen');
 
 const ROOT = __dirname;
 const DATEI = path.resolve(process.argv[2] || path.join(ROOT, '../../kunden/gruppe42/gruppe42.json'));
@@ -66,12 +69,68 @@ s.fallstudien.eintraege = liste(s.fallstudien.eintraege).filter((e) => e.kunde);
 const impulseSichtbar = s.impulse.sichtbar === true;
 const fallstudienSichtbar = s.fallstudien.sichtbar === true && s.fallstudien.eintraege.length > 0;
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten', 'methodik']);
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten', 'methodik', 'editor']);
 const ids = [...s.impulse.eintraege.map((e) => e.id),...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
   if (ids.indexOf(id) !== ids.lastIndexOf(id)) { console.error(`✖ id "${id}" kommt doppelt vor.`); process.exit(1); }
 }
+
+// Wächter: Struktur gegen den eingecheckten Abdruck (tests/struktur.json), Texte gegen die Textregeln.
+// Nach bewusster Strukturänderung Abdruck neu erzeugen: node site/lib/struktur-erzeugen.js <pfad>/gruppe42.json
+let abdruckCache = null;
+function ladeAbdruck() {
+  if (abdruckCache) return abdruckCache;
+  const pfad = abdruckPfad(DATEI);
+  const erzeugen = 'node site/lib/struktur-erzeugen.js ' + path.relative(process.cwd(), DATEI);
+  if (!fs.existsSync(pfad)) {
+    console.error(`✖ ${ABDRUCK_DATEI} fehlt (${pfad}). Erzeugen mit: ${erzeugen}`);
+    process.exit(1);
+  }
+  try { abdruckCache = JSON.parse(fs.readFileSync(pfad, 'utf8')); } catch (e) {
+    console.error(`✖ ${ABDRUCK_DATEI} konnte nicht gelesen werden: ${e.message}`);
+    process.exit(1);
+  }
+  return abdruckCache;
+}
+function testMeldungen(daten, abdruck) {
+  const soll = abdruck.tests && abdruck.tests[daten.id];
+  const aus = [];
+  if (!soll) aus.push(`Kein Eintrag für "${daten.id}" in ${ABDRUCK_DATEI}`);
+  else W.pruefeStruktur(daten, soll, W.TEXTFELDER_TEST).forEach((m) => aus.push('Struktur: ' + m));
+  W.pruefeTexte(daten, W.TEXTFELDER_TEST).forEach((m) => aus.push(`${m.pfad}: ${m.meldung}`));
+  return aus;
+}
+// Läuft vor jeder Bildverarbeitung: prüft alle Tests und die Einträge in tests.eintraege, sammelt alle Meldungen.
+function pruefeTests() {
+  const liste_ = liste(s.tests && s.tests.eintraege);
+  // Ohne Tests und ohne Abdruck: nichts zu prüfen. Gibt es einen Abdruck, zählt er auch bei leerer Liste.
+  if (!liste_.length && !fs.existsSync(abdruckPfad(DATEI))) return;
+  const abdruck = ladeAbdruck();
+  const aus = [];
+  const sollEintraege = liste(abdruck.eintraege);
+  if (sollEintraege.length !== liste_.length) aus.push(`tests.eintraege: Anzahl ${liste_.length} statt ${sollEintraege.length}`);
+  else liste_.forEach((e, i) => {
+    const pre = `tests.eintraege[${i}]`;
+    W.pruefeStruktur(e, sollEintraege[i], W.TEXTFELDER_EINTRAG).forEach((m) => aus.push(`${pre}.${m}`));
+    W.pruefeTexte(e, W.TEXTFELDER_EINTRAG).forEach((m) => aus.push(`${pre}.${m.pfad}: ${m.meldung}`));
+  });
+  for (const e of liste_) {
+    if (!e || !e.daten) continue;
+    let daten;
+    try { daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), e.daten), 'utf8')); } catch (err) {
+      aus.push(`Test "${e.id}": ${e.daten} konnte nicht gelesen werden: ${err.message}`);
+      continue;
+    }
+    testMeldungen(daten, abdruck).forEach((m) => aus.push(`Test "${e.id}": ${m}`));
+  }
+  if (aus.length) {
+    aus.forEach((m) => console.error(`✖ ${m}`));
+    console.error(`✖ Selbsttests: ${aus.length} Verstoß/Verstöße, Build abgebrochen.`);
+    process.exit(1);
+  }
+}
+pruefeTests();
 
 // ---------------------------------------------------------------------------
 // 2. Ausgabeordner, Schriften, Skript
@@ -103,6 +162,19 @@ const kartenSichtbar = !!(kartenCfg && kartenCfg.sichtbar === true);
 const kartenJs = kartenCfg ? fs.readFileSync(path.join(ROOT, 'src/js/karten.js'), 'utf8') : '';
 if (kartenCfg) fs.writeFileSync(path.join(DIST, 'js/karten.js'), kartenJs);
 const kartenJsUrl = `js/karten.js?v=${crypto.createHash('sha1').update(kartenJs).digest('hex').slice(0, 8)}`;
+// Test-Editor (/editor/): eigene Skripte nur auf der Editor-Seite, je mit ?v=-Prüfsumme
+const editorJs = tests.length ? [
+  ['testwaechter', path.join(ROOT, '../../lib/testwaechter.js')],
+  ['testseite', path.join(ROOT, '../../lib/testseite.js')],
+  ['editor-kern', path.join(ROOT, 'src/js/editor-kern.js')],
+  ['editor-github', path.join(ROOT, 'src/js/editor-github.js')],
+  ['editor-vorschau', path.join(ROOT, 'src/js/editor-vorschau.js')],
+  ['editor', path.join(ROOT, 'src/js/editor.js')],
+].map(([name, quelle]) => {
+  const inhalt = fs.readFileSync(quelle, 'utf8');
+  fs.writeFileSync(path.join(DIST, `js/${name}.js`), inhalt);
+  return `js/${name}.js?v=${crypto.createHash('sha1').update(inhalt).digest('hex').slice(0, 8)}`;
+}) : [];
 const testZiel = sichtbareTests.length === 1 && !kartenSichtbar ? `${sichtbareTests[0].id}.html` : 'selbsttests.html';
 
 // ---------------------------------------------------------------------------
@@ -431,6 +503,9 @@ function ladeTest(cfg) {
   const daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), cfg.daten), 'utf8'));
   const kennung = `Test "${cfg.id}"`;
   const fehler = (m) => { console.error(`✖ ${kennung}: ${m}`); process.exit(1); };
+  const abdruck = ladeAbdruck();
+  const meldungen = testMeldungen(daten, abdruck);
+  if (meldungen.length) { meldungen.forEach((m) => console.error(`✖ ${kennung}: ${m}`)); process.exit(1); }
   const kat = new Set(liste(daten.categories).map((c) => c.id));
   if (!kat.size || !liste(daten.questions).length || !daten.scale || !daten.result) fehler('categories, questions, scale und result sind Pflicht.');
   daten.questions.forEach((f) => { if (!kat.has(f.category)) fehler(`Frage ${f.id}: unbekannte Kategorie "${f.category}".`); });
@@ -440,66 +515,9 @@ function ladeTest(cfg) {
 }
 
 function testSeite(cfg, daten, testsCfg) {
-  const titel = cfg.titel;
-  const json = JSON.stringify(daten).replace(/</g, '\\u003c');
-  const entwurf = cfg.sichtbar !== true;
-  const r = daten.result;
-  const dauer = cfg.kurz ? esc(cfg.kurz) : `${daten.questions.length} Aussagen`;
   return `
-${seitenkopf(titel, cfg.motto, cfg.intro, null, true)}
-<section class="abschnitt test" id="test" aria-label="${esc(titel)}">
-  <div class="container">
-    <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
-    ${entwurf ? '<p class="shop-hinweis">Entwurf: Dieser Test ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
-    <div class="test-karte" data-test>
-      <div data-schritt="intro">
-        <p class="kicker">Vorab</p>
-        <h2 class="test-titel">So funktioniert es</h2>
-        <ul class="test-hinweise">
-          <li><strong>${dauer}.</strong> Antworte spontan und denke an deinen Alltag.</li>
-          <li><strong>Keine richtigen oder falschen Antworten.</strong> Am Ende erhältst du eine Auswertung mit Impulsen.</li>
-          <li><strong>Privat:</strong> ${esc(testsCfg.datenschutz || 'Deine Antworten werden nur in deinem Browser verarbeitet und nicht gespeichert.')}</li>
-        </ul>
-        <p class="test-note">${esc(daten.status || '')}. Kein Diagnoseinstrument.${testsCfg.methodik ? ' <a href="methodik.html">So entstehen unsere Tests</a>' : ''}</p>
-        <button class="knopf knopf-dunkel" type="button" data-start hidden>Test starten</button>
-      </div>
-      <div data-schritt="frage" hidden>
-        <div class="test-kopf">
-          <p class="test-zaehler" data-zaehler aria-live="polite"></p>
-          <div class="test-balken" role="progressbar" aria-label="Fortschritt" aria-valuemin="0" aria-valuemax="${daten.questions.length}" aria-valuenow="0" data-balken><span></span></div>
-        </div>
-        <fieldset class="test-frage">
-          <legend tabindex="-1" data-frage></legend>
-          <div class="test-optionen" data-optionen></div>
-        </fieldset>
-        <div class="test-aktionen">
-          <button class="knopf knopf-rand" type="button" data-zurueck>Zurück</button>
-          <button class="knopf knopf-dunkel" type="button" data-weiter disabled>Weiter</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-<section class="sand abschnitt test-ergebnis" id="ergebnis" aria-labelledby="ergebnis-titel" data-ergebnis hidden>
-  <div class="container">
-    <p class="kicker" data-kicker>${esc(r.kicker || 'Dein Ergebnis')}</p>
-    <h2 class="titel" id="ergebnis-titel" tabindex="-1">${betont(r.title || 'Dein Ergebnis')}</h2>
-    <p class="test-lead" data-intro></p>
-    <div class="test-stufe" data-stufe hidden></div>
-    <figure class="test-chart" data-chart></figure>
-    <div class="test-details" data-details></div>
-    <p class="test-lead test-outro" data-outro></p>
-    <p class="test-note" data-note></p>
-    <div class="knoepfe test-ende">
-      ${r.cta && r.cta.href ? `<a class="knopf knopf-honig" href="${esc(r.cta.href)}">${esc(r.cta.text || 'Im Erstgespräch vertiefen')}</a>` : ''}
-      <button class="knopf knopf-rand" type="button" data-mail>Per E-Mail an mich senden</button>
-      <button class="knopf knopf-rand" type="button" data-neu>Neu starten</button>
-      <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
-    </div>
-  </div>
-</section>
-${kontaktband()}
-<script type="application/json" id="antreiber-daten">${json}</script>`;
+${T.kopf(cfg)}
+${T.abschnitte(cfg, daten, testsCfg, kontaktband())}`;
 }
 
 function methodikSeite(cfg) {
@@ -529,15 +547,7 @@ ${kontaktband()}`;
 }
 
 function testUebersicht(cfg) {
-  const karten = sichtbareTests.map((e) => `
-      <li class="karte">
-        <div class="karte-inhalt">
-          ${e.kurz ? `<ul class="schlagworte"><li>${esc(e.kurz)}</li></ul>` : ''}
-          <h2>${esc(e.titel)}</h2>
-          ${e.beschreibung ? `<p>${esc(e.beschreibung)}</p>` : ''}
-          <a class="knopf knopf-dunkel" href="${seiteVon(e.id)}">Test starten<span class="sr-only">: ${esc(e.titel)}</span></a>
-        </div>
-      </li>`).join('');
+  const karten = sichtbareTests.map((e) => T.kachel(e, seiteVon(e.id))).join('');
   const kartenKarte = kartenSichtbar ? `
       <li class="karte">
         <div class="karte-inhalt">
@@ -554,6 +564,19 @@ ${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro, null, true)}
   </ul>${cfg.methodik ? '<p class="test-note methodik-link"><a href="methodik.html">So entstehen unsere Tests</a>: was sie können und was nicht.</p>' : ''}</div>
 </section>
 ${kontaktband()}`;
+}
+// Test-Editor: nur das Gerüst; Ansichten (Anmelden, Testwahl, Formular, Vorschau) baut js/editor.js.
+function editorSeite() {
+  return `
+<section class="abschnitt ed" aria-labelledby="ed-titel">
+  <div class="container">
+    <p class="kicker">Test-Editor</p>
+    <h1 class="ed-titel" id="ed-titel">Texte der Selbsttests bearbeiten</h1>
+    <noscript><p class="shop-hinweis">Für den Editor wird JavaScript benötigt.</p></noscript>
+    <div class="ed-meldung" data-ed-meldung role="status" aria-live="polite"></div>
+    <div class="ed-app" data-ed-app></div>
+  </div>
+</section>`;
 }
 // Gesprächskarten: Kartensätze liegen als JSON auf der Seite; js/karten.js zieht zufällig ohne Wiederholung.
 // Ohne JavaScript bleibt die Liste aller Karten sichtbar.
@@ -790,9 +813,11 @@ function hauptnav({ aktiv, anker, kontaktZiel }) {
     </nav>`;
 }
 
-function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false }) {
+// basis: Seite in einem Unterordner (editor/index.html) -> <base href="/">, damit Fonts, CSS-URLs und Links stimmen
+function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false, basis = false }) {
   const start = datei === 'index.html';
-  const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei}` : '';
+  // Seiten im Unterordner (Editor) bekommen keine kanonische URL und kein og:url
+  const seitenUrl = websiteUrl && !basis ? `${websiteUrl}/${start ? '' : datei}` : '';
   const anker = (id) => (start ? `#${id}` : `./#${id}`);
   // Kontaktband vorhanden -> Sprung auf der Seite; sonst zur Startseite (sonst tut der Knopf nichts)
   const kontaktZiel = inhalt.includes('id="kontakt"') ? '#kontakt' : './#kontakt';
@@ -804,7 +829,7 @@ function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '
   return `<!doctype html>
 <html lang="de">
 <head>
-<meta charset="utf-8">
+<meta charset="utf-8">${basis ? '\n<base href="/">' : ''}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(titel)}</title>
 <meta name="description" content="${esc(beschreibung)}">
@@ -821,7 +846,7 @@ ${og}
 <script src="${mainJsUrl}" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+<a class="skip-link" href="${basis ? esc(datei.replace(/index\.html$/, '')) : ''}#inhalt">Zum Inhalt springen</a>
 ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(s.name)}${s.ersteller ? `, erstellt von ${esc(s.ersteller)}` : ''}</div>` : ''}
 <header class="kopf">
   <div class="container kopf-innen">
@@ -960,6 +985,16 @@ if (kartenCfg) {
     zusatzHead: `<script src="${kartenJsUrl}" defer></script>`,
   });
 }
+// Test-Editor: nicht im Menü, noindex (damit nicht in der Sitemap), in robots.txt ausgeschlossen
+if (editorJs.length) {
+  fs.mkdirSync(path.join(DIST, 'editor'), { recursive: true });
+  seiten.push({
+    datei: 'editor/index.html', aktiv: 'editor', inhalt: editorSeite(), noindex: true, basis: true,
+    titel: `Test-Editor – ${s.name}`,
+    beschreibung: 'Texte der Selbsttests bearbeiten und zur Freigabe senden.',
+    zusatzHead: editorJs.map((u) => `<script src="${u}" defer></script>`).join(''),
+  });
+}
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
 ergaenzeStrukturdaten(seiten);
 for (const seite of seiten) fs.writeFileSync(path.join(DIST, seite.datei), layout(seite));
@@ -972,7 +1007,7 @@ const zahl = (s.name.match(/(\d{1,3})$/) || [])[1];
 fs.writeFileSync(path.join(DIST, 'favicon.svg'),
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#F2B33D"/><text x="32" y="41" font-family="Arial, sans-serif" font-weight="700" font-size="${zahl ? 26 : 24}" text-anchor="middle" fill="#2E2520">${esc(zahl || h.initialen(s.name))}</text></svg>`);
 fs.writeFileSync(path.join(DIST, 'robots.txt'),
-  demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${websiteUrl ? `Sitemap: ${websiteUrl}/sitemap.xml\n` : ''}`);
+  demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${editorJs.length ? 'Disallow: /editor/\n' : ''}${websiteUrl ? `Sitemap: ${websiteUrl}/sitemap.xml\n` : ''}`);
 if (websiteUrl && !demo) {
   const heute = new Date().toISOString().slice(0, 10);
   const urls = seiten.filter((p) => !p.noindex).map((p) => `<url><loc>${websiteUrl}/${p.datei === 'index.html' ? '' : p.datei}</loc><lastmod>${heute}</lastmod></url>`).join('');
