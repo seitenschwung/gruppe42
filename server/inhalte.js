@@ -222,6 +222,7 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
       throw fehler('ungueltig', 'Keine Änderungen', { meldungen: [{ pfad: '', meldung: 'Keine Änderungen' }] });
     }
     const overlay = leseOverlay();
+    if (overlay === null) throw fehler('nicht_verfuegbar', 'Overlay nicht lesbar');
     // 1) Form und Editierbarkeit
     const ungueltig = [];
     const gesehen = new Set();

@@ -126,7 +126,7 @@ function notFound(res) {
 }
 
 function serveHtml(req, res, { html, etag }, head) {
-  const headers = { 'Content-Type': MIME['.html'], ETag: etag };
+  const headers = { 'Content-Type': MIME['.html'], ETag: etag, 'Cache-Control': 'no-cache' };
   if (req.headers['if-none-match'] === etag) return send(res, 304, headers, undefined);
   const body = Buffer.from(html, 'utf8');
   headers['Content-Length'] = body.length;
@@ -141,6 +141,8 @@ function serve(req, res, file, st, head) {
     'Last-Modified': st.mtime.toUTCString(),
     ETag: etag,
   };
+  // HTML immer revalidieren (ETag/304), damit Live-Texte sofort sichtbar sind; andere Dateien unverändert.
+  if (path.extname(file).toLowerCase() === '.html') headers['Cache-Control'] = 'no-cache';
   if (req.headers['if-none-match'] === etag) return send(res, 304, headers, undefined);
   headers['Content-Length'] = st.size;
   res.writeHead(200, allHeaders(res, headers));

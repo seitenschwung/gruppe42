@@ -82,7 +82,7 @@ Mit gültiger Sitzung, Header und Origin wie oben:
 
 ### 8. Repo-Abgleich
 - `node server/editor-export.js` im Container gibt das Overlay als JSON aus.
-- `node site/lib/einpflegen.js <overlay.json>` lokal: schreibt die Texte in `site/kunden/gruppe42/**` (nur erlaubte Felder, Wächter prüft); danach Commit/PR durch den Entwickler; anschließend Overlay im Container leeren (`node server/editor-export.js --leeren <sha256 des exportierten Stands>`, nur wenn der Stand unverändert ist). Leeren nach dem Deploy; danach Server neu starten oder erneut speichern, damit gerenderte Seiten neu entstehen.
+- `node site/lib/einpflegen.js <overlay.json>` lokal: schreibt die Texte in `site/kunden/gruppe42/**` (nur erlaubte Felder, Wächter prüft); danach Commit/PR durch den Entwickler; anschließend Overlay im Container leeren (`node server/editor-export.js --leeren <sha256 des exportierten Stands>`, nur wenn der Stand unverändert ist). Leeren nach dem Deploy; danach den Container neu starten (ein Speichern rendert nur diese Testseite und die Übersicht neu).
 
 ## Restrisiken
 - Gestohlenes/entsperrtes Gerät mit Passkey: Angreifer kann Testtexte ändern (nur Text, Wächter-Grenzen). Gegenmittel: Benachrichtigung, Verlauf, Rückgängig, Passkey entfernen (`editor-einladung.js --entfernen <id>`).

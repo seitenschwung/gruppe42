@@ -50,7 +50,9 @@ steht auf dem Knopf „Noch … Hinweise offen“.
 | Meldung | Was zu tun ist |
 |---|---|
 | Bitte erneut anmelden. Ihr Entwurf bleibt in diesem Browser gespeichert. | Erneut mit Passkey anmelden. |
-| Das Feld „…“ wurde inzwischen geändert. Bitte laden Sie den Test neu. | Seite neu laden und Ihren Text prüfen. |
+| Nicht gespeichert: Das Feld „…“ wurde inzwischen von anderer Seite geändert. Der aktuelle Stand wurde geladen. Ihr Text dafür war: „…“. | Der aktuelle Stand ist schon geladen; Ihr Text wird mit angezeigt. Prüfen Sie ihn und speichern Sie erneut. |
+| Gerade wird an anderer Stelle gespeichert. Bitte versuchen Sie es in einem Moment erneut; Ihr Entwurf bleibt erhalten. | Einen Moment warten, dann erneut speichern. |
+| Gespeichert, aber die Website zeigt noch den alten Text. Bitte wenden Sie sich an Seitenschwung. | Seitenschwung Bescheid geben; Ihr Text ist gespeichert. |
 | Zu viele Anfragen in kurzer Zeit. Bitte warten Sie eine Minute … | Kurz warten, dann erneut versuchen. |
 | Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung … | Verbindung prüfen, erneut versuchen. |
 | Dieser Einladungslink ist ungültig, abgelaufen oder wurde schon verwendet. | Neuen Link bei Seitenschwung anfordern. |

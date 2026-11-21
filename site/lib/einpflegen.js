@@ -124,7 +124,15 @@ function main(argv, out, err) {
     err('Nichts geschrieben. Der Wächter lehnt ab:\n' + r.fehler.map((f) => '  - ' + f).join('\n') + '\n');
     return 1;
   }
-  for (const rel of Object.keys(r.dateien)) fs.writeFileSync(path.join(kunde, rel), serial(r.dateien[rel]));
+  for (const rel of Object.keys(r.dateien)) {
+    const ziel = path.join(kunde, rel);
+    const tmp = ziel + '.tmp-' + process.pid;
+    try { fs.writeFileSync(tmp, serial(r.dateien[rel])); fs.renameSync(tmp, ziel); } catch (e) {
+      try { fs.unlinkSync(tmp); } catch (e2) { /* nichts da */ }
+      err('Fehler: Schreiben von ' + rel + ' fehlgeschlagen (' + e.message + ')\n');
+      return 1;
+    }
+  }
   const dateiNamen = Object.keys(r.bericht);
   out(dateiNamen.length ? dateiNamen.map((d) => '  ' + d + ': ' + r.bericht[d] + ' Feld(er) geändert').join('\n') + '\n' : '  Keine Änderungen gegenüber dem Repo.\n');
   if (r.verwaist.length) out('Ignoriert (nicht mehr vorhanden oder nicht änderbar):\n' + r.verwaist.map((v) => '  - ' + v).join('\n') + '\n');

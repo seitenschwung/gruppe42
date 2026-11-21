@@ -92,6 +92,20 @@ test('editor_csp', async () => {
   assert.strictEqual(r304.headers.get('cache-control'), 'no-store');
 });
 
+test('html_no_cache_other_assets_unchanged', async () => {
+  const h = await get('/shop.html');
+  assert.strictEqual(h.status, 200);
+  assert.strictEqual(h.headers.get('cache-control'), 'no-cache');
+  assert.ok(h.headers.get('etag') && h.headers.get('last-modified'));
+  const n = await get('/shop.html', { headers: { 'if-none-match': h.headers.get('etag') } });
+  assert.strictEqual(n.status, 304);
+  assert.strictEqual(n.headers.get('cache-control'), 'no-cache');
+  const idx = await get('/sub/');
+  assert.strictEqual(idx.headers.get('cache-control'), 'no-cache');
+  const css = await get('/a.css');
+  assert.strictEqual(css.headers.get('cache-control'), null);
+});
+
 test('andere_seiten_ohne_csp', async () => {
   for (const p of ['/', '/editorial.html', '/shop.html', '/nope']) {
     const h = (await get(p)).headers;

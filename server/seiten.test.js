@@ -142,6 +142,9 @@ test('Server: Live-Seite mit neuem ETag, 304, HEAD, Header; ohne seiten unverän
     assert.ok(b.res.headers.etag && b.res.headers.etag !== a.res.headers.etag);
     const c = await hole(srv, '/' + ID + '.html', { headers: { 'If-None-Match': b.res.headers.etag } });
     assert.equal(c.res.statusCode, 304);
+    assert.equal(b.res.headers['cache-control'], 'no-cache');
+    assert.equal(c.res.headers['cache-control'], 'no-cache');
+    assert.equal(a.res.headers['cache-control'], 'no-cache');
     const h = await hole(srv, '/' + ID + '.html', { method: 'HEAD' });
     assert.equal(h.res.statusCode, 200);
     assert.equal(h.body, '');

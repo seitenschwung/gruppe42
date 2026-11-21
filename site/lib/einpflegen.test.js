@@ -96,3 +96,16 @@ test('falsche_pruefsumme_und_kaputte_eingabe', () => {
   assert.notStrictEqual(spawnSync('node', [SKRIPT, datei, '--kunde', kunde]).status, 0);
   assert.deepStrictEqual(alle(kunde), vorher);
 });
+
+test('schreibt_atomar_ohne_temp_reste', () => {
+  const { tmp, kunde } = kopie();
+  const cfg = JSON.parse(lies(path.join(kunde, 'gruppe42.json')));
+  const e = cfg.tests.eintraege[0];
+  const t = JSON.parse(lies(path.join(kunde, e.daten)));
+  const r = lauf(tmp, kunde, { version: 1, tests: { [t.id]: { 'questions[0].text': 'Atomar' } }, eintraege: {} }, true);
+  assert.strictEqual(r.status, 0, r.stderr);
+  const rest = [];
+  (function geh(d) { for (const f of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, f.name); if (f.isDirectory()) geh(p); else if (/\.tmp-/.test(f.name)) rest.push(p); } })(kunde);
+  assert.deepStrictEqual(rest, []);
+  assert.ok(lies(path.join(kunde, e.daten)).includes('Atomar'));
+});

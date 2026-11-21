@@ -311,3 +311,22 @@ test('Dateisperre: gehaltene Sperre -> nicht_verfuegbar (gesperrt), nichts gesch
   assert.equal(inh.speichere(ID, [aend(inh, 'questions[0].text', 'Zwei')], 'Ingrid').nr, 2);
   assert.equal(inh.leeren(inh.export().sha256), true);
 });
+
+test('Overlay erst unter der Sperre unlesbar: nicht_verfuegbar statt TypeError', () => {
+  const { inh, dataDir } = umgebung();
+  const p = path.join(dataDir, 'inhalte.json');
+  const orig = fs.readFileSync;
+  let n = 0;
+  const a = aend(inh, 'questions[0].text', 'x');
+  fs.readFileSync = function (f, ...rest) {
+    if (f === p && ++n >= 2) return '{kaputt';
+    return orig.call(this, f, ...rest);
+  };
+  try {
+    fs.mkdirSync(dataDir, { recursive: true });
+    fs.writeFileSync(p, '{"version":1,"tests":{},"eintraege":{}}');
+    const e = fehlerArt(() => inh.speichere(ID, [a], 'a'));
+    assert.equal(e.art, 'nicht_verfuegbar');
+    assert.equal(e.message, 'Overlay nicht lesbar');
+  } finally { fs.readFileSync = orig; }
+});
