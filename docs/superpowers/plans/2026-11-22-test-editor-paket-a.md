@@ -1,3 +1,5 @@
+> Superseded by the live editor design (`docs/superpowers/specs/2026-11-22-test-editor-live-design.md`): the GitHub/PR flow described here was removed. Kept for history.
+
 # Test-Editor Paket A Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development. Steps use checkbox (`- [ ]`) syntax.

@@ -64,7 +64,7 @@ function createServer({ root, version, log, api, seiten }) {
     } catch { /* bad percent escape: answered with 400 below */ }
     if (log && req.url !== '/healthz') {
       // Combined log format, the one CrowdSec's http/nginx parsers expect.
-      // OAuth code/state must never reach the log: no query for /api/editor, nor when the path can't be parsed.
+      // Editor URLs (invitation codes etc.) must never reach the log: no query for /api/editor, nor when the path can't be parsed.
       const logUrl = pathname === null || isEditorApi(pathname) ? req.url.split('?')[0] : req.url;
       res.on('finish', () => {
         const h = req.headers;
@@ -176,8 +176,6 @@ if (require.main === module) {
     api: {
       routes: {
         ...require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }).routes,
-        ...require('./editor-auth').createEditorAuth({ env: process.env, fetch }).routes,
-        // After editor-auth on purpose: its /api/editor/abmelden is replaced (editor-auth goes in Task 7).
         ...sitzung.routes,
         ...editorApi.routes,
         ...require('./webhook').createWebhook({

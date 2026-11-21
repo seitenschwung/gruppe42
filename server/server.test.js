@@ -129,14 +129,14 @@ const logFor = async (p, needle) => {
 };
 
 test('log_ohne_query', async () => {
-  const cb = await logFor('/api/editor/callback?code=geheim&state=x', '/api/editor/callback');
+  const cb = await logFor('/api/editor/anmelden?code=geheim&state=x', '/api/editor/anmelden');
   assert.ok(cb.length && cb.every((l) => !l.includes('geheim') && !l.includes('?')), cb.join());
   assert.ok((await logFor('/shop.html?a=1', '/shop.html?a=1')).length);
 });
 
 test('log_ohne_query_kodiert', async () => {
-  for (const [p, needle] of [['/api/%65ditor/callback?code=geheim1', '/api/%65ditor/callback'],
-    ['/x/..%2fapi/editor/callback?code=geheim2', '/x/..%2fapi/editor/callback'],
+  for (const [p, needle] of [['/api/%65ditor/anmelden?code=geheim1', '/api/%65ditor/anmelden'],
+    ['/x/..%2fapi/editor/anmelden?code=geheim2', '/x/..%2fapi/editor/anmelden'],
     ['/%zz?code=geheim3', '/%zz']]) {
     const l = await logFor(p, needle);
     assert.ok(l.length, p);
