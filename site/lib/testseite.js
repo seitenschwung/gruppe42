@@ -37,13 +37,13 @@
 
   // Test- und Ergebnisabschnitt plus Daten-Skript. `zwischen` (z. B. kontaktband()) steht
   // zwischen Ergebnisabschnitt und Skript, genau wie auf der gebauten Seite.
-  function abschnitte(cfg, daten, testsCfg, zwischen) {
+  // Marker <!--g42:...--> begrenzen die Bereiche, die der Server (server/seiten.js) mit Live-Texten neu erzeugt.
+  function sektionen(cfg, daten, testsCfg) {
     const titel = cfg.titel;
-    const json = JSON.stringify(daten).replace(/</g, '\\u003c');
     const entwurf = cfg.sichtbar !== true;
     const r = daten.result;
     const dauer = cfg.kurz ? esc(cfg.kurz) : `${daten.questions.length} Aussagen`;
-    return `<section class="abschnitt test" id="test" aria-label="${esc(titel)}">
+    return `<!--g42:test--><section class="abschnitt test" id="test" aria-label="${esc(titel)}">
   <div class="container">
     <noscript><p class="shop-hinweis">Für den Test wird JavaScript benötigt. Deine Antworten verlassen dabei nie deinen Browser.</p></noscript>
     ${entwurf ? '<p class="shop-hinweis">Entwurf: Dieser Test ist noch nicht freigegeben (nicht im Menü, nicht indexierbar).</p>' : ''}
@@ -93,9 +93,18 @@
       <button class="knopf knopf-rand" type="button" data-druck>Als PDF speichern / drucken</button>
     </div>
   </div>
-</section>
+</section><!--/g42:test-->`;
+  }
+
+  function datenSkript(daten) {
+    const json = JSON.stringify(daten).replace(/</g, '\\u003c');
+    return `<!--g42:daten--><script type="application/json" id="antreiber-daten">${json}</script><!--/g42:daten-->`;
+  }
+
+  function abschnitte(cfg, daten, testsCfg, zwischen) {
+    return `${sektionen(cfg, daten, testsCfg)}
 ${zwischen || ''}
-<script type="application/json" id="antreiber-daten">${json}</script>`;
+${datenSkript(daten)}`;
   }
 
   // Karte eines Tests in der Übersicht (selbsttests.html).
@@ -111,5 +120,5 @@ ${zwischen || ''}
       </li>`;
   }
 
-  return { esc, betont, kopf, abschnitte, kachel };
+  return { esc, betont, kopf, sektionen, datenSkript, abschnitte, kachel };
 }));

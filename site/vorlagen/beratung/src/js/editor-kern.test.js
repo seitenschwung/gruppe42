@@ -89,32 +89,10 @@ test('aenderungen: nur geänderte Felder, mit Label', () => {
   assert.strictEqual(a[0].neu, 'Anders.');
   assert.strictEqual(a[0].alt, d.questions[2].text);
   assert.match(a[0].label, /^Frage 3/);
-  const paar = K.aenderungen({ test: d, eintrag: e }, { test: d, eintrag: Object.assign({}, e, { titel: 'T2' }) }, f);
-  assert.deepStrictEqual(paar.map((x) => x.neu), ['T2']);
-});
-
-test('pr_text', () => {
-  const liste = [{ label: 'Frage 3 (Bereich „X“)', alt: 'a', neu: 'b' }, { label: 'Name des Tests', alt: 'c', neu: 'd' }];
-  const r = K.prText('Antreiber-Test', liste, 'Bitte prüfen.');
-  assert.strictEqual(r.titel, 'Inhalt: Antreiber-Test (2 Änderungen)');
-  assert.strictEqual(r.text,
-    'Bitte prüfen.\n\n- Frage 3 (Bereich „X“): „a“ → „b“\n- Name des Tests: „c“ → „d“\n\nErstellt mit dem Test-Editor.');
-  const ohne = K.prText('T', liste.slice(0, 1), '');
-  assert.ok(ohne.text.startsWith('- Frage 3'));
-  assert.strictEqual(ohne.titel, 'Inhalt: T (1 Änderung)');
-});
-
-test('pr_text_entschaerft: keine Erwähnungen/Querverweise, Listenpunkte einzeilig', () => {
-  const liste = [{ label: 'Frage 1', alt: 'hallo @team/x\nzweite Zeile', neu: 'siehe #12\r\nund o/r#5' }];
-  const r = K.prText('Test @a #3', liste, 'Danke @someone, siehe #12.\n\nAbsatz bleibt');
-  const alles = r.titel + '\n' + r.text;
-  assert.ok(!/@(?!\u200b)/.test(alles));
-  assert.ok(!/#(?=\d)/.test(alles));
-  assert.ok(r.text.includes('@\u200bsomeone') && r.text.includes('#\u200b12'));
-  assert.ok(r.text.includes('Danke @\u200bsomeone, siehe #\u200b12.\n\nAbsatz bleibt'));
-  const zeilen = r.text.split('\n').filter((z) => z.startsWith('- '));
-  assert.strictEqual(zeilen.length, 1);
-  assert.ok(zeilen[0].includes('zweite Zeile') && zeilen[0].includes('und o/r#\u200b5'));
+  assert.strictEqual(a[0].datei, 'test');
+  assert.strictEqual(a[0].pfad, 'questions[2].text');
+  const paar = K.aenderungen({ test: d, eintrag: e }, { test: d, eintrag: Object.assign({}, e, { motto: 'M2' }) }, f);
+  assert.deepStrictEqual(paar.map((x) => [x.datei, x.pfad, x.neu]), [['eintrag', 'motto', 'M2']]);
 });
 
 test('setze_pfadarten: length und Nicht-Zahlen bei Arrays werden abgelehnt', () => {
@@ -125,64 +103,24 @@ test('setze_pfadarten: length und Nicht-Zahlen bei Arrays werden abgelehnt', () 
   assert.deepStrictEqual(K.setze(o, 'a[1]', 'z'), { a: ['x', 'z'] });
 });
 
-test('wende_an: fremde Änderung auf main bleibt, eigene kommt dazu', () => {
-  const { e, d } = tests[0];
-  const f = K.felder(d, e).filter((x) => x.datei === 'test');
-  const jetzt = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
-  // Inzwischen auf main: anderes Textfeld und ein Nicht-Textfeld geändert
-  let frisch = K.setze(d, 'questions[5].text', 'Fremd geändert');
-  frisch = K.setze(frisch, 'result.kind', d.result.kind);
-  frisch = Object.assign({}, frisch, { neuesFeld: 1 });
-  const r = K.wendeAn(frisch, d, jetzt, f);
-  assert.ok(!r.konflikt);
-  assert.strictEqual(r.daten.questions[2].text, 'Neu von Ingrid');
-  assert.strictEqual(r.daten.questions[5].text, 'Fremd geändert');
-  assert.strictEqual(r.daten.neuesFeld, 1);
-  assert.strictEqual(d.questions[2].text, tests[0].d.questions[2].text, 'Start unverändert');
-});
-
-test('wende_an: dasselbe Feld inzwischen geändert -> konflikt', () => {
-  const { e, d } = tests[0];
-  const f = K.felder(d, e).filter((x) => x.datei === 'test');
-  const jetzt = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
-  const frisch = K.setze(d, 'questions[2].text', 'Anders auf main');
-  assert.deepStrictEqual(K.wendeAn(frisch, d, jetzt, f), { konflikt: 'questions[2].text' });
-  // Feld auf main entfernt (Struktur geändert) -> ebenfalls konflikt
-  const ohne = Object.assign({}, d, { questions: d.questions.slice(0, 2) });
-  assert.deepStrictEqual(K.wendeAn(ohne, d, jetzt, f), { konflikt: 'questions[2].text' });
-  // Keine eigenen Änderungen -> frischer Stand unverändert zurück
-  assert.strictEqual(K.wendeAn(frisch, d, d, f).daten, frisch);
-});
-
-test('wende_an: frischer Wert ist schon der eigene neue Wert -> kein Konflikt', () => {
-  const { e, d } = tests[0];
-  const f = K.felder(d, e).filter((x) => x.datei === 'test');
-  const jetzt = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
-  const frisch = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
-  const r = K.wendeAn(frisch, d, jetzt, f);
-  assert.ok(!r.konflikt);
-  assert.strictEqual(r.daten.questions[2].text, 'Neu von Ingrid');
-  assert.strictEqual(r.daten, frisch, 'nichts zu ändern -> derselbe Stand');
-});
-
 test('entwurf_anwenden: nur Felder mit unveränderter Basis, sonst verworfen mit Label', () => {
   const { e, d } = tests[0];
   const f = K.felder(d, e);
   const stand = { test: d, eintrag: e };
   const q2 = f.find((x) => x.pfad === 'questions[2].text');
   const q5 = f.find((x) => x.pfad === 'questions[5].text');
-  const titel = f.find((x) => x.datei === 'eintrag' && x.pfad === 'titel');
+  const motto = f.find((x) => x.datei === 'eintrag' && x.pfad === 'motto');
   const entwurf = {
-    werte: { 'test|questions[2].text': 'Entwurf 2', 'test|questions[5].text': 'Entwurf 5', 'eintrag|titel': 'Neuer Titel' },
-    basis: { 'test|questions[2].text': d.questions[2].text, 'test|questions[5].text': 'Alter Stand', 'eintrag|titel': e.titel },
+    werte: { 'test|questions[2].text': 'Entwurf 2', 'test|questions[5].text': 'Entwurf 5', 'eintrag|motto': 'Neues Motto' },
+    basis: { 'test|questions[2].text': d.questions[2].text, 'test|questions[5].text': 'Alter Stand', 'eintrag|motto': e.motto },
   };
   const r = K.entwurfAnwenden(stand, entwurf, f);
   assert.strictEqual(r.daten.test.questions[2].text, 'Entwurf 2');
   assert.strictEqual(r.daten.test.questions[5].text, d.questions[5].text, 'Repo-Wert bleibt');
-  assert.strictEqual(r.daten.eintrag.titel, 'Neuer Titel');
+  assert.strictEqual(r.daten.eintrag.motto, 'Neues Motto');
   assert.strictEqual(r.angewendet, 2);
   assert.deepStrictEqual(r.verworfen, [q5.label]);
-  assert.ok(q2 && titel);
+  assert.ok(q2 && motto);
   assert.strictEqual(d.questions[2].text, tests[0].d.questions[2].text, 'Original unverändert');
 });
 
@@ -196,15 +134,6 @@ test('entwurf_anwenden: alter Entwurf ohne Basis wird verworfen; gleicher Wert z
   assert.strictEqual(r.angewendet, 0);
   assert.deepStrictEqual(r.verworfen, [q5.label]);
   assert.deepStrictEqual(K.entwurfAnwenden({ test: d, eintrag: e }, null, f), { daten: { test: d, eintrag: e }, angewendet: 0, verworfen: [] });
-});
-
-test('nurErlaubteDateien', () => {
-  const ok = ['a.json', 'g.json'];
-  assert.strictEqual(K.nurErlaubteDateien(['a.json', 'g.json'], ok), true);
-  assert.strictEqual(K.nurErlaubteDateien([], ok), true);
-  assert.strictEqual(K.nurErlaubteDateien(['a.json', 'build.js'], ok), false);
-  assert.strictEqual(K.nurErlaubteDateien(['a.json', 'build.js'], ok), false); // Umbenennung: previous_filename steht in der Liste
-  assert.strictEqual(K.nurErlaubteDateien(new Array(100).fill('a.json'), ok), false);
 });
 
 test('labels_eintrag: Kachel und Seitenkopf, Überschrift der Testseite, kein „Teaser:“', () => {
@@ -258,4 +187,66 @@ test('passt: Suche in Label und Wert, ohne Groß-/Kleinschreibung, auch Umlaute'
   // zerlegtes ü (u + U+0308) findet auch das zusammengesetzte
   assert.strictEqual(K.passt(f, 'gründlich', 'gründlich'), true);
   assert.strictEqual(K.passt(f, 'x', ''), true);
+});
+
+test('fest: Test-name und Eintrag-titel nur als Info, nicht live änderbar', () => {
+  for (const { e, d } of tests) {
+    const f = K.felder(d, e);
+    const fest = f.filter((x) => x.fest).map((x) => x.datei + '|' + x.pfad).sort();
+    assert.deepStrictEqual(fest, ['eintrag|titel', 'test|name'], e.id);
+    assert.ok(f.filter((x) => !x.fest).length > 10, e.id);
+    // Änderungen an festen Feldern zählen nicht
+    const n = { test: K.setze(d, 'name', 'Anders'), eintrag: Object.assign({}, e, { titel: 'Anders' }) };
+    assert.deepStrictEqual(K.aenderungen({ test: d, eintrag: e }, n, f), [], e.id);
+    // Entwürfe für feste Felder werden nicht angewendet (auch nicht als verworfen gemeldet)
+    const r = K.entwurfAnwenden({ test: d, eintrag: e }, {
+      werte: { 'test|name': 'X', 'eintrag|titel': 'Y' }, basis: { 'test|name': d.name, 'eintrag|titel': e.titel },
+    }, f);
+    assert.strictEqual(r.angewendet, 0);
+    assert.deepStrictEqual(r.verworfen, []);
+    assert.strictEqual(r.daten.test.name, d.name);
+  }
+});
+
+test('export_ohne_pr: keine GitHub-/PR-Helfer mehr', () => {
+  assert.strictEqual(K.prText, undefined);
+  assert.strictEqual(K.nurErlaubteDateien, undefined);
+  assert.strictEqual(K.wendeAn, undefined);
+});
+
+test('erfolgText: live -> "Ist live.", sonst Hinweis auf alten Text (kein "wird veröffentlicht")', () => {
+  assert.strictEqual(K.erfolgText('Gespeichert', true), 'Gespeichert. Ist live.');
+  assert.strictEqual(K.erfolgText('Rückgängig gemacht', true), 'Rückgängig gemacht. Ist live.');
+  const nein = K.erfolgText('Gespeichert', false);
+  assert.strictEqual(nein, 'Gespeichert, aber die Website zeigt noch den alten Text. Bitte wenden Sie sich an Seitenschwung.');
+  assert.doesNotMatch(nein, /Ist live|veröffentlicht/);
+  assert.match(K.erfolgText('Rückgängig gemacht', false), /^Rückgängig gemacht, aber die Website zeigt noch den alten Text\./);
+});
+
+test('ordneMeldungen: Feldmeldungen je Feld, feldlose getrennt', () => {
+  const felder = new Set(['test|name', 'test|questions[0].text', 'eintrag|motto']);
+  const r = K.ordneMeldungen([
+    { pfad: 'questions[0].text', meldung: 'Darf nicht leer sein' },
+    { pfad: 'questions[0].text', meldung: 'Zu lang' },
+    { pfad: 'motto', meldung: 'Zu lang' },
+    { pfad: '', meldung: 'questions: Anzahl 3 statt 4' },
+    { pfad: 'gibtsnicht', meldung: 'Dieses Feld ist nicht änderbar' },
+  ], (k) => felder.has(k));
+  assert.deepStrictEqual([...r.jeFeld], [
+    ['test|questions[0].text', ['Darf nicht leer sein', 'Zu lang']],
+    ['eintrag|motto', ['Zu lang']],
+  ]);
+  assert.deepStrictEqual(r.ohneFeld, ['questions: Anzahl 3 statt 4', 'Dieses Feld ist nicht änderbar']);
+  assert.deepStrictEqual(K.ordneMeldungen(undefined, () => true), { jeFeld: new Map(), ohneFeld: [] });
+});
+
+test('ausText: je grund eine Meldung, ohne grund neutral', () => {
+  assert.match(K.ausText('nicht_schreibbar'), /Datenspeicher/);
+  assert.match(K.ausText('gesperrt'), /in einem Moment/);
+  assert.match(K.ausText('aus'), /nicht eingeschaltet/);
+  assert.match(K.ausText('overlay_unlesbar'), /nicht gelesen/);
+  const neutral = 'Der Editor ist gerade nicht verfügbar. Bitte versuchen Sie es in ein paar Minuten erneut.';
+  assert.strictEqual(K.ausText(''), neutral);
+  assert.strictEqual(K.ausText(undefined), neutral);
+  assert.strictEqual(K.ausText('toString'), neutral);
 });
