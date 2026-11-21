@@ -137,6 +137,20 @@
     return aus;
   }
 
+  // Eigene Änderungen (start -> jetzt) auf einen frisch geladenen Stand anwenden. Alles andere im frischen Stand
+  // bleibt erhalten. Hat sich ein geändertes Feld inzwischen auch dort geändert (oder fehlt es), gibt es {konflikt: pfad}.
+  function wendeAn(frisch, start, jetzt, felderListe) {
+    let daten = frisch;
+    for (const f of felderListe) {
+      const alt = hole(start, f.pfad);
+      const neu = hole(jetzt, f.pfad);
+      if (alt === neu) continue;
+      if (hole(frisch, f.pfad) !== alt) return { konflikt: f.pfad };
+      daten = setze(daten, f.pfad, neu);
+    }
+    return { daten };
+  }
+
   // Verhindert Erwähnungen (@name) und Querverweise (#12, owner/repo#12) in GitHub-Texten.
   const entschaerfe = (t) => String(t).replace(/@/g, '@\u200b').replace(/#(?=\d)/g, '#\u200b');
   const einzeilig = (t) => entschaerfe(String(t).replace(/\s*[\r\n]+\s*/g, ' '));
@@ -151,5 +165,5 @@
     return { titel, text: teile2.join('\n\n') };
   }
 
-  return { felder, setze, aenderungen, prText };
+  return { felder, setze, aenderungen, wendeAn, prText };
 });

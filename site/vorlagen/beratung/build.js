@@ -815,7 +815,8 @@ function hauptnav({ aktiv, anker, kontaktZiel }) {
 // basis: Seite in einem Unterordner (editor/index.html) -> <base href="/">, damit Fonts, CSS-URLs und Links stimmen
 function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false, basis = false }) {
   const start = datei === 'index.html';
-  const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei.replace(/(^|\/)index\.html$/, '$1')}` : '';
+  // Seiten im Unterordner (Editor) bekommen keine kanonische URL und kein og:url
+  const seitenUrl = websiteUrl && !basis ? `${websiteUrl}/${start ? '' : datei}` : '';
   const anker = (id) => (start ? `#${id}` : `./#${id}`);
   // Kontaktband vorhanden -> Sprung auf der Seite; sonst zur Startseite (sonst tut der Knopf nichts)
   const kontaktZiel = inhalt.includes('id="kontakt"') ? '#kontakt' : './#kontakt';

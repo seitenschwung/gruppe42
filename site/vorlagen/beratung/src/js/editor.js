@@ -193,7 +193,7 @@
       if (!liste.length) continue;
       const zahl = el('span', { klasse: 'ed-zahl' });
       const gruppe = el('details', { klasse: 'ed-gruppe', open: g === 'start' },
-        el('summary', {}, el('h3', { text: titel }), zahl));
+        el('summary', {}, el('span', { klasse: 'ed-gruppe-titel', text: titel }), zahl));
       if (g === 'stufen') gruppe.append(el('p', { klasse: 'ed-leise', text: 'Die Grenzen der Stufen (z. B. „ab 50 %“) sind fest und lassen sich hier nicht ändern.' }));
       if (g === 'bereiche' && istStufen) gruppe.append(el('p', { klasse: 'ed-leise', text: 'Diese Texte erscheinen im Ergebnis bei den einzelnen Bereichen.' }));
       liste.forEach((f) => gruppe.append(feldElement(f)));
@@ -208,7 +208,7 @@
     const aktionen = el('div', { klasse: 'ed-aktionen' },
       t.dom.hinweise, t.dom.offen,
       el('div', { klasse: 'knoepfe' }, sitzung.darfSchreiben && sendeKnopf,
-        knopf('Anderen Test wählen', 'knopf-rand', () => { meldung(''); zeigeTestwahl(); })));
+        knopf('Anderen Test wählen', 'knopf-rand', zurTestwahl)));
 
     const vorschau = vorschauBereich();
     const umschalter = el('div', { klasse: 'ed-umschalter ed-modus', role: 'group', 'aria-label': 'Bearbeiten oder Vorschau' });
@@ -324,8 +324,10 @@
     const anzahl = K.aenderungen(t.orig, t.jetzt, t.felder).length;
     t.dom.senden.disabled = offen > 0 || anzahl === 0;
     t.dom.senden.textContent = offen > 0 ? 'Noch ' + offen + (offen === 1 ? ' Hinweis offen' : ' Hinweise offen') : 'Zur Freigabe senden';
-    t.dom.offen.textContent = offen > 0 ? 'Bitte beheben Sie zuerst die markierten Hinweise.'
+    // Live-Region nur bei geändertem Inhalt neu setzen (sonst Ansage bei jedem Tastendruck)
+    const offenText = offen > 0 ? 'Noch ' + offen + (offen === 1 ? ' Hinweis' : ' Hinweise') + ' offen. Bitte beheben Sie zuerst die markierten Stellen.'
       : anzahl === 0 ? 'Noch keine Änderungen.' : anzahl + (anzahl === 1 ? ' Änderung' : ' Änderungen') + ' bereit zum Senden.';
+    if (t.dom.offen.textContent !== offenText) t.dom.offen.textContent = offenText;
   }
 
   // --- Vorschau -------------------------------------------------------------------------------
@@ -437,6 +439,31 @@
     x.dlg.showModal();
   }
 
+  function konflikt() {
+    const e = new Error('Konflikt');
+    e.art = 'konflikt';
+    return e;
+  }
+
+  // Eigene Änderungen auf den frisch gelesenen Stand anwenden; dieselben Regeln wie beim Bearbeiten prüfen.
+  function anwenden(gruppeFrisch, datenFrisch, strukturFrisch) {
+    const eintragFrisch = gruppeFrisch.tests && gruppeFrisch.tests.eintraege && gruppeFrisch.tests.eintraege[t.index];
+    if (!eintragFrisch || eintragFrisch.id !== t.id || eintragFrisch.daten !== t.orig.eintrag.daten) throw konflikt();
+    const nur = (datei) => t.felder.filter((f) => f.datei === datei);
+    const rT = K.wendeAn(datenFrisch, t.orig.test, t.jetzt.test, nur('test'));
+    const rE = K.wendeAn(eintragFrisch, t.orig.eintrag, t.jetzt.eintrag, nur('eintrag'));
+    if (rT.konflikt || rE.konflikt) throw konflikt();
+    const sollT = (strukturFrisch.tests || {})[rT.daten.id];
+    const sollE = (strukturFrisch.eintraege || [])[t.index];
+    const meldungen = !sollT || !sollE ? ['Abdruck fehlt'] : [].concat(
+      W.pruefeTexte(rT.daten, W.TEXTFELDER_TEST), W.pruefeTexte(rE.daten, W.TEXTFELDER_EINTRAG),
+      W.pruefeStruktur(rT.daten, sollT, W.TEXTFELDER_TEST), W.pruefeStruktur(rE.daten, sollE, W.TEXTFELDER_EINTRAG));
+    if (meldungen.length) throw konflikt();
+    const gruppe = rE.daten === eintragFrisch ? gruppeFrisch
+      : K.setze(gruppeFrisch, 'tests.eintraege[' + t.index + ']', rE.daten);
+    return { test: rT.daten, eintrag: rE.daten, gruppe };
+  }
+
   async function sende(dlg, notiz) {
     const knoepfe = dlg.querySelectorAll('button');
     knoepfe.forEach((b) => { b.disabled = true; });
@@ -450,20 +477,25 @@
         return meldung('In der Zwischenzeit hat sich der Stand dieses Tests geändert. Bitte öffnen Sie den Test erneut; ' +
           'Ihr Entwurf bleibt erhalten.', 'fehler', knopf('Test neu öffnen', 'knopf-dunkel', () => oeffneTest(t.index).catch(fehler)));
       }
+      // Frisch vom Ziel lesen (PR-Branch oder main, fester Commit), eigene Änderungen darauf anwenden, neu prüfen.
+      // So überschreibt der PR keine Änderungen, die inzwischen von anderer Seite gemacht wurden.
+      const kopf = await gh('kopf', t.pr ? t.pr.branch : 'main');
+      const lies = async (pfad) => JSON.parse((await gh('ladeDatei', pfad, kopf)).text);
+      const [gruppeFrisch, datenFrisch, strukturFrisch] = await Promise.all([lies(PFAD_GRUPPE), lies(t.pfadDaten), lies(PFAD_STRUKTUR)]);
+      const neu = anwenden(gruppeFrisch, datenFrisch, strukturFrisch);
       const dateien = [];
-      const anders = (datei) => JSON.stringify(t.jetzt[datei]) !== JSON.stringify(t.orig[datei]);
-      if (anders('test')) dateien.push({ pfad: t.pfadDaten, text: JSON.stringify(t.jetzt.test, null, 2) + '\n' });
-      if (anders('eintrag')) {
-        const gruppe = K.setze(t.gruppe, 'tests.eintraege[' + t.index + ']', t.jetzt.eintrag);
-        dateien.push({ pfad: PFAD_GRUPPE, text: JSON.stringify(gruppe, null, 2) + '\n' });
-        t.gruppe = gruppe;
-      }
+      if (neu.test !== datenFrisch) dateien.push({ pfad: t.pfadDaten, text: JSON.stringify(neu.test, null, 2) + '\n' });
+      if (neu.gruppe !== gruppeFrisch) dateien.push({ pfad: PFAD_GRUPPE, text: JSON.stringify(neu.gruppe, null, 2) + '\n' });
       const text = K.prText(t.jetzt.eintrag.titel, liste, notiz);
-      const pr = await gh('sende', { testId: t.id, dateien, titel: text.titel, text: text.text, pr: t.pr || undefined });
+      const pr = await gh('sende', { testId: t.id, dateien, titel: text.titel, text: text.text, pr: t.pr || undefined, erwartet: kopf });
       loescheEntwurf(t.id);
       t.pr = pr;
-      t.orig = t.jetzt;
+      t.gruppe = neu.gruppe;
+      t.orig = { test: neu.test, eintrag: neu.eintrag };
+      t.jetzt = t.orig;
+      t.felder = K.felder(neu.test, neu.eintrag);
       dlg.close();
+      await ladeStand().catch(() => {});
       zeigeGesendet();
     } finally {
       knoepfe.forEach((b) => { b.disabled = false; });
@@ -508,17 +540,29 @@
     ansicht(kopfleiste(), el('h2', { text: t.jetzt.eintrag.titel + ': gesendet' }), statusBox(false),
       el('div', { klasse: 'knoepfe' },
         knopf('Weiter bearbeiten', 'knopf-dunkel', zeigeBearbeiten),
-        knopf('Anderen Test wählen', 'knopf-rand', zeigeTestwahl)));
+        knopf('Anderen Test wählen', 'knopf-rand', zurTestwahl)));
   }
 
   // --- Start --------------------------------------------------------------------------------
+  async function ladeStand() {
+    const [g, s] = await Promise.all([gh('ladeDatei', PFAD_GRUPPE), gh('ladeDatei', PFAD_STRUKTUR)]);
+    stand = { gruppe: JSON.parse(g.text), struktur: JSON.parse(s.text) };
+  }
+  // Zurück zur Testwahl mit frischem Stand (Titel, Kurzinfos); scheitert das Laden, bleibt der bisherige.
+  function zurTestwahl() {
+    meldung('');
+    ladeStand()
+      .catch((e) => { if (e && e.art === 'abgelaufen') throw e; })
+      .then(() => { if (sitzung.token) zeigeTestwahl(); })
+      .catch(fehler);
+  }
+
   async function starte() {
     meldung('Anmeldung wird geprüft …');
     const z = await gh('zugriff');
     sitzung.login = z.login;
     sitzung.darfSchreiben = z.darfSchreiben;
-    const [g, s] = await Promise.all([gh('ladeDatei', PFAD_GRUPPE), gh('ladeDatei', PFAD_STRUKTUR)]);
-    stand = { gruppe: JSON.parse(g.text), struktur: JSON.parse(s.text) };
+    await ladeStand();
     meldung('');
     zeigeTestwahl();
   }

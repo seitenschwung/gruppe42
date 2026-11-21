@@ -62,6 +62,7 @@ test('editor_seite', () => {
     const editor = fs.readFileSync(path.join(dist, 'editor', 'index.html'), 'utf8');
     assert.match(editor, /<meta name="robots" content="noindex, nofollow">/);
     assert.match(editor, /<base href="\/">/);
+    assert.doesNotMatch(editor, /rel="canonical"|og:url/);
     assert.match(editor, /Für den Editor wird JavaScript benötigt\./);
     // Editor-Skripte nur auf der Editor-Seite, je mit ?v=-Hash, und als Dateien vorhanden
     for (const js of ['testwaechter', 'testseite', 'editor-kern', 'editor-github', 'editor-vorschau', 'editor']) {

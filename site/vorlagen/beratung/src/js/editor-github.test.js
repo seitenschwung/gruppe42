@@ -176,3 +176,12 @@ test('base64_nicht_bmp: Emoji-Roundtrip', async () => {
   const m2 = mock({ ['GET ' + R + '/contents/x.json?ref=main']: { body: { content: b64(text), sha: 's' } } });
   assert.strictEqual((await G.ladeDatei(ctxMit(m2), 'x.json', 'main')).text, text);
 });
+
+test('kopf_und_erwartet: Head lesen; anderer Head beim Senden -> konflikt, nichts geschrieben', async () => {
+  const m = mock(schreibRoutenBasis('main'));
+  assert.strictEqual(await G.kopf(ctxMit(m), 'main'), 'kopf1');
+  await assert.rejects(
+    G.sende(ctxMit(m), { testId: 'antreiber', dateien, titel: 't', text: 'x', erwartet: 'kopf0' }),
+    (e) => e.art === 'konflikt');
+  assert.ok(!m.aufrufe.some((a) => a.m !== 'GET'), 'kein Schreibzugriff');
+});

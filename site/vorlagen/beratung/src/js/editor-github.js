@@ -65,6 +65,12 @@
       '-' + zweistellig(d.getHours()) + zweistellig(d.getMinutes());
   }
 
+  // Aktueller Commit eines Branches (zum Lesen eines festen Stands und als eingabe.erwartet für sende).
+  async function kopf(ctx, branch) {
+    const ref = await anfrage(ctx, 'GET', '/repos/' + ctx.repo + '/git/ref/heads/' + pfadKodiert(branch));
+    return ref.object.sha;
+  }
+
   async function zugriff(ctx) {
     const nutzer = await anfrage(ctx, 'GET', '/user');
     const repo = await anfrage(ctx, 'GET', '/repos/' + ctx.repo);
@@ -93,6 +99,8 @@
 
     const ref = await anfrage(ctx, 'GET', r + '/git/ref/heads/' + pfadKodiert(quelle));
     const kopf = ref.object.sha;
+    // Dateien wurden von diesem Stand gelesen: hat sich der Branch seither bewegt, nicht darüber schreiben.
+    if (eingabe.erwartet && eingabe.erwartet !== kopf) throw fehler('konflikt', 'Stand hat sich geändert');
     const commit = await anfrage(ctx, 'GET', r + '/git/commits/' + kopf);
     const baumSha = commit.tree.sha;
 
@@ -119,5 +127,5 @@
     return { zustand: pr.state === 'closed' ? 'geschlossen' : 'offen', mergeSha: null };
   }
 
-  return { zugriff, ladeDatei, offenerPr, sende, status };
+  return { zugriff, kopf, ladeDatei, offenerPr, sende, status };
 });

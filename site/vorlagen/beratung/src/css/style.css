@@ -544,7 +544,7 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
 .ed-feld textarea, .ed-dialog textarea { resize: vertical; line-height: 1.5; }
 .ed-gruppe { border: 1px solid var(--linie-2); border-radius: 16px; background: #fff; margin-bottom: 16px; }
 .ed-gruppe > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 16px 20px; cursor: pointer; }
-.ed-gruppe > summary h3 { font-size: 19px; display: inline; }
+.ed-gruppe-titel { font-size: 19px; font-weight: 700; }
 .ed-gruppe > :not(summary) { margin-inline: 20px; }
 .ed-gruppe > :last-child { margin-bottom: 20px; }
 .ed-gruppe.ed-ist-fehler > summary .ed-zahl { color: var(--terrakotta); font-weight: 600; }

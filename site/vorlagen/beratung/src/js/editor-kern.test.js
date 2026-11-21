@@ -123,3 +123,32 @@ test('setze_pfadarten: length und Nicht-Zahlen bei Arrays werden abgelehnt', () 
   assert.throws(() => K.setze(o, 'a[5]', 'z'), /Pfad/);
   assert.deepStrictEqual(K.setze(o, 'a[1]', 'z'), { a: ['x', 'z'] });
 });
+
+test('wende_an: fremde Änderung auf main bleibt, eigene kommt dazu', () => {
+  const { e, d } = tests[0];
+  const f = K.felder(d, e).filter((x) => x.datei === 'test');
+  const jetzt = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
+  // Inzwischen auf main: anderes Textfeld und ein Nicht-Textfeld geändert
+  let frisch = K.setze(d, 'questions[5].text', 'Fremd geändert');
+  frisch = K.setze(frisch, 'result.kind', d.result.kind);
+  frisch = Object.assign({}, frisch, { neuesFeld: 1 });
+  const r = K.wendeAn(frisch, d, jetzt, f);
+  assert.ok(!r.konflikt);
+  assert.strictEqual(r.daten.questions[2].text, 'Neu von Ingrid');
+  assert.strictEqual(r.daten.questions[5].text, 'Fremd geändert');
+  assert.strictEqual(r.daten.neuesFeld, 1);
+  assert.strictEqual(d.questions[2].text, tests[0].d.questions[2].text, 'Start unverändert');
+});
+
+test('wende_an: dasselbe Feld inzwischen geändert -> konflikt', () => {
+  const { e, d } = tests[0];
+  const f = K.felder(d, e).filter((x) => x.datei === 'test');
+  const jetzt = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
+  const frisch = K.setze(d, 'questions[2].text', 'Anders auf main');
+  assert.deepStrictEqual(K.wendeAn(frisch, d, jetzt, f), { konflikt: 'questions[2].text' });
+  // Feld auf main entfernt (Struktur geändert) -> ebenfalls konflikt
+  const ohne = Object.assign({}, d, { questions: d.questions.slice(0, 2) });
+  assert.deepStrictEqual(K.wendeAn(ohne, d, jetzt, f), { konflikt: 'questions[2].text' });
+  // Keine eigenen Änderungen -> frischer Stand unverändert zurück
+  assert.strictEqual(K.wendeAn(frisch, d, d, f).daten, frisch);
+});
