@@ -102,3 +102,24 @@ test('pr_text', () => {
   assert.ok(ohne.text.startsWith('- Frage 3'));
   assert.strictEqual(ohne.titel, 'Inhalt: T (1 Änderung)');
 });
+
+test('pr_text_entschaerft: keine Erwähnungen/Querverweise, Listenpunkte einzeilig', () => {
+  const liste = [{ label: 'Frage 1', alt: 'hallo @team/x\nzweite Zeile', neu: 'siehe #12\r\nund o/r#5' }];
+  const r = K.prText('Test @a #3', liste, 'Danke @someone, siehe #12.\n\nAbsatz bleibt');
+  const alles = r.titel + '\n' + r.text;
+  assert.ok(!/@(?!\u200b)/.test(alles));
+  assert.ok(!/#(?=\d)/.test(alles));
+  assert.ok(r.text.includes('@\u200bsomeone') && r.text.includes('#\u200b12'));
+  assert.ok(r.text.includes('Danke @\u200bsomeone, siehe #\u200b12.\n\nAbsatz bleibt'));
+  const zeilen = r.text.split('\n').filter((z) => z.startsWith('- '));
+  assert.strictEqual(zeilen.length, 1);
+  assert.ok(zeilen[0].includes('zweite Zeile') && zeilen[0].includes('und o/r#\u200b5'));
+});
+
+test('setze_pfadarten: length und Nicht-Zahlen bei Arrays werden abgelehnt', () => {
+  const o = { a: ['x', 'y'] };
+  assert.throws(() => K.setze(o, 'a.length', 1), /Pfad/);
+  assert.throws(() => K.setze(o, 'a.0', 'z'), /Pfad/);
+  assert.throws(() => K.setze(o, 'a[5]', 'z'), /Pfad/);
+  assert.deepStrictEqual(K.setze(o, 'a[1]', 'z'), { a: ['x', 'z'] });
+});

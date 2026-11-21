@@ -37,7 +37,8 @@
     if (!schritte.length) throw new Error('Leerer Pfad');
     const rek = (knoten, i) => {
       const s = schritte[i];
-      if (knoten === null || typeof knoten !== 'object' || !Object.prototype.hasOwnProperty.call(knoten, s)) {
+      const artOk = Array.isArray(knoten) ? typeof s === 'number' : typeof s === 'string';
+      if (knoten === null || typeof knoten !== 'object' || !artOk || !Object.prototype.hasOwnProperty.call(knoten, s)) {
         throw new Error('Pfad nicht vorhanden: ' + pfad);
       }
       const kopie = Array.isArray(knoten) ? knoten.slice() : Object.assign({}, knoten);
@@ -136,12 +137,16 @@
     return aus;
   }
 
+  // Verhindert Erwähnungen (@name) und Querverweise (#12, owner/repo#12) in GitHub-Texten.
+  const entschaerfe = (t) => String(t).replace(/@/g, '@\u200b').replace(/#(?=\d)/g, '#\u200b');
+  const einzeilig = (t) => entschaerfe(String(t).replace(/\s*[\r\n]+\s*/g, ' '));
+
   function prText(testTitel, liste, notiz) {
     const n = liste.length;
-    const titel = 'Inhalt: ' + testTitel + ' (' + n + (n === 1 ? ' Änderung' : ' Änderungen') + ')';
+    const titel = 'Inhalt: ' + einzeilig(testTitel) + ' (' + n + (n === 1 ? ' Änderung' : ' Änderungen') + ')';
     const teile2 = [];
-    if (notiz && notiz.trim()) teile2.push(notiz.trim());
-    teile2.push(liste.map((a) => '- ' + a.label + ': „' + a.alt + '“ → „' + a.neu + '“').join('\n'));
+    if (notiz && notiz.trim()) teile2.push(entschaerfe(notiz.trim()));
+    teile2.push(liste.map((a) => '- ' + einzeilig(a.label) + ': „' + einzeilig(a.alt) + '“ → „' + einzeilig(a.neu) + '“').join('\n'));
     teile2.push('Erstellt mit dem Test-Editor.');
     return { titel, text: teile2.join('\n\n') };
   }

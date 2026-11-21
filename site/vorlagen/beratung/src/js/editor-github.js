@@ -29,11 +29,20 @@
       opt.headers['Content-Type'] = 'application/json';
       opt.body = JSON.stringify(body);
     }
-    const antwort = await ctx.fetch(API + pfad, opt);
+    let antwort;
+    try {
+      antwort = await ctx.fetch(API + pfad, opt);
+    } catch (e) {
+      throw fehler('netz', 'Keine Verbindung zu GitHub');
+    }
     if (antwort.status === 401) throw fehler('abgelaufen', 'Anmeldung abgelaufen', 401);
     if (konfliktStati && konfliktStati.includes(antwort.status)) throw fehler('konflikt', 'Konflikt', antwort.status);
     if (!antwort.ok) throw fehler('fehler', 'GitHub-Fehler ' + antwort.status, antwort.status);
-    return antwort.json();
+    try {
+      return await antwort.json();
+    } catch (e) {
+      throw fehler('fehler', 'Ungültige Antwort von GitHub', antwort.status);
+    }
   }
 
   const zuBase64 = (text) => {
@@ -70,8 +79,8 @@
 
   async function offenerPr(ctx, testId) {
     const liste = await anfrage(ctx, 'GET', '/repos/' + ctx.repo + '/pulls?state=open&per_page=100');
-    const praefix = 'inhalt/' + testId + '-';
-    const pr = liste.find((p) => p.head && typeof p.head.ref === 'string' && p.head.ref.startsWith(praefix) &&
+    const muster = new RegExp('^inhalt/' + testId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '-\\d{4}-\\d{2}-\\d{2}-\\d{4}$');
+    const pr = liste.find((p) => p.head && typeof p.head.ref === 'string' && muster.test(p.head.ref) &&
       p.head.repo && p.head.repo.full_name === ctx.repo);
     return pr ? { nummer: pr.number, branch: pr.head.ref, url: pr.html_url } : null;
   }

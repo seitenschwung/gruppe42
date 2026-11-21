@@ -147,3 +147,32 @@ test('status: offen, gemergt, geschlossen', async () => {
   assert.deepStrictEqual(await G.status(c, 2), { zustand: 'gemergt', mergeSha: 'abc' });
   assert.deepStrictEqual(await G.status(c, 3), { zustand: 'geschlossen', mergeSha: null });
 });
+
+test('netz_und_ungueltiges_json', async () => {
+  const c = { token: 't', repo: REPO, basis: 'main', fetch: async () => { throw new TypeError('Failed to fetch'); } };
+  await assert.rejects(G.zugriff(c), (e) => e instanceof Error && e.art === 'netz');
+  const c2 = { token: 't', repo: REPO, basis: 'main', fetch: async () => ({ ok: true, status: 200, json: async () => { throw new SyntaxError('x'); } }) };
+  await assert.rejects(G.zugriff(c2), (e) => e instanceof Error && e.art === 'fehler');
+});
+
+test('offener_pr_praefix: team passt nicht auf team-klima', async () => {
+  const pr = (nr, ref) => ({ number: nr, html_url: 'u' + nr, head: { ref, repo: { full_name: REPO } } });
+  const m = mock({ ['GET ' + R + '/pulls?state=open&per_page=100']: { body: [
+    pr(1, 'inhalt/team-klima-2026-01-01-0000'), pr(2, 'inhalt/team-2026-01-01-0000'), pr(3, 'inhalt/team-evil'),
+  ] } });
+  assert.strictEqual((await G.offenerPr(ctxMit(m), 'team')).nummer, 2);
+  assert.strictEqual((await G.offenerPr(ctxMit(m), 'team-klima')).nummer, 1);
+});
+
+test('base64_nicht_bmp: Emoji-Roundtrip', async () => {
+  const text = 'Hallo 😀 Führung';
+  const routen = schreibRoutenBasis('main');
+  routen['POST ' + R + '/git/refs'] = { body: {} };
+  routen['POST ' + R + '/pulls'] = { body: { number: 1, html_url: 'u' } };
+  const m = mock(routen);
+  await G.sende(ctxMit(m), { testId: 'a', dateien: [{ pfad: 'x.json', text }], titel: 't', text: 'x' });
+  const blob = m.aufrufe.find((a) => a.url.endsWith('/git/blobs'));
+  assert.strictEqual(Buffer.from(blob.body.content, 'base64').toString('utf8'), text);
+  const m2 = mock({ ['GET ' + R + '/contents/x.json?ref=main']: { body: { content: b64(text), sha: 's' } } });
+  assert.strictEqual((await G.ladeDatei(ctxMit(m2), 'x.json', 'main')).text, text);
+});
