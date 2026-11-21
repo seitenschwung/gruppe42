@@ -17,7 +17,7 @@ RUN apk add --no-cache libwebp-tools
 WORKDIR /app
 COPY server/ server/
 COPY site/ site/
-RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/webhook.test.js server/orders.test.js
+RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/webhook.test.js server/orders.test.js site/vorlagen/beratung/src/js/antreiber.test.js
 
 # --- 3) Serve: Node server for static files and later /api/* ---
 FROM node:20-alpine
