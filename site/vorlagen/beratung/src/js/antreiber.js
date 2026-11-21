@@ -1,6 +1,7 @@
 /* Antreiber-Test – läuft komplett im Browser, nichts wird gespeichert oder gesendet.
    Die Seite (build.js) liefert Gerüst und Daten (#antreiber-daten); hier: Ablauf, Auswertung, Ergebnis.
-   Die reine Rechnung (auswertenWerte, vorschauAntworten) liegt auf Dateiebene und ist in Node testbar. */
+   Die reine Rechnung (auswertenWerte, vorschauAntworten) ist in Node testbar; im Browser entsteht keine globale Variable. */
+(function () {
 'use strict';
 
 function skalaGrenzen(DATA) {
@@ -60,8 +61,8 @@ function vorschauAntworten(DATA, spec) {
   }
   if (m && m[1] === 'stufe' && DATA.result.kind === 'levels') {
     var stufen = DATA.result.levels.slice().sort(function (a, b) { return a.min - b.min; });
-    var i = Number(m[2]);
-    if (i >= 0 && i < stufen.length && i === Math.floor(i)) {
+    var i = /^\d+$/.test(m[2]) ? Number(m[2]) : -1;
+    if (i >= 0 && i < stufen.length) {
       var von = stufen[i].min, bis = i + 1 < stufen.length ? stufen[i + 1].min : Infinity;
       var gleichmaessig = function (g) { return DATA.questions.map(function (f) { return rohZu(DATA, f, g); }); };
       var proz = function (a) { return auswertenWerte(DATA, a).prozent; };
@@ -411,3 +412,4 @@ if (typeof document !== 'undefined') (function () {
 })();
 
 if (typeof module === 'object' && module.exports) module.exports = { auswertenWerte: auswertenWerte, vorschauAntworten: vorschauAntworten };
+})();

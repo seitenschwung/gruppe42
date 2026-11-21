@@ -49,3 +49,15 @@ test('zufall: leere Spec liefert gültige Skalenwerte', () => {
     assert.ok(a.every((x) => Object.keys(d.scale).includes(String(x))));
   }
 });
+
+test('ladbar ohne window/document, keine Globals; ungültige Specs fallen auf Zufall zurück', () => {
+  assert.strictEqual(typeof document, 'undefined');
+  assert.strictEqual(typeof globalThis.auswertenWerte, 'undefined');
+  assert.strictEqual(typeof globalThis.skalaGrenzen, 'undefined');
+  const d = tests.find((t) => t.d.result.kind === 'levels').d;
+  for (const spec of ['stufe:', 'stufe: ', 'stufe:x', 'stufe:-1', 'stufe:99', 'bereich:gibtsnicht']) {
+    const a = vorschauAntworten(d, spec);
+    assert.strictEqual(a.length, d.questions.length, spec);
+    assert.ok(a.every((x) => Object.keys(d.scale).includes(String(x))), spec);
+  }
+});
