@@ -49,7 +49,7 @@ wenn kein Bereich klar vorne liegt.
 
 Hinweise erscheinen unter den Feldern, etwa wenn ein Text zu lang ist oder etwas nicht erlaubt ist (z. B. Links). Solange Hinweise offen sind,
 steht auf dem Knopf „Noch … Hinweise offen“. Ein Klick auf den Hinweis springt zum Feld. Zu den Hinweisen zählen:
-- „Bitte ohne Punkt am Ende – er wird automatisch ergänzt.“ (beim Feld „Status“)
+- „Bitte ohne Punkt am Ende – er wird automatisch ergänzt.“ (beim Feld „Hinweis zum Status des Tests“)
 - „Enthält unsichtbare Steuerzeichen – bitte Text neu eintippen.“ (oft nach Kopieren aus anderen Programmen)
 - „Enthält Zeilenumbrüche oder Steuerzeichen – bitte als eine Zeile schreiben.“
 
