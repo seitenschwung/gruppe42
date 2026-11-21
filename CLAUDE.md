@@ -39,3 +39,16 @@ needs `cwebp` (libwebp-tools) for WebP variants; AVIF is skipped when `avifenc` 
 - Result preview without taking a test: append `?vorschau` (random answers) or `?vorschau=3` (all answers 3) to any test page URL
 - Tests quality: `tests.methodik` in gruppe42.json -> `methodik.html` (how tests are built, limits; table generated from test JSONs). Engine: ranking shows no leader when spread < `result.minSpread` (default 0.1 of max); hint if >=90% identical answers. Teamklima 20 items, Employer-Branding 16 (4 per area, some `reverse`). Still NOT scientifically validated
 - Header menu: `hauptnav()` in build.js. "Angebot" = <details> dropdown (Workshops per Zielgruppe, Leistungen with own page, Seminare); main.js closes it on Esc/outside click and handles the mobile menu button (without JS everything stays visible). One CTA "Kontakt aufnehmen" (kontaktZiel).
+
+## Test-Editor
+- `/editor/`: client edits test texts in the browser (login with GitHub, preview, "Zur Freigabe senden" opens a PR). Nothing goes live without owner review. Client guide: `docs/anleitung-test-editor.md`; design: `docs/superpowers/specs/2026-11-21-test-editor-design.md`
+- Parts: guard `site/lib/testwaechter.js` + `struktur.json` (regenerate command above), login `server/editor-auth.js` (GitHub code exchange; 503 without env), UI `src/js/editor*.js` (kern, github, vorschau, editor), page `editorSeite()` in build.js (noindex, not in menu/sitemap, `Disallow: /editor/`)
+- Env (Coolify): `EDITOR_GITHUB_CLIENT_ID`, `EDITOR_GITHUB_CLIENT_SECRET`. Token only in memory, never stored or logged
+- `.github/CODEOWNERS`: tests/, `gruppe42.json`, `.github/` -> `@Nirnberger`
+- Preview comment: a PR touching `tests/*.json` changes that test page's fingerprint, so it is shot incl. variant `ergebnis` (no `preview.json` change needed). The comment only appears on PRs labelled `manual-review` (editor does not set it; owner/box adds it)
+- Owner checklist, in this order (once, before the client gets access):
+  1. Settings -> Environments -> `production` -> Deployment branches: only `main`; same for `preview` if it holds secrets
+  2. Settings -> Rules -> ruleset for `main`: PR required (0 approvals, "Require review from Code Owners"), status check pipeline job required, force-push blocked, deletion forbidden, bypass only owner. Then check that `dev automerge` for Dependabot still passes
+  3. GitHub App "Gruppe 42 Editor" in org `seitenschwung`: callback `https://gruppe42.seitenschwung.com/api/editor/callback`, "Expire user authorization tokens" on, webhook off, permissions Contents RW, Pull requests RW, Metadata R; install only on `gruppe42`. Client ID/secret into Coolify as `EDITOR_GITHUB_CLIENT_ID`/`EDITOR_GITHUB_CLIENT_SECRET`
+  4. Only then: Ingrid's GitHub account (2FA on) as collaborator "Write"
+- Still open: the real end-to-end test against GitHub (login, PR, status) until the App exists; so far only mocked tests
