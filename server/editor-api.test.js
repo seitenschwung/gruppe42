@@ -56,7 +56,7 @@ function anfrage(base, ip, methode, pfad, body, extra = {}) {
 }
 
 // Eine vollständige Umgebung: Basis-Kopie, Datenverzeichnis, echter Server, angemeldete Sitzung.
-async function starte({ env = ENV, vorher, meldung } = {}) {
+async function starte({ env = ENV, vorher, meldung, distDir = dist } = {}) {
   const n = zaehler++;
   const basisDir = path.join(tmp, 'basis' + n);
   fs.cpSync(FIXTURE, basisDir, { recursive: true });
@@ -66,12 +66,12 @@ async function starte({ env = ENV, vorher, meldung } = {}) {
   const lines = [];
   const log = (l) => lines.push(l);
   const inhalte = createInhalte({ basisDir, dataDir });
-  const seiten = createSeiten({ root: dist, inhalte, Testseite, log });
+  const seiten = createSeiten({ root: distDir, inhalte, Testseite, log });
   const sitzung = createSitzung({ env, dataDir });
   const e = { ...env };
   if (meldung) e.EDITOR_MELDUNG_URL = meldung;
   const api = createEditorApi({ env: e, inhalte, seiten, sitzung, log });
-  const server = createServer({ root: dist, version: 't', log, seiten, api: { routes: { ...sitzung.routes, ...api.routes } } });
+  const server = createServer({ root: distDir, version: 't', log, seiten, api: { routes: { ...sitzung.routes, ...api.routes } } });
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
   const ip = `10.1.0.${++ipZaehler}`;
@@ -193,6 +193,7 @@ test('speichern: 200, danach liefert die Testseite den neuen Text; wer aus der S
     const r = await postA(s, '/api/editor/speichern', { testId: ID, wer: 'Hacker', aenderungen: [aend(s, 'questions[0].text', neu)] });
     assert.strictEqual(r.status, 200, r.text);
     assert.strictEqual(r.json.nr, 1);
+    assert.strictEqual(r.json.live, true);
     assert.match(r.json.zeit, /^\d{4}-\d\d-\d\dT/);
     assert.strictEqual(r.headers['cache-control'], 'no-store');
     const seite = await s.get('/' + ID + '.html');
@@ -451,4 +452,76 @@ test('CLI editor-export: unlesbares Overlay oder fehlende Basis: Fehler, kein Ex
   assert.strictEqual(a.stdout, '');
   const b = cli({ EDITOR_DATA_DIR: data, EDITOR_INHALT_DIR: path.join(dir, 'fehlt') });
   assert.notStrictEqual(b.status, 0);
+});
+
+test('Rate-Limit greift vor der Datenträgerprüfung', async () => {
+  const s = await starte({ vorher: (dir) => fs.writeFileSync(path.join(dir, 'inhalte.json'), '{kaputt') });
+  try {
+    let letzte;
+    for (let i = 0; i < 70; i++) letzte = await s.get('/api/editor/stand');
+    assert.strictEqual(letzte.status, 429);
+  } finally { await s.stop(); }
+});
+
+test('Renderfehler: speichern und rueckgaengig melden live:false, Speicherung bleibt gültig', async () => {
+  const dist2 = path.join(tmp, 'dist-kaputt');
+  fs.cpSync(dist, dist2, { recursive: true });
+  const f = path.join(dist2, ID + '.html');
+  fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace('<!--g42:daten-->', ''));
+  await mitUmgebung(async (s) => {
+    const r = await postA(s, '/api/editor/speichern', { testId: ID, aenderungen: [aend(s, 'questions[0].text', 'Nicht live sichtbar')] });
+    assert.strictEqual(r.status, 200);
+    assert.strictEqual(r.json.live, false);
+    assert.ok(s.lines.some((l) => l.startsWith('seiten: Rendern fehlgeschlagen')));
+    assert.ok(!(await s.get('/' + ID + '.html')).text.includes('Nicht live sichtbar'));
+    assert.strictEqual(alt(s, 'questions[0].text'), 'Nicht live sichtbar');
+    const u = await postA(s, '/api/editor/rueckgaengig', { nr: r.json.nr });
+    assert.strictEqual(u.status, 200);
+    assert.strictEqual(u.json.live, false);
+  }, { distDir: dist2 });
+});
+
+test('hängende Meldung verzögert die Antwort nicht', async () => {
+  const offen = new Set();
+  const server = http.createServer((req) => { offen.add(req); });
+  await new Promise((r) => server.listen(0, '127.0.0.1', r));
+  try {
+    await mitUmgebung(async (s) => {
+      const t0 = Date.now();
+      const r = await postA(s, '/api/editor/speichern', { testId: ID, aenderungen: [aend(s, 'questions[0].text', 'Hängt nicht')] });
+      assert.strictEqual(r.status, 200);
+      assert.ok(Date.now() - t0 < 2000);
+    }, { meldung: `http://localhost:${server.address().port}/h` });
+  } finally { server.closeAllConnections(); await new Promise((r) => server.close(r)); }
+});
+
+test('Prototyp-Schlüssel in Bodies werden abgewiesen, nichts wird verschmutzt', async () => {
+  await mitUmgebung(async (s) => {
+    const roh = (p, text) => new Promise((resolve, reject) => {
+      const u = new URL(s.base + p);
+      const r = http.request({ hostname: u.hostname, port: u.port, path: p, method: 'POST', headers: { 'Content-Type': 'application/json', 'X-G42-Editor': '1', Origin: ORIGIN, Cookie: s.cookie, 'X-Forwarded-For': s.ip } }, (res) => { res.resume(); res.on('end', () => resolve(res.statusCode)); });
+      r.on('error', reject);
+      r.end(text);
+    });
+    assert.strictEqual(await roh('/api/editor/rueckgaengig', '{"__proto__":{"nr":1}}'), 400);
+    assert.strictEqual(await roh('/api/editor/rueckgaengig', '{"constructor":{"prototype":{"nr":1}}}'), 400);
+    assert.strictEqual(await roh('/api/editor/speichern', '{"__proto__":{"testId":"antreiber-test","aenderungen":[{}]}}'), 400);
+    assert.strictEqual((await postA(s, '/api/editor/speichern', { testId: '__proto__', aenderungen: [{ datei: 'test', pfad: 'x', alt: 'a', neu: 'b' }] })).status, 404);
+    assert.strictEqual((await postA(s, '/api/editor/speichern', { testId: 'constructor', aenderungen: [{ datei: 'test', pfad: 'x', alt: 'a', neu: 'b' }] })).status, 404);
+    for (const pfad of ['__proto__.polluted', 'constructor.prototype.polluted', 'questions[0].__proto__.x']) {
+      const r = await postA(s, '/api/editor/speichern', { testId: ID, aenderungen: [{ datei: 'test', pfad, alt: '', neu: 'x' }] });
+      assert.ok(r.status === 422 || r.status === 409, pfad + ' ' + r.status);
+    }
+    assert.strictEqual({}.polluted, undefined);
+    assert.deepStrictEqual((await getA(s, '/api/editor/verlauf?testId=' + ID)).json.verlauf, []);
+  });
+});
+
+test('GET verlauf ohne Sitzung: 401 mit Body', async () => {
+  const s = await starte();
+  try {
+    const r = await s.get('/api/editor/verlauf?testId=' + ID);
+    assert.strictEqual(r.status, 401);
+    assert.deepStrictEqual(r.json, { error: 'anmeldung' });
+  } finally { await s.stop(); }
 });

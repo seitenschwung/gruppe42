@@ -41,30 +41,37 @@ function createSeiten({ root, inhalte, Testseite, log }) {
   function testSeite(id) {
     const pathname = '/' + id + '.html';
     const original = lies(id + '.html');
-    if (original === null) { seiten.delete(pathname); return; }
+    if (original === null) { seiten.delete(pathname); return true; }
     const w = inhalte.wirksam(id);
     const testsCfg = inhalte.testsCfg();
     let html = ersetze(original, 'kopf', T.kopf(w.eintrag));
     if (html !== null) html = ersetze(html, 'test', innen(T.sektionen(w.eintrag, w.daten, testsCfg), 'test'));
     if (html !== null) html = ersetze(html, 'daten', innen(T.datenSkript(w.daten), 'daten'));
     ablegen(pathname, original, html);
+    return html !== null; // null: Marker fehlt, die Seite bleibt Image-Stand
   }
 
   function uebersicht() {
     const original = lies('selbsttests.html');
-    if (original === null) { seiten.delete('/selbsttests.html'); return; }
+    if (original === null) { seiten.delete('/selbsttests.html'); return true; }
     const eintraege = (inhalte.testsCfg().eintraege || []).filter((e) => e && e.id && e.daten && e.titel && e.sichtbar === true);
     const karten = eintraege.map((e) => T.kachel(e, e.id + '.html')).join('');
-    ablegen('/selbsttests.html', original, ersetze(original, 'kacheln', karten));
+    const html = ersetze(original, 'kacheln', karten);
+    ablegen('/selbsttests.html', original, html);
+    return html !== null;
   }
 
+  // true, wenn alle betroffenen Seiten gerendert werden konnten (sonst zeigt die öffentliche Seite den Image-Stand).
   function aktualisiere(testId) {
-    if (!inhalte) { seiten.clear(); return; }
+    if (!inhalte) { seiten.clear(); return true; }
     const ids = testId ? [testId] : inhalte.liste().map((t) => t.id);
+    let ok = true;
+    const fehl = (name) => { ok = false; if (log) log(`seiten: Rendern fehlgeschlagen (${name})`); };
     for (const id of ids) {
-      try { testSeite(id); } catch (e) { seiten.delete('/' + id + '.html'); if (log) log(`seiten: Rendern fehlgeschlagen (${id})`); }
+      try { if (!testSeite(id)) fehl(id); } catch (e) { seiten.delete('/' + id + '.html'); fehl(id); }
     }
-    try { uebersicht(); } catch (e) { seiten.delete('/selbsttests.html'); if (log) log('seiten: Rendern fehlgeschlagen (selbsttests)'); }
+    try { if (!uebersicht()) fehl('selbsttests'); } catch (e) { seiten.delete('/selbsttests.html'); fehl('selbsttests'); }
+    return ok;
   }
 
   aktualisiere();

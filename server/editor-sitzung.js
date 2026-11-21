@@ -182,9 +182,9 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
   function route(fn) {
     return async (req, res, send) => {
       const reply = (status, obj, cookie) => send(res, status, cookie ? { ...JSON_HEADERS, 'Set-Cookie': cookie } : JSON_HEADERS, JSON.stringify(obj) + '\n');
-      if (!verfuegbar()) return reply(503, { error: 'editor_aus' });
       const ip = ipVon(req);
       if (limited(ip)) return reply(429, { error: 'rate_limited' });
+      if (!verfuegbar()) return reply(503, { error: 'editor_aus' });
       if (req.headers['x-g42-editor'] !== '1' || req.headers.origin !== cfg.origin) return reply(403, { error: 'herkunft' });
       let body;
       try { body = await leseJson(req); } catch (e) { return reply(e.status || 400, { error: 'bad_request' }); }

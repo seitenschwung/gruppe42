@@ -49,8 +49,8 @@ function createEditorApi({ env = process.env, inhalte, seiten, sitzung, fetch: f
   }
 
   function aktualisiere(testId) {
-    if (!seiten) return;
-    try { seiten.aktualisiere(testId); } catch { if (log) log('editor: Seiten aktualisieren fehlgeschlagen'); }
+    if (!seiten) return false;
+    try { return seiten.aktualisiere(testId) === true; } catch { if (log) log('editor: Seiten aktualisieren fehlgeschlagen'); return false; }
   }
 
   // Nur Titel, Name und Anzahl; Fehler werden ignoriert.
@@ -76,9 +76,9 @@ function createEditorApi({ env = process.env, inhalte, seiten, sitzung, fetch: f
   function route({ post, fn }) {
     return async (req, res, send) => {
       const reply = (status, obj) => send(res, status, JSON_HEADERS, JSON.stringify(obj) + '\n');
+      if (limited(ipVon(req))) return reply(429, { error: 'rate_limited' });
       const g = grund();
       if (g) return reply(503, { error: 'editor_aus', grund: g });
-      if (limited(ipVon(req))) return reply(429, { error: 'rate_limited' });
       if (req.headers['x-g42-editor'] !== '1' || (post && req.headers.origin !== cfg.origin)) return reply(403, { error: 'herkunft' });
       const s = sitzung.pruefe(req);
       if (!s) return reply(401, { error: 'anmeldung' });
@@ -113,9 +113,9 @@ function createEditorApi({ env = process.env, inhalte, seiten, sitzung, fetch: f
     if (typeof testId !== 'string' || !testId || !Array.isArray(aenderungen) || !aenderungen.length
       || aenderungen.length > MAX_AENDERUNGEN || !aenderungen.every(formOk)) return reply(400, { error: 'bad_request' });
     const r = inhalte.speichere(testId, aenderungen.map(({ datei, pfad, alt, neu }) => ({ datei, pfad, alt, neu })), wer);
-    aktualisiere(testId);
+    const live = aktualisiere(testId);
     melde(testId, wer, anzahlVon(testId, r.nr, aenderungen.length));
-    return reply(200, { nr: r.nr, zeit: r.zeit });
+    return reply(200, { nr: r.nr, zeit: r.zeit, live });
   } });
 
   const verlauf = route({ fn: ({ req, reply }) => {
@@ -132,9 +132,9 @@ function createEditorApi({ env = process.env, inhalte, seiten, sitzung, fetch: f
     // Nur echte Ganzzahlen, keine Umwandlung von Strings.
     if (!Number.isSafeInteger(body.nr)) return reply(400, { error: 'bad_request' });
     const r = inhalte.rueckgaengig(body.nr, wer);
-    aktualisiere(r.testId);
+    const live = aktualisiere(r.testId);
     melde(r.testId, wer, anzahlVon(r.testId, r.nr, 1));
-    return reply(200, { nr: r.nr, zeit: r.zeit });
+    return reply(200, { nr: r.nr, zeit: r.zeit, live });
   } });
 
   return {

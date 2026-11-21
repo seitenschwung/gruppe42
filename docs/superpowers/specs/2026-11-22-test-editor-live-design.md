@@ -66,7 +66,7 @@ Entscheidungen des Owners: keine Freigabe vor Livegang; Login per **Passkey**; n
 ### 5. Editor-API (`server/editor-api.js`)
 Mit gültiger Sitzung, Header und Origin wie oben:
 - `GET /api/editor/stand` → `{wer, tests: [{id, titel, daten (wirksam), eintrag (wirksam), verwaist}], testsCfg}` (alles, was die Oberfläche für Felder und Vorschau braucht).
-- `POST /api/editor/speichern {testId, aenderungen}` → `200 {nr, zeit}` | `409 {konflikt: pfad}` | `422 {meldungen: [{pfad, meldung}]}`; danach Neu-Rendern und Benachrichtigung.
+- `POST /api/editor/speichern {testId, aenderungen}` → `200 {nr, zeit, live}` | `409 {error:'konflikt', pfad}` | `422 {error:'ungueltig', meldungen: [{pfad, meldung}]}`; danach Neu-Rendern und Benachrichtigung. `live:false` heißt: gespeichert, aber die öffentliche Seite konnte nicht neu gerendert werden (zeigt noch den alten Text); die Oberfläche darf dann nicht „Ist live.“ melden.
 - `GET /api/editor/verlauf?testId=` → letzte 50 Einträge; `POST /api/editor/rueckgaengig {nr}` → wie speichern.
 - GET-Routen mit Header-Pflicht, ohne Origin-Pflicht (Browser senden bei GET kein Origin).
 
@@ -82,7 +82,7 @@ Mit gültiger Sitzung, Header und Origin wie oben:
 
 ### 8. Repo-Abgleich
 - `node server/editor-export.js` im Container gibt das Overlay als JSON aus.
-- `node site/lib/einpflegen.js <overlay.json>` lokal: schreibt die Texte in `site/kunden/gruppe42/**` (nur erlaubte Felder, Wächter prüft); danach Commit/PR durch den Entwickler; anschließend Overlay im Container leeren (`node server/editor-export.js --leeren <sha256 des exportierten Stands>`, nur wenn der Stand unverändert ist).
+- `node site/lib/einpflegen.js <overlay.json>` lokal: schreibt die Texte in `site/kunden/gruppe42/**` (nur erlaubte Felder, Wächter prüft); danach Commit/PR durch den Entwickler; anschließend Overlay im Container leeren (`node server/editor-export.js --leeren <sha256 des exportierten Stands>`, nur wenn der Stand unverändert ist). Leeren nach dem Deploy; danach Server neu starten oder erneut speichern, damit gerenderte Seiten neu entstehen.
 
 ## Restrisiken
 - Gestohlenes/entsperrtes Gerät mit Passkey: Angreifer kann Testtexte ändern (nur Text, Wächter-Grenzen). Gegenmittel: Benachrichtigung, Verlauf, Rückgängig, Passkey entfernen (`editor-einladung.js --entfernen <id>`).
