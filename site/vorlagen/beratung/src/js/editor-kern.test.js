@@ -1,0 +1,104 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert');
+const fs = require('node:fs');
+const path = require('node:path');
+const W = require('../../../../lib/testwaechter');
+const K = require('./editor-kern.js');
+
+const dir = path.join(__dirname, '../../../../kunden/gruppe42');
+const lies = (p) => JSON.parse(fs.readFileSync(path.join(dir, p), 'utf8'));
+const gruppe = lies('gruppe42.json');
+const tests = gruppe.tests.eintraege.map((e) => ({ e, d: lies(e.daten) }));
+
+// Konkrete Pfade aller Strings, die der Wächter als Textfeld ansieht
+function waechterPfade(daten, textfelder) {
+  const aus = [];
+  const mus = (p) => p.replace(/\[\d+\]/g, '[]').replace(/^scale\.[^.[]+$/, 'scale.*');
+  (function geh(k, p) {
+    if (Array.isArray(k)) k.forEach((w, i) => geh(w, p + '[' + i + ']'));
+    else if (k && typeof k === 'object') for (const key of Object.keys(k)) geh(k[key], p ? p + '.' + key : key);
+    else if (typeof k === 'string' && textfelder.includes(mus(p))) aus.push(p);
+  })(daten, '');
+  return aus;
+}
+
+test('felder_vollstaendig: Pfade = genau die Textfelder laut Wächter', () => {
+  assert.ok(tests.length >= 4);
+  for (const { e, d } of tests) {
+    const f = K.felder(d, e);
+    const test_ = f.filter((x) => x.datei === 'test').map((x) => x.pfad).sort();
+    const eintrag = f.filter((x) => x.datei === 'eintrag').map((x) => x.pfad).sort();
+    assert.deepStrictEqual(test_, waechterPfade(d, W.TEXTFELDER_TEST).sort(), e.id);
+    assert.deepStrictEqual(eintrag, waechterPfade(e, W.TEXTFELDER_EINTRAG).sort(), e.id);
+    for (const x of f) {
+      assert.ok(GRUPPEN.includes(x.gruppe), x.pfad);
+      assert.ok(x.label && x.label !== x.pfad, e.id + ' ' + x.pfad);
+      assert.strictEqual(typeof x.wert, 'string');
+    }
+    assert.strictEqual(new Set(f.map((x) => x.label)).size, f.length, 'Labels eindeutig ' + e.id);
+  }
+});
+const GRUPPEN = ['start', 'skala', 'fragen', 'ergebnis', 'bereiche', 'stufen'];
+
+test('labels_sprechend', () => {
+  const { e, d } = tests.find((t) => t.d.id === 'antreiber');
+  const f = K.felder(d, e);
+  const label = (pfad, datei = 'test') => f.find((x) => x.pfad === pfad && x.datei === datei).label;
+  assert.strictEqual(label('questions[0].text'), 'Frage 1 (Bereich „Sei perfekt!“)');
+  assert.strictEqual(label('categories[0].sections[1].title'), 'Bereich „Sei perfekt!“, Abschnitt 2: Titel');
+  const lead = f.find((x) => x.pfad === 'result.lead');
+  assert.ok(lead.hinweis.includes('{names}'));
+  const t = tests.find((x) => x.d.id === 'teamklima');
+  const l = K.felder(t.d, t.e).find((x) => x.pfad === 'result.levels[1].title');
+  assert.strictEqual(l.label, 'Stufe ab ' + t.d.result.levels[1].min + ' %: Überschrift');
+  assert.strictEqual(f.find((x) => x.pfad === 'result.title').betont, true);
+  assert.strictEqual(f.find((x) => x.pfad === 'motto').betont, true);
+  assert.strictEqual(f.find((x) => x.pfad === 'name').betont, false);
+});
+
+test('cta_href_fehlt: der Link des Buttons ist nicht bearbeitbar', () => {
+  for (const { e, d } of tests) {
+    const pfade = K.felder(d, e).map((x) => x.pfad);
+    assert.ok(pfade.includes('result.cta.text'));
+    assert.ok(!pfade.includes('result.cta.href'));
+    assert.ok(!pfade.some((p) => /href|\.id$|kind|reverse|\.min$|tone/.test(p)), e.id);
+  }
+});
+
+test('setze_struktur_bleibt: Kopie, Original unverändert, Struktur gleich', () => {
+  for (const { e, d } of tests) {
+    const erwartet = W.struktur(d, W.TEXTFELDER_TEST);
+    const orig = JSON.stringify(d);
+    let neu = d;
+    for (const f of K.felder(d, e).filter((x) => x.datei === 'test')) neu = K.setze(neu, f.pfad, 'Neu ' + f.pfad.length + (f.wert.includes('{names}') ? ' {names}' : ''));
+    assert.strictEqual(JSON.stringify(d), orig);
+    assert.deepStrictEqual(W.pruefeStruktur(neu, erwartet, W.TEXTFELDER_TEST), []);
+    assert.notStrictEqual(JSON.stringify(neu), orig);
+  }
+  assert.throws(() => K.setze({ a: 1 }, 'b.c', 'x'), /Pfad/);
+});
+
+test('aenderungen: nur geänderte Felder, mit Label', () => {
+  const { e, d } = tests[0];
+  const f = K.felder(d, e);
+  const n = K.setze(d, 'questions[2].text', 'Anders.');
+  const a = K.aenderungen(d, n, f);
+  assert.strictEqual(a.length, 1);
+  assert.strictEqual(a[0].neu, 'Anders.');
+  assert.strictEqual(a[0].alt, d.questions[2].text);
+  assert.match(a[0].label, /^Frage 3/);
+  const paar = K.aenderungen({ test: d, eintrag: e }, { test: d, eintrag: Object.assign({}, e, { titel: 'T2' }) }, f);
+  assert.deepStrictEqual(paar.map((x) => x.neu), ['T2']);
+});
+
+test('pr_text', () => {
+  const liste = [{ label: 'Frage 3 (Bereich „X“)', alt: 'a', neu: 'b' }, { label: 'Name des Tests', alt: 'c', neu: 'd' }];
+  const r = K.prText('Antreiber-Test', liste, 'Bitte prüfen.');
+  assert.strictEqual(r.titel, 'Inhalt: Antreiber-Test (2 Änderungen)');
+  assert.strictEqual(r.text,
+    'Bitte prüfen.\n\n- Frage 3 (Bereich „X“): „a“ → „b“\n- Name des Tests: „c“ → „d“\n\nErstellt mit dem Test-Editor.');
+  const ohne = K.prText('T', liste.slice(0, 1), '');
+  assert.ok(ohne.text.startsWith('- Frage 3'));
+  assert.strictEqual(ohne.titel, 'Inhalt: T (1 Änderung)');
+});
