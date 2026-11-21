@@ -116,7 +116,7 @@ test('neuer_pr: Reihenfolge ref, blobs, tree, commit, ref anlegen, pulls', async
   assert.deepStrictEqual(r, { nummer: 12, url: 'https://github.com/x/pull/12', branch: 'inhalt/antreiber-2026-11-21-0905' });
   assert.deepStrictEqual(m.aufrufe.map((a) => a.m + ' ' + a.url.replace(R, '')), [
     'GET /git/ref/heads/main', 'GET /git/commits/kopf1', 'POST /git/blobs', 'POST /git/blobs',
-    'POST /git/trees', 'POST /git/commits', 'POST /git/refs', 'POST /pulls',
+    'POST /git/trees', 'POST /git/commits', 'POST /git/refs', 'POST /pulls', 'POST /issues/12/labels',
   ]);
   const blob = m.aufrufe.find((a) => a.url.endsWith('/git/blobs'));
   assert.strictEqual(blob.body.encoding, 'base64');
@@ -216,4 +216,48 @@ test('kopf_und_erwartet: Head lesen; anderer Head beim Senden -> konflikt, nicht
     G.sende(ctxMit(m), { testId: 'antreiber', dateien, titel: 't', text: 'x', erwartet: 'kopf0' }),
     (e) => e.art === 'konflikt');
   assert.ok(!m.aufrufe.some((a) => a.m !== 'GET'), 'kein Schreibzugriff');
+});
+
+test('prDateien: Dateinamen, per_page=100', async () => {
+  const m = mock({ ['GET ' + R + '/pulls/7/files?per_page=100']: { body: [{ filename: 'a.json' }, { filename: 'b/c.js' }] } });
+  assert.deepStrictEqual(await G.prDateien(ctxMit(m), 7), ['a.json', 'b/c.js']);
+  const m2 = mock({ ['GET ' + R + '/pulls/7/files?per_page=100']: { status: 500, body: {} } });
+  await assert.rejects(G.prDateien(ctxMit(m2), 7), { art: 'fehler', status: 500 });
+});
+
+test('setzeLabel: POST issues/{n}/labels', async () => {
+  const m = mock({ ['POST ' + R + '/issues/5/labels']: { body: [] } });
+  assert.strictEqual(await G.setzeLabel(ctxMit(m), 5, 'manual-review'), undefined);
+  assert.deepStrictEqual(m.aufrufe[0].body, { labels: ['manual-review'] });
+});
+
+test('sende: neuer PR bekommt Label manual-review', async () => {
+  const routen = schreibRoutenBasis('main');
+  routen['POST ' + R + '/git/refs'] = { body: {} };
+  routen['POST ' + R + '/pulls'] = { body: { number: 12, html_url: 'u' } };
+  routen['POST ' + R + '/issues/12/labels'] = { body: [] };
+  const m = mock(routen);
+  await G.sende(ctxMit(m), { testId: 'antreiber', dateien, titel: 't', text: 'x' });
+  const l = m.aufrufe[m.aufrufe.length - 1];
+  assert.strictEqual(l.m + ' ' + l.url.replace(R, ''), 'POST /issues/12/labels');
+  assert.deepStrictEqual(l.body, { labels: ['manual-review'] });
+});
+
+test('sende: Label-Fehler bricht nicht ab', async () => {
+  const routen = schreibRoutenBasis('main');
+  routen['POST ' + R + '/git/refs'] = { body: {} };
+  routen['POST ' + R + '/pulls'] = { body: { number: 12, html_url: 'u' } };
+  routen['POST ' + R + '/issues/12/labels'] = { status: 403, body: {} };
+  const r = await G.sende(ctxMit(mock(routen)), { testId: 'antreiber', dateien, titel: 't', text: 'x' });
+  assert.strictEqual(r.nummer, 12);
+});
+
+test('sende: Folgesendung setzt kein Label', async () => {
+  const routen = schreibRoutenBasis('inhalt/a-1');
+  routen['PATCH ' + R + '/git/refs/heads/inhalt/a-1'] = { body: {} };
+  routen['PATCH ' + R + '/pulls/3'] = { body: {} };
+  routen['POST ' + R + '/issues/3/comments'] = { body: {} };
+  const m = mock(routen);
+  await G.sende(ctxMit(m), { testId: 'a', dateien, titel: 't', text: 'x', pr: { nummer: 3, branch: 'inhalt/a-1', url: 'u' } });
+  assert.ok(!m.aufrufe.some((a) => a.url.endsWith('/labels')));
 });

@@ -10,12 +10,17 @@
   const meldungEl = d.querySelector('[data-ed-meldung]');
   if (!app || !meldungEl || !W || !K || !G || !V || !window.Testseite) return;
 
+  // fetch wird einmal beim Laden festgehalten; spätere Änderungen an window.fetch (z. B. durch Fremdskripte) wirken nicht.
+  const holeFetch = window.fetch.bind(window);
   const REPO = 'seitenschwung/gruppe42';
   const KUNDE = 'site/kunden/gruppe42/';
   const PFAD_GRUPPE = KUNDE + 'gruppe42.json';
   const PFAD_STRUKTUR = KUNDE + 'tests/struktur.json';
   const SPEICHER = 'g42-editor-entwurf-';
   const LOGIN = '/api/editor/login';
+  const API_TOKEN = '/api/editor/token';
+  const API_ABMELDEN = '/api/editor/abmelden';
+  const MELDUNG_FREMD = 'Es gibt einen offenen Vorschlag mit weiteren Änderungen. Seitenschwung kümmert sich darum.';
   const GRUPPEN = [
     ['start', 'Startseite des Tests'], ['skala', 'Antwortskala'], ['fragen', 'Fragen'],
     ['ergebnis', 'Ergebnis: allgemein'], ['stufen', 'Ergebnis-Stufen'], ['bereiche', 'Ergebnis je Bereich'],
@@ -26,8 +31,7 @@
   let t = null; // aktuell bearbeiteter Test
   let zaehler = 0;
 
-  // fetch wird bei jedem Aufruf frisch geholt (nicht zwischengespeichert).
-  const ctx = () => ({ token: sitzung.token, fetch: (...a) => window.fetch(...a), repo: REPO, basis: 'main' });
+  const ctx = () => ({ token: sitzung.token, fetch: holeFetch, repo: REPO, basis: 'main' });
   async function gh(name, ...args) {
     if (sitzung.ablauf && Date.now() > sitzung.ablauf) {
       const e = new Error('Anmeldung abgelaufen');
@@ -122,7 +126,23 @@
   function kopfleiste() {
     return el('div', { klasse: 'ed-leiste' },
       el('p', { klasse: 'ed-leise', text: 'Angemeldet als ' + sitzung.login }),
-      knopf('Abmelden', 'knopf-rand ed-klein', () => { sitzung.token = null; sitzung.ablauf = 0; meldung(''); zeigeAbgemeldet(); }));
+      knopf('Abmelden', 'knopf-rand ed-klein', abmelden));
+  }
+  // Token beim Server widerrufen (Ergebnis egal), dann lokal vergessen. Der Entwurf bleibt gespeichert.
+  async function abmelden() {
+    const tok = sitzung.token;
+    sitzung.token = null;
+    sitzung.ablauf = 0;
+    meldung('');
+    zeigeAbgemeldet();
+    if (!tok) return;
+    try {
+      await holeFetch(API_ABMELDEN, {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'X-G42-Editor': '1', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tok }),
+      });
+    } catch (e) { /* Abmelden gilt lokal trotzdem */ }
   }
   function keinZugriff() {
     return !sitzung.darfSchreiben && el('p', { klasse: 'shop-hinweis', role: 'note',
@@ -153,10 +173,19 @@
     return w;
   };
 
+  // Ein offener Vorschlag wird nur weiterverwendet, wenn er ausschließlich diesen Test (JSON + Liste) ändert.
+  async function istEigenerPr(pr, pfadDaten) {
+    const erlaubt = [pfadDaten, PFAD_GRUPPE];
+    const dateien = await gh('prDateien', pr.nummer);
+    return dateien.every((f) => erlaubt.includes(f));
+  }
+
   async function oeffneTest(i) {
     meldung('Test wird geladen …');
     const basisEintrag = stand.gruppe.tests.eintraege[i];
-    const pr = await gh('offenerPr', basisEintrag.id);
+    let pr = await gh('offenerPr', basisEintrag.id);
+    let gesperrt = false;
+    if (pr && !(await istEigenerPr(pr, KUNDE + basisEintrag.daten.replace(/^\.\//, '')))) { pr = null; gesperrt = true; }
     // Wartet schon eine Änderung auf Freigabe, wird auf deren Stand weitergearbeitet (derselbe PR, neuer Commit).
     const ref = pr ? pr.branch : undefined;
     const gruppe = pr ? JSON.parse((await gh('ladeDatei', PFAD_GRUPPE, ref)).text) : stand.gruppe;
@@ -164,7 +193,7 @@
     const pfadDaten = KUNDE + eintrag.daten.replace(/^\.\//, '');
     const daten = JSON.parse((await gh('ladeDatei', pfadDaten, ref)).text);
     t = {
-      index: i, id: eintrag.id, pfadDaten, gruppe, pr, ansicht: 'fragen', spec: '', frage: null, timer: null,
+      index: i, id: eintrag.id, pfadDaten, gruppe, pr, gesperrt, ansicht: 'fragen', spec: '', frage: null, timer: null,
       orig: { test: daten, eintrag }, jetzt: { test: daten, eintrag }, felder: K.felder(daten, eintrag),
     };
     const r = K.entwurfAnwenden(t.jetzt, leseEntwurf(t.id), t.felder);
@@ -177,7 +206,8 @@
     if (r.verworfen.length) {
       teile.push('Diese Felder wurden inzwischen geändert; Ihr Entwurf wurde dort nicht übernommen: ' + r.verworfen.join(', ') + '.');
     }
-    meldung(teile.join(' '), r.verworfen.length ? 'fehler' : 'info');
+    if (gesperrt) teile.unshift(MELDUNG_FREMD + ' Senden ist derzeit nicht möglich.');
+    meldung(teile.join(' '), r.verworfen.length || gesperrt ? 'fehler' : 'info');
     zeigeBearbeiten();
   }
 
@@ -206,7 +236,8 @@
     t.dom.hinweise = el('ul', { klasse: 'ed-hinweise' });
     const aktionen = el('div', { klasse: 'ed-aktionen' },
       t.dom.hinweise, t.dom.offen,
-      el('div', { klasse: 'knoepfe' }, sitzung.darfSchreiben && sendeKnopf,
+      t.gesperrt && el('p', { klasse: 'shop-hinweis', role: 'note', text: MELDUNG_FREMD + ' Senden ist derzeit nicht möglich; Sie können die Texte trotzdem bearbeiten und ansehen.' }),
+      el('div', { klasse: 'knoepfe' }, sitzung.darfSchreiben && !t.gesperrt && sendeKnopf,
         knopf('Anderen Test wählen', 'knopf-rand', zurTestwahl)));
 
     const vorschau = vorschauBereich();
@@ -477,6 +508,12 @@
         return meldung('In der Zwischenzeit hat sich der Stand dieses Tests geändert. Bitte öffnen Sie den Test erneut; ' +
           'Ihr Entwurf bleibt erhalten.', 'fehler', knopf('Test neu öffnen', 'knopf-dunkel', () => oeffneTest(t.index).catch(fehler)));
       }
+      if (offen && !(await istEigenerPr(offen, t.pfadDaten))) {
+        dlg.close();
+        t.gesperrt = true;
+        zeigeBearbeiten();
+        return meldung(MELDUNG_FREMD + ' Senden ist derzeit nicht möglich.', 'fehler');
+      }
       // Frisch vom Ziel lesen (PR-Branch oder main, fester Commit), eigene Änderungen darauf anwenden, neu prüfen.
       // So überschreibt der PR keine Änderungen, die inzwischen von anderer Seite gemacht wurden.
       const kopf = await gh('kopf', t.pr ? t.pr.branch : 'main');
@@ -567,14 +604,37 @@
     zeigeTestwahl();
   }
 
+  // Token holen: das Cookie aus dem Login (HttpOnly, 60 s) wird einmal gegen das Token getauscht.
+  async function holeToken() {
+    meldung('Anmeldung wird geprüft …');
+    let a;
+    try {
+      a = await holeFetch(API_TOKEN, { method: 'POST', credentials: 'same-origin', headers: { 'X-G42-Editor': '1' } });
+    } catch (e) {
+      zeigeAbgemeldet();
+      return meldung('Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', 'fehler', loginLink('Erneut anmelden'));
+    }
+    if (a.status === 503) {
+      zeigeAbgemeldet();
+      return meldung('Der Editor ist noch nicht eingerichtet.', 'fehler');
+    }
+    let daten = null;
+    if (a.ok) { try { daten = await a.json(); } catch (e) { daten = null; } }
+    if (!daten || typeof daten.token !== 'string' || !daten.token) {
+      zeigeAbgemeldet();
+      return meldung('Anmeldung abgelaufen, bitte erneut anmelden.', 'fehler', loginLink('Erneut anmelden'));
+    }
+    sitzung.token = daten.token;
+    if (Number(daten.ablauf) > 0) sitzung.ablauf = Date.now() + Number(daten.ablauf) * 1000;
+    await starte();
+  }
+
+  // Das Fragment wird sofort entfernt. Ein Token im Fragment (#token=) wird nie angenommen.
   const frag = new URLSearchParams(location.hash.slice(1));
-  if (location.hash) history.replaceState(null, '', location.pathname);
-  const token = frag.get('token');
-  if (token) {
-    sitzung.token = token;
-    const ablauf = Number(frag.get('ablauf'));
-    if (ablauf > 0) sitzung.ablauf = Date.now() + ablauf * 1000;
-    starte().catch(fehler);
+  const angemeldet = location.hash === '#angemeldet';
+  if (location.hash) history.replaceState(null, '', location.pathname + location.search);
+  if (angemeldet) {
+    holeToken().catch(fehler);
   } else {
     zeigeAbgemeldet();
     const f = frag.get('fehler');

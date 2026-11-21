@@ -91,6 +91,16 @@
     return pr ? { nummer: pr.number, branch: pr.head.ref, url: pr.html_url } : null;
   }
 
+  // Dateinamen, die ein PR ändert (bis 100).
+  async function prDateien(ctx, nummer) {
+    const liste = await anfrage(ctx, 'GET', '/repos/' + ctx.repo + '/pulls/' + nummer + '/files?per_page=100');
+    return liste.map((f) => f.filename);
+  }
+
+  async function setzeLabel(ctx, nummer, label) {
+    await anfrage(ctx, 'POST', '/repos/' + ctx.repo + '/issues/' + nummer + '/labels', { labels: [label] });
+  }
+
   async function sende(ctx, eingabe) {
     const r = '/repos/' + ctx.repo;
     const jetzt = ctx.jetzt || (() => new Date());
@@ -121,6 +131,8 @@
     }
     await anfrage(ctx, 'POST', r + '/git/refs', { ref: 'refs/heads/' + branch, sha: neu.sha }, [409, 422]);
     const pr = await anfrage(ctx, 'POST', r + '/pulls', { title: eingabe.titel, head: branch, base: ctx.basis, body: eingabe.text });
+    // Label ist nur eine Markierung für die Prüfung: scheitert es, gilt das Senden trotzdem als erfolgreich.
+    try { await setzeLabel(ctx, pr.number, 'manual-review'); } catch (e) { /* bewusst ignoriert */ }
     return { nummer: pr.number, url: pr.html_url, branch };
   }
 
@@ -130,5 +142,5 @@
     return { zustand: pr.state === 'closed' ? 'geschlossen' : 'offen', mergeSha: null };
   }
 
-  return { zugriff, kopf, ladeDatei, offenerPr, sende, status };
+  return { zugriff, kopf, ladeDatei, offenerPr, prDateien, setzeLabel, sende, status };
 });
