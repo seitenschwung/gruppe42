@@ -13,9 +13,11 @@ RUN node site/vorlagen/beratung/build.js site/kunden/gruppe42/gruppe42.json \
 
 # --- 2) Test: server unit tests (pipeline runs this stage; it is not in the final image) ---
 FROM node:20-alpine AS test
+RUN apk add --no-cache libwebp-tools
 WORKDIR /app
 COPY server/ server/
-RUN node --test server/server.test.js server/products.test.js server/checkout.test.js server/webhook.test.js server/orders.test.js
+COPY site/ site/
+RUN node --test site/lib/testwaechter.test.js server/server.test.js server/products.test.js server/checkout.test.js server/webhook.test.js server/orders.test.js
 
 # --- 3) Serve: Node server for static files and later /api/* ---
 FROM node:20-alpine
