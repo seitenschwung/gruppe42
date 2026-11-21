@@ -22,12 +22,28 @@ const SECURITY_HEADERS = {
   'X-Frame-Options': 'SAMEORIGIN',
 };
 
+const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+const isEditorPath = (p) => p === '/editor' || p.startsWith('/editor/');
+const isEditorApi = (u) => u === '/api/editor' || u.startsWith('/api/editor/') || u.startsWith('/api/editor?');
+
+// Headers for every response of a path; /editor gets a strict CSP and no caching.
+function headersFor(pathname) {
+  if (!isEditorPath(pathname)) return SECURITY_HEADERS;
+  return { ...SECURITY_HEADERS, 'Content-Security-Policy': EDITOR_CSP, 'X-Frame-Options': 'DENY', 'Cache-Control': 'no-store' };
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 const pad = (n) => String(n).padStart(2, '0');
 const clfDate = (d) => `${pad(d.getUTCDate())}/${MONTHS[d.getUTCMonth()]}/${d.getUTCFullYear()}:${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} +0000`;
 
+// Path-specific headers (res.pathHeaders) win over the per-response ones, so /editor stays no-store.
+function allHeaders(res, headers) {
+  const ph = res.pathHeaders;
+  return ph && ph !== SECURITY_HEADERS ? { ...SECURITY_HEADERS, ...headers, ...ph } : { ...SECURITY_HEADERS, ...headers };
+}
+
 function send(res, status, headers, body) {
-  res.writeHead(status, { ...SECURITY_HEADERS, ...headers });
+  res.writeHead(status, allHeaders(res, headers));
   res.end(body);
 }
 
@@ -41,7 +57,9 @@ function createServer({ root, version, log, api }) {
       res.on('finish', () => {
         const h = req.headers;
         const ip = (h['x-forwarded-for'] || req.socket.remoteAddress || '-').split(',')[0].trim();
-        log(`${ip} - - [${clfDate(new Date())}] "${req.method} ${req.url}" ${res.statusCode} ${res.getHeader('content-length') || '-'} "${h.referer || '-'}" "${h['user-agent'] || '-'}"`);
+        // OAuth code/state must never reach the log: drop the query for /api/editor.
+        const logUrl = isEditorApi(req.url) ? req.url.split('?')[0] : req.url;
+        log(`${ip} - - [${clfDate(new Date())}] "${req.method} ${logUrl}" ${res.statusCode} ${res.getHeader('content-length') || '-'} "${h.referer || '-'}" "${h['user-agent'] || '-'}"`);
       });
     }
     let pathname;
@@ -50,6 +68,7 @@ function createServer({ root, version, log, api }) {
     } catch {
       return send(res, 400, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Bad Request\n');
     }
+    res.pathHeaders = headersFor(pathname);
     if (api && api.routes[pathname]) {
       const route = api.routes[pathname];
       if (req.method !== route.method) {
@@ -105,12 +124,12 @@ function serve(req, res, file, st, head) {
   };
   if (req.headers['if-none-match'] === etag) return send(res, 304, headers, undefined);
   headers['Content-Length'] = st.size;
-  res.writeHead(200, { ...SECURITY_HEADERS, ...headers });
+  res.writeHead(200, allHeaders(res, headers));
   if (head) return res.end();
   fs.createReadStream(file).on('error', () => res.destroy()).pipe(res);
 }
 
-module.exports = { createServer };
+module.exports = { createServer, headersFor };
 
 if (require.main === module) {
   const orders = require('./orders').createOrderStore({ dir: process.env.DATA_DIR || '/data' });

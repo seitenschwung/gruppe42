@@ -4,13 +4,17 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { createServer } = require('./server');
+const { createServer, headersFor } = require('./server');
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'site-'));
 fs.writeFileSync(path.join(root, 'index.html'), '<h1>hi</h1>');
 fs.mkdirSync(path.join(root, 'sub'));
 fs.writeFileSync(path.join(root, 'sub', 'index.html'), 'sub');
 fs.writeFileSync(path.join(root, 'a.css'), 'body{}');
+fs.mkdirSync(path.join(root, 'editor'));
+fs.writeFileSync(path.join(root, 'editor', 'index.html'), 'ed');
+fs.writeFileSync(path.join(root, 'editorial.html'), 'x');
+fs.writeFileSync(path.join(root, 'shop.html'), 'shop');
 fs.writeFileSync(path.join(path.dirname(root), 'secret.txt'), 'secret');
 
 const lines = [];
@@ -66,4 +70,42 @@ test('methods, api placeholder, access log', async () => {
   assert.deepStrictEqual(await api.json(), { error: 'not_found' });
   assert.ok(lines.some((l) => /"GET \/api\/anything" 404 /.test(l)));
   assert.ok(!lines.some((l) => l.includes('/healthz')));
+});
+
+const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+
+test('editor_csp', async () => {
+  for (const p of ['/editor/', '/editor/nope', '/editor']) {
+    const r = await get(p);
+    const h = r.headers;
+    assert.strictEqual(h.get('content-security-policy'), EDITOR_CSP, p);
+    assert.strictEqual(h.get('x-frame-options'), 'DENY', p);
+    assert.strictEqual(h.get('cache-control'), 'no-store', p);
+    assert.strictEqual(h.get('x-content-type-options'), 'nosniff', p);
+  }
+  assert.strictEqual((await get('/editor')).status, 301);
+  const first = await get('/editor/');
+  assert.strictEqual(first.status, 200);
+  const r304 = await get('/editor/', { headers: { 'if-none-match': first.headers.get('etag') } });
+  assert.strictEqual(r304.status, 304);
+  assert.strictEqual(r304.headers.get('content-security-policy'), EDITOR_CSP);
+  assert.strictEqual(r304.headers.get('cache-control'), 'no-store');
+});
+
+test('andere_seiten_ohne_csp', async () => {
+  for (const p of ['/', '/editorial.html', '/shop.html', '/nope']) {
+    const h = (await get(p)).headers;
+    assert.strictEqual(h.get('content-security-policy'), null, p);
+    assert.strictEqual(h.get('x-frame-options'), 'SAMEORIGIN', p);
+  }
+  assert.strictEqual(headersFor('/editorial.html')['Content-Security-Policy'], undefined);
+});
+
+test('log_ohne_query', async () => {
+  await get('/api/editor/callback?code=geheim&state=x');
+  await get('/shop.html?a=1');
+  await new Promise((r) => setTimeout(r, 50));
+  const cb = lines.find((l) => l.includes('/api/editor/callback'));
+  assert.ok(cb && !cb.includes('geheim') && !cb.includes('?'), cb);
+  assert.ok(lines.some((l) => l.includes('"GET /shop.html?a=1"')));
 });
