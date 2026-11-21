@@ -205,3 +205,40 @@ test('eintraege', () => {
     assert.ok(pruefeTexte(d, TEXTFELDER_EINTRAG).some((m) => m.pfad === 'titel'));
   }
 });
+
+test('status_ohne_schlusspunkt', () => mit('teamklima', (d) => {
+  d.status = 'Eigene Kurzbefragung.';
+  const m = pruefeTexte(d, TEXTFELDER_TEST).filter((x) => x.pfad === 'status');
+  assert.strictEqual(m.length, 1);
+  assert.strictEqual(m[0].meldung, 'Bitte ohne Punkt am Ende – er wird automatisch ergänzt.');
+  d.status = 'Eigene Kurzbefragung. ';
+  assert.ok(pruefeTexte(d, TEXTFELDER_TEST).some((x) => x.pfad === 'status'));
+  d.status = 'Eigene Kurzbefragung';
+  assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), []);
+  // nur status: andere Felder dürfen mit Punkt enden
+  d.questions[0].text = 'Ein Satz.';
+  assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), []);
+}));
+
+test('steuerzeichen_verboten', () => {
+  const verboten = ['‪', '‮', '⁦', '⁩', '​', '‏', '﻿'];
+  for (const z of verboten) {
+    mit('teamklima', (d) => {
+      d.questions[0].text = 'Fra' + z + 'ge';
+      const m = pruefeTexte(d, TEXTFELDER_TEST).filter((x) => x.pfad === 'questions[0].text');
+      assert.strictEqual(m.length, 1, 'U+' + z.charCodeAt(0).toString(16));
+      assert.strictEqual(m[0].meldung, 'Enthält unsichtbare Steuerzeichen – bitte Text neu eintippen.');
+    });
+  }
+  // Grenzen: direkt daneben liegende Zeichen sind erlaubt
+  for (const z of [' ', ' ', '⁥', '⁪', ' ', '‐']) {
+    mit('teamklima', (d) => {
+      d.questions[0].text = 'Fra' + z + 'ge';
+      assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), [], 'U+' + z.charCodeAt(0).toString(16));
+    });
+  }
+  const g = JSON.parse(fs.readFileSync(path.join(DIR, 'gruppe42.json'), 'utf8'));
+  const e = structuredClone(g.tests.eintraege[0]);
+  e.titel = 'Ti​tel';
+  assert.ok(pruefeTexte(e, TEXTFELDER_EINTRAG).some((x) => x.pfad === 'titel' && /Steuerzeichen/.test(x.meldung)));
+});

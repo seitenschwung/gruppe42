@@ -226,10 +226,12 @@
       if (g === 'stufen') gruppe.append(el('p', { klasse: 'ed-leise', text: 'Die Grenzen der Stufen (z. B. „ab 50 %“) sind fest und lassen sich hier nicht ändern.' }));
       if (g === 'bereiche' && istStufen) gruppe.append(el('p', { klasse: 'ed-leise', text: 'Diese Texte erscheinen im Ergebnis bei den einzelnen Bereichen.' }));
       liste.forEach((f) => gruppe.append(feldElement(f)));
+      gruppe.addEventListener('toggle', () => { if (gruppe.open) passeGruppeAn(gruppe); });
       t.dom.gruppen.set(g, { el: gruppe, zahl, anzahl: liste.length });
       formular.append(gruppe);
     }
 
+    const suche = sucheBereich();
     const sendeKnopf = knopf('Zur Freigabe senden', 'knopf-dunkel', oeffneDialog);
     t.dom.senden = sendeKnopf;
     t.dom.offen = el('p', { klasse: 'ed-leise', 'aria-live': 'polite' });
@@ -242,12 +244,12 @@
 
     const vorschau = vorschauBereich();
     const umschalter = el('div', { klasse: 'ed-umschalter ed-modus', role: 'group', 'aria-label': 'Bearbeiten oder Vorschau' });
-    const flaeche = el('div', { klasse: 'ed-flaeche' }, el('div', { klasse: 'ed-spalte-form' }, formular, aktionen), vorschau);
+    const flaeche = el('div', { klasse: 'ed-flaeche' }, el('div', { klasse: 'ed-spalte-form' }, suche, formular, aktionen), vorschau);
     [['Bearbeiten', false], ['Vorschau', true]].forEach(([text, zeigt]) => {
       umschalter.append(knopf(text, 'knopf-rand ed-klein', (ev) => {
         flaeche.classList.toggle('ed-zeigt-vorschau', zeigt);
         umschalter.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b === ev.currentTarget)));
-        if (zeigt) planeVorschau(0);
+        if (zeigt) planeVorschau(0); else passeGruppeAn(formular);
       }, { 'aria-pressed': String(!zeigt) }));
     });
 
@@ -257,8 +259,58 @@
       umschalter, flaeche, dialog());
     waehleAnsicht(t.ansicht);
     pruefe();
+    passeGruppeAn(formular);
     planeVorschau(0);
   }
+
+  // --- Suche im Formular ------------------------------------------------------------------------
+  function sucheBereich() {
+    const feld = el('input', { id: 'ed-suche', type: 'search', autocomplete: 'off', spellcheck: 'false', 'aria-describedby': 'ed-suche-h' });
+    const treffer = el('p', { klasse: 'ed-leise ed-treffer', id: 'ed-suche-h', 'aria-live': 'polite' });
+    feld.addEventListener('input', () => filtere(feld.value));
+    feld.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape' && feld.value) { ev.preventDefault(); leereSuche(); }
+    });
+    t.dom.suche = { feld, treffer, offen: null };
+    return el('div', { klasse: 'ed-suche', role: 'search' }, el('label', { for: 'ed-suche', text: 'Text suchen' }), feld, treffer);
+  }
+
+  function leereSuche() {
+    t.dom.suche.feld.value = '';
+    filtere('');
+  }
+
+  // Blendet Felder ohne Treffer aus und öffnet Gruppen mit Treffern; leerer Suchtext stellt den vorigen Zustand her.
+  function filtere(text) {
+    const s = t.dom.suche;
+    const aktiv = text.trim() !== '';
+    if (aktiv && !s.offen) s.offen = new Map([...t.dom.gruppen].map(([g, info]) => [g, info.el.open]));
+    const jeGruppe = new Map();
+    let n = 0;
+    for (const x of t.dom.felder.values()) {
+      const ok = !aktiv || K.passt(x.f, x.eingabe.value, text);
+      x.box.hidden = !ok;
+      if (ok) { n++; jeGruppe.set(x.f.gruppe, (jeGruppe.get(x.f.gruppe) || 0) + 1); }
+    }
+    for (const [g, info] of t.dom.gruppen) {
+      info.el.hidden = aktiv && !jeGruppe.get(g);
+      if (aktiv && jeGruppe.get(g)) info.el.open = true;
+      if (!aktiv && s.offen) info.el.open = s.offen.get(g);
+    }
+    if (!aktiv) s.offen = null;
+    const neu = !aktiv ? '' : n === 0 ? 'Keine Treffer' : n + ' Treffer';
+    // Live-Region nur bei geändertem Inhalt neu setzen
+    if (s.treffer.textContent !== neu) s.treffer.textContent = neu;
+    passeGruppeAn(d.getElementById('ed-formular') || d);
+  }
+
+  // Zeilen nach Länge (K.zeilen); ist das Feld sichtbar und der Text trotzdem länger, wächst es bis 12 Zeilen.
+  function passeHoeheAn(ta) {
+    let z = K.zeilen(ta.value);
+    if (ta.rows !== z) ta.rows = z;
+    while (z < 12 && ta.clientHeight && ta.scrollHeight > ta.clientHeight + 1) ta.rows = ++z;
+  }
+  const passeGruppeAn = (wurzel) => wurzel.querySelectorAll('.ed-feld textarea').forEach(passeHoeheAn);
 
   function feldElement(f) {
     const n = ++zaehler;
@@ -266,17 +318,28 @@
     const hilfeText = [f.hinweis, f.betont ? 'Ein Wort zwischen Sternchen wird hervorgehoben, z. B. *Wort*.' : ''].filter(Boolean).join(' ');
     const hilfe = hilfeText && el('p', { klasse: 'ed-hilfe', id: id + '-h', text: hilfeText });
     const fehlerEl = el('p', { klasse: 'ed-fehler', id: id + '-m', hidden: true });
-    const eingabe = f.mehrzeilig
-      ? el('textarea', { id, rows: String(Math.min(8, Math.max(3, Math.ceil(f.wert.length / 60)))) })
-      : el('input', { id, type: 'text' });
+    // Immer mehrzeilig, damit lange Texte ganz sichtbar sind. Zeilenumbrüche erscheinen auf der Website nicht,
+    // daher fügt Enter keinen ein und eingefügte Umbrüche werden zu Leerzeichen.
+    const eingabe = el('textarea', { id });
     eingabe.value = wert(t.jetzt, f);
+    eingabe.rows = K.zeilen(eingabe.value);
+    eingabe.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') ev.preventDefault(); });
     const marke = el('span', { klasse: 'ed-marke', text: 'geändert', hidden: true });
     const zurueck = knopf('Zurücksetzen', 'knopf-rand ed-klein', () => {
       setzeWert(f, wert(t.orig, f));
       eingabe.value = wert(t.orig, f);
+      passeHoeheAn(eingabe);
       eingabe.focus();
     }, { hidden: true, 'aria-label': 'Zurücksetzen: ' + f.label });
-    eingabe.addEventListener('input', () => setzeWert(f, eingabe.value));
+    eingabe.addEventListener('input', () => {
+      if (/[\r\n]/.test(eingabe.value)) {
+        const pos = eingabe.selectionStart;
+        eingabe.value = eingabe.value.replace(/\r\n?|\n/g, ' ');
+        eingabe.setSelectionRange(pos, pos);
+      }
+      passeHoeheAn(eingabe);
+      setzeWert(f, eingabe.value);
+    });
     eingabe.addEventListener('focus', () => folgeFokus(f));
     const box = el('div', { klasse: 'ed-feld' },
       el('div', { klasse: 'ed-feld-kopf' }, el('label', { for: id, text: f.label }), marke, zurueck),
@@ -343,7 +406,7 @@
       zahlen.set(x.f.gruppe, z);
       if (liste.length) {
         t.dom.hinweise.append(el('li', {}, el('button', { type: 'button', klasse: 'ed-sprung', text: x.f.label + ': ' + liste.join(' '),
-          onclick: () => { x.box.closest('details').open = true; x.eingabe.focus(); } })));
+          onclick: () => { if (x.box.hidden) leereSuche(); x.box.closest('details').open = true; x.eingabe.focus(); } })));
       }
     }
     for (const [g, info] of t.dom.gruppen) {
@@ -373,6 +436,8 @@
       });
     } else {
       t.jetzt.test.categories.forEach((c) => auswahl.append(el('option', { value: 'bereich:' + c.id, text: c.name })));
+      // Alle Antworten gleich: kein Bereich liegt vorne, das Ergebnis zeigt den Text bei Gleichstand (result.tie).
+      auswahl.append(el('option', { value: '3', text: 'Gleichstand (kein Bereich vorne)' }));
     }
     t.spec = auswahl.value;
     auswahl.addEventListener('change', () => { t.spec = auswahl.value; planeVorschau(0); });
@@ -408,6 +473,7 @@
       a = 'ergebnis';
       const r = t.jetzt.test.result;
       if (f.gruppe === 'bereiche' && r.kind !== 'levels') spec = 'bereich:' + t.jetzt.test.categories[nr(0)].id;
+      if (f.pfad === 'result.tie' && r.kind !== 'levels') spec = '3';
       if (f.gruppe === 'stufen') {
         const sortiert = r.levels.slice().sort((x, y) => x.min - y.min);
         spec = 'stufe:' + sortiert.indexOf(r.levels[nr(0)]);

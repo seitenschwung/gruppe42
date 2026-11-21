@@ -206,3 +206,56 @@ test('nurErlaubteDateien', () => {
   assert.strictEqual(K.nurErlaubteDateien(['a.json', 'build.js'], ok), false); // Umbenennung: previous_filename steht in der Liste
   assert.strictEqual(K.nurErlaubteDateien(new Array(100).fill('a.json'), ok), false);
 });
+
+test('labels_eintrag: Kachel und Seitenkopf, Überschrift der Testseite, kein „Teaser:“', () => {
+  for (const { e, d } of tests) {
+    const f = K.felder(d, e);
+    const label = (pfad) => f.find((x) => x.pfad === pfad && x.datei === 'eintrag').label;
+    assert.strictEqual(label('titel'), 'Kachel und Seitenkopf: Titel', e.id);
+    assert.strictEqual(label('motto'), 'Überschrift der Testseite', e.id);
+    if (e.kurz) assert.strictEqual(label('kurz'), 'Kachel und Seitenkopf: Kurzinfo', e.id);
+    assert.ok(!f.some((x) => x.label.startsWith('Teaser')), e.id);
+  }
+});
+
+test('hinweise_erscheint: Eintragsfelder, name und status sagen, wo sie erscheinen', () => {
+  for (const { e, d } of tests) {
+    const f = K.felder(d, e);
+    const pflicht = f.filter((x) => x.datei === 'eintrag' || x.pfad === 'name' || x.pfad === 'status');
+    assert.ok(pflicht.length >= 4, e.id);
+    for (const x of pflicht) assert.match(x.hinweis || '', /^Erscheint: .+\.$/, e.id + ' ' + x.pfad);
+  }
+  const { e, d } = tests.find((t) => t.d.id === 'antreiber');
+  const f = K.felder(d, e);
+  const h = (pfad, datei = 'test') => f.find((x) => x.pfad === pfad && x.datei === datei).hinweis;
+  assert.match(h('name'), /Betreff/);
+  assert.match(h('status'), /Kein Diagnoseinstrument/);
+  assert.match(h('motto', 'eintrag'), /Hauptüberschrift/);
+  assert.match(h('kurz', 'eintrag'), /So funktioniert es/);
+  assert.match(h('beschreibung', 'eintrag'), /Kachel/);
+  // bestehender Hinweis bleibt
+  assert.ok(h('result.lead').includes('{names}'));
+});
+
+test('zeilen: nach Länge, mindestens 2, höchstens 12', () => {
+  assert.strictEqual(K.zeilen(''), 2);
+  assert.strictEqual(K.zeilen('kurz'), 2);
+  assert.strictEqual(K.zeilen('a'.repeat(60)), 2);
+  assert.strictEqual(K.zeilen('a'.repeat(61)), 3);
+  assert.strictEqual(K.zeilen('a'.repeat(300)), 6);
+  assert.strictEqual(K.zeilen('a'.repeat(5000)), 12);
+  assert.strictEqual(K.zeilen('a\nb\nc\nd'), 5);
+  for (const { e, d } of tests) for (const x of K.felder(d, e)) assert.strictEqual(x.zeilen, K.zeilen(x.wert));
+});
+
+test('passt: Suche in Label und Wert, ohne Groß-/Kleinschreibung, auch Umlaute', () => {
+  const f = { label: 'Frage 1 (Bereich „Sei perfekt!“)' };
+  assert.strictEqual(K.passt(f, 'Ich mache es gründlich', 'PERFEKT'), true);
+  assert.strictEqual(K.passt(f, 'Ich mache es gründlich', 'GRÜNDLICH'), true);
+  assert.strictEqual(K.passt(f, 'ÄRGER im Team', 'ärger'), true);
+  assert.strictEqual(K.passt(f, 'Ich mache es gründlich', 'schnell'), false);
+  assert.strictEqual(K.passt(f, 'x', '  frage 1 '), true);
+  // zerlegtes ü (u + U+0308) findet auch das zusammengesetzte
+  assert.strictEqual(K.passt(f, 'gründlich', 'gründlich'), true);
+  assert.strictEqual(K.passt(f, 'x', ''), true);
+});

@@ -61,7 +61,19 @@
     'result.cta.text': 'Ergebnis: Text des Buttons',
   };
   const EINTRAG_LABEL = {
-    titel: 'Titel', motto: 'Motto', intro: 'Einleitung', kurz: 'Kurzinfo', beschreibung: 'Beschreibung',
+    titel: 'Kachel und Seitenkopf: Titel', motto: 'Überschrift der Testseite', intro: 'Kachel und Seitenkopf: Einleitung',
+    kurz: 'Kachel und Seitenkopf: Kurzinfo', beschreibung: 'Kachel und Seitenkopf: Beschreibung',
+  };
+  // Wo ein Feld auf der Website erscheint (Felder, deren Name allein mehrdeutig ist).
+  const ERSCHEINT = {
+    titel: 'Erscheint: als Titel der Kachel in der Übersicht der Selbsttests und als Kurzzeile über der Überschrift der Testseite.',
+    motto: 'Erscheint: als Hauptüberschrift oben auf der Testseite.',
+    intro: 'Erscheint: als Einleitung unter der Überschrift der Testseite.',
+    kurz: 'Erscheint: als Schlagwort auf der Kachel und als erster Punkt unter „So funktioniert es“.',
+    beschreibung: 'Erscheint: als Text auf der Kachel in der Übersicht der Selbsttests.',
+    name: 'Erscheint: im Betreff, wenn jemand das Ergebnis per E-Mail verschickt, und im Titel des Browser-Tabs.',
+    status: 'Erscheint: auf der Testseite unter „So funktioniert es“; dahinter wird automatisch „. Kein Diagnoseinstrument.“ ergänzt.',
+    'result.tie': 'Erscheint: im Ergebnis, wenn kein Bereich klar vorne liegt. In der Vorschau mit „Gleichstand“ ansehen.',
   };
   const NAME_STATUS = { name: 'Name des Tests', status: 'Hinweis zum Status des Tests' };
 
@@ -69,7 +81,7 @@
   function beschreibeTestfeld(daten, pfad, m) {
     const s = teile(pfad);
     const bereichsName = (i) => '„' + (daten.categories[i] && daten.categories[i].name) + '“';
-    if (NAME_STATUS[m]) return { gruppe: 'start', label: NAME_STATUS[m] };
+    if (NAME_STATUS[m]) return { gruppe: 'start', label: NAME_STATUS[m], hinweis: ERSCHEINT[m] };
     if (m === 'scale.*') return { gruppe: 'skala', label: 'Antwortstufe ' + s[1] };
     if (m === 'questions[].text') {
       const q = daten.questions[s[1]];
@@ -90,6 +102,7 @@
       return { gruppe: 'stufen', label: 'Stufe ab ' + daten.result.levels[s[2]].min + ' %: ' + teil };
     }
     const f = { gruppe: 'ergebnis', label: ERGEBNIS_LABEL[m] || pfad };
+    if (ERSCHEINT[m]) f.hinweis = ERSCHEINT[m];
     if (m === 'result.lead' && typeof hole(daten, pfad) === 'string' && hole(daten, pfad).includes('{names}')) {
       f.hinweis = '{names} wird durch die stärksten Bereiche ersetzt und muss stehen bleiben.';
     }
@@ -102,12 +115,24 @@
     else if (typeof knoten === 'string' && textfelder.includes(muster(pfad))) fn(pfad, muster(pfad), knoten);
   }
 
+  // Zeilen für das Textfeld: etwa 60 Zeichen je Zeile plus eine Reserve, mindestens 2, höchstens 12.
+  function zeilen(text) {
+    const t = String(text || '');
+    const n = Math.max(Math.ceil(t.length / 60), t.split('\n').length) + 1;
+    return Math.min(12, Math.max(2, n));
+  }
+
+  const normal = (t) => String(t).normalize('NFC').toLocaleLowerCase('de');
+
+  // Suche im Editor: passt das Feld (Label oder aktueller Wert) zum Suchtext? Leerer Suchtext passt immer.
+  function passt(feld, wert, suche) {
+    const s = normal(suche).trim();
+    return !s || normal(feld.label).includes(s) || normal(wert).includes(s);
+  }
+
   function baueFeld(datei, pfad, wert, kern) {
     const betont = Testwaechter.BETONT_ERLAUBT.includes(muster(pfad));
-    return Object.assign({
-      datei, pfad, gruppe: 'start', label: pfad, wert,
-      mehrzeilig: wert.length > 70 || wert.includes('\n'), betont,
-    }, kern);
+    return Object.assign({ datei, pfad, gruppe: 'start', label: pfad, wert, zeilen: zeilen(wert), betont }, kern);
   }
 
   // Alle bearbeitbaren Textfelder (Test-JSON und Eintrag in gruppe42.json), genau die, die der Wächter freigibt.
@@ -118,7 +143,7 @@
     });
     if (eintrag) {
       sammle(eintrag, '', Testwaechter.TEXTFELDER_EINTRAG, (pfad, m, wert) => {
-        aus.push(baueFeld('eintrag', pfad, wert, { gruppe: 'start', label: 'Teaser: ' + EINTRAG_LABEL[m] }));
+        aus.push(baueFeld('eintrag', pfad, wert, { gruppe: 'start', label: EINTRAG_LABEL[m], hinweis: ERSCHEINT[m] }));
       });
     }
     return aus.sort((a, b) => GRUPPEN.indexOf(a.gruppe) - GRUPPEN.indexOf(b.gruppe));
@@ -193,5 +218,5 @@
     return Array.isArray(dateien) && dateien.length < 100 && dateien.every((f) => erlaubt.includes(f));
   }
 
-  return { felder, setze, aenderungen, wendeAn, entwurfAnwenden, prText, nurErlaubteDateien };
+  return { felder, setze, aenderungen, wendeAn, entwurfAnwenden, prText, nurErlaubteDateien, zeilen, passt };
 });

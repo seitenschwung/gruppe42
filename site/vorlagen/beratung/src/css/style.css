@@ -540,8 +540,11 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
 .ed-spalte-vorschau { position: sticky; top: 96px; }
 .ed-rahmen { width: 100%; height: min(72vh, 900px); border: 1px solid var(--linie-2); border-radius: 16px; background: #fff; }
 .ed-auswahl { display: grid; gap: 6px; margin-top: 8px; }
-.ed-auswahl select, .ed-feld input, .ed-feld textarea, .ed-dialog textarea { width: 100%; font: inherit; font-size: 16px; color: var(--espresso); background: #fff; border: 1.5px solid var(--linie-2); border-radius: 10px; padding: 10px 12px; }
+.ed-auswahl select, .ed-suche input, .ed-feld textarea, .ed-dialog textarea { width: 100%; font: inherit; font-size: 16px; color: var(--espresso); background: #fff; border: 1.5px solid var(--linie-2); border-radius: 10px; padding: 10px 12px; }
 .ed-feld textarea, .ed-dialog textarea { resize: vertical; line-height: 1.5; }
+.ed-suche { display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; margin-bottom: 16px; }
+.ed-suche label { font-weight: 600; font-size: 15px; }
+.ed-treffer { min-height: 1.5em; margin: 0; }
 .ed-gruppe { border: 1px solid var(--linie-2); border-radius: 16px; background: #fff; margin-bottom: 16px; }
 .ed-gruppe > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 16px 20px; cursor: pointer; }
 .ed-gruppe-titel { font-size: 19px; font-weight: 700; }
@@ -553,8 +556,8 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
 .ed-feld-kopf { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-bottom: 6px; }
 .ed-feld label { font-weight: 600; font-size: 15px; }
 .ed-marke { font-size: 13px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: var(--honig-hell); }
-.ed-ist-geaendert input, .ed-ist-geaendert textarea { border-color: var(--honig); background: #FFFDF7; }
-.ed-ist-fehler input, .ed-ist-fehler textarea { border-color: var(--terrakotta); }
+.ed-ist-geaendert textarea { border-color: var(--honig); background: #FFFDF7; }
+.ed-ist-fehler textarea { border-color: var(--terrakotta); }
 .ed-hilfe { font-size: 14px; color: var(--text-2); margin-top: 6px; }
 .ed-fehler { font-size: 14px; font-weight: 600; color: var(--terrakotta); margin-top: 6px; }
 .ed-aktionen { position: sticky; bottom: 0; z-index: 5; padding: 16px 0; background: var(--creme); border-top: 1px solid var(--linie-2); display: grid; gap: 10px; }
