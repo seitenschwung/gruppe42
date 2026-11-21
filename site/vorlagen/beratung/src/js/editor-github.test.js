@@ -63,16 +63,48 @@ test('umlaute_dekodieren', async () => {
 test('offener_pr_wird_weiterverwendet: kein neuer Ref, kein neuer PR', async () => {
   const routen = schreibRoutenBasis('inhalt/antreiber-2026-11-20-1000');
   routen['PATCH ' + R + '/git/refs/heads/inhalt/antreiber-2026-11-20-1000'] = { body: {} };
+  routen['PATCH ' + R + '/pulls/7'] = { body: {} };
+  routen['POST ' + R + '/issues/7/comments'] = { status: 201, body: {} };
   const m = mock(routen);
   const pr = { nummer: 7, branch: 'inhalt/antreiber-2026-11-20-1000', url: 'https://github.com/x/pull/7' };
   const r = await G.sende(ctxMit(m), { testId: 'antreiber', dateien, titel: 'Inhalt: T (1 Änderung)', text: 'x', pr });
   assert.deepStrictEqual(r, { nummer: 7, url: pr.url, branch: pr.branch });
   assert.ok(!m.aufrufe.some((a) => a.m === 'POST' && a.url === R + '/git/refs'));
   assert.ok(!m.aufrufe.some((a) => a.url === R + '/pulls'));
-  const patch = m.aufrufe.find((a) => a.m === 'PATCH');
+  const patch = m.aufrufe.find((a) => a.m === 'PATCH' && a.url.includes('/git/refs/'));
   assert.deepStrictEqual(patch.body, { sha: 'commit2', force: false });
   const commit = m.aufrufe.find((a) => a.url === R + '/git/commits' && a.m === 'POST');
   assert.deepStrictEqual(commit.body.parents, ['kopf1']);
+});
+
+test('offener_pr_folgesendung: Notiz als Kommentar, Titel aktualisiert', async () => {
+  const routen = schreibRoutenBasis('inhalt/antreiber-2026-11-20-1000');
+  routen['PATCH ' + R + '/git/refs/heads/inhalt/antreiber-2026-11-20-1000'] = { body: {} };
+  routen['POST ' + R + '/issues/7/comments'] = { status: 201, body: {} };
+  routen['PATCH ' + R + '/pulls/7'] = { body: {} };
+  const m = mock(routen);
+  const pr = { nummer: 7, branch: 'inhalt/antreiber-2026-11-20-1000', url: 'https://github.com/x/pull/7' };
+  const r = await G.sende(ctxMit(m), { testId: 'antreiber', dateien, titel: 'Inhalt: T (2 Änderungen)', text: 'Bitte prüfen\n\n- A', pr });
+  assert.deepStrictEqual(r, { nummer: 7, url: pr.url, branch: pr.branch });
+  assert.deepStrictEqual(m.aufrufe.find((a) => a.url === R + '/issues/7/comments').body, { body: 'Bitte prüfen\n\n- A' });
+  const titel = m.aufrufe.find((a) => a.url === R + '/pulls/7');
+  assert.strictEqual(titel.m, 'PATCH');
+  assert.deepStrictEqual(titel.body, { title: 'Inhalt: T (2 Änderungen)' });
+  assert.ok(!m.aufrufe.some((a) => a.m === 'POST' && (a.url === R + '/git/refs' || a.url === R + '/pulls')));
+  // Kommentar und Titel erst nach dem Verschieben des Branches
+  const idx = (u) => m.aufrufe.findIndex((a) => a.url === u);
+  assert.ok(idx(R + '/git/refs/heads/inhalt/antreiber-2026-11-20-1000') < idx(R + '/issues/7/comments'));
+  // Fehler beim Kommentar: 401 -> abgelaufen, 500 -> fehler, Netz -> netz
+  for (const [status, art] of [[401, 'abgelaufen'], [500, 'fehler']]) {
+    const r2 = Object.assign({}, routen, { ['POST ' + R + '/issues/7/comments']: { status, body: {} } });
+    await assert.rejects(G.sende(ctxMit(mock(r2)), { testId: 'antreiber', dateien, titel: 't', text: 'x', pr }), { art });
+  }
+  const m3 = mock(routen);
+  const netz = async (url, opt) => {
+    if (url === R + '/issues/7/comments') throw new TypeError('Failed to fetch');
+    return m3.fetch(url, opt);
+  };
+  await assert.rejects(G.sende(ctxMit(m3, { fetch: netz }), { testId: 'antreiber', dateien, titel: 't', text: 'x', pr }), { art: 'netz' });
 });
 
 test('neuer_pr: Reihenfolge ref, blobs, tree, commit, ref anlegen, pulls', async () => {

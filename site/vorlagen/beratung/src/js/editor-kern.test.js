@@ -152,3 +152,47 @@ test('wende_an: dasselbe Feld inzwischen geändert -> konflikt', () => {
   // Keine eigenen Änderungen -> frischer Stand unverändert zurück
   assert.strictEqual(K.wendeAn(frisch, d, d, f).daten, frisch);
 });
+
+test('wende_an: frischer Wert ist schon der eigene neue Wert -> kein Konflikt', () => {
+  const { e, d } = tests[0];
+  const f = K.felder(d, e).filter((x) => x.datei === 'test');
+  const jetzt = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
+  const frisch = K.setze(d, 'questions[2].text', 'Neu von Ingrid');
+  const r = K.wendeAn(frisch, d, jetzt, f);
+  assert.ok(!r.konflikt);
+  assert.strictEqual(r.daten.questions[2].text, 'Neu von Ingrid');
+  assert.strictEqual(r.daten, frisch, 'nichts zu ändern -> derselbe Stand');
+});
+
+test('entwurf_anwenden: nur Felder mit unveränderter Basis, sonst verworfen mit Label', () => {
+  const { e, d } = tests[0];
+  const f = K.felder(d, e);
+  const stand = { test: d, eintrag: e };
+  const q2 = f.find((x) => x.pfad === 'questions[2].text');
+  const q5 = f.find((x) => x.pfad === 'questions[5].text');
+  const titel = f.find((x) => x.datei === 'eintrag' && x.pfad === 'titel');
+  const entwurf = {
+    werte: { 'test|questions[2].text': 'Entwurf 2', 'test|questions[5].text': 'Entwurf 5', 'eintrag|titel': 'Neuer Titel' },
+    basis: { 'test|questions[2].text': d.questions[2].text, 'test|questions[5].text': 'Alter Stand', 'eintrag|titel': e.titel },
+  };
+  const r = K.entwurfAnwenden(stand, entwurf, f);
+  assert.strictEqual(r.daten.test.questions[2].text, 'Entwurf 2');
+  assert.strictEqual(r.daten.test.questions[5].text, d.questions[5].text, 'Repo-Wert bleibt');
+  assert.strictEqual(r.daten.eintrag.titel, 'Neuer Titel');
+  assert.strictEqual(r.angewendet, 2);
+  assert.deepStrictEqual(r.verworfen, [q5.label]);
+  assert.ok(q2 && titel);
+  assert.strictEqual(d.questions[2].text, tests[0].d.questions[2].text, 'Original unverändert');
+});
+
+test('entwurf_anwenden: alter Entwurf ohne Basis wird verworfen; gleicher Wert zählt nicht', () => {
+  const { e, d } = tests[0];
+  const f = K.felder(d, e);
+  const q5 = f.find((x) => x.pfad === 'questions[5].text');
+  const r = K.entwurfAnwenden({ test: d, eintrag: e },
+    { werte: { 'test|questions[5].text': 'Alt', 'test|questions[2].text': d.questions[2].text } }, f);
+  assert.strictEqual(r.daten.test, d);
+  assert.strictEqual(r.angewendet, 0);
+  assert.deepStrictEqual(r.verworfen, [q5.label]);
+  assert.deepStrictEqual(K.entwurfAnwenden({ test: d, eintrag: e }, null, f), { daten: { test: d, eintrag: e }, angewendet: 0, verworfen: [] });
+});

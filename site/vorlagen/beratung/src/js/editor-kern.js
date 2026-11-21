@@ -145,10 +145,33 @@
       const alt = hole(start, f.pfad);
       const neu = hole(jetzt, f.pfad);
       if (alt === neu) continue;
-      if (hole(frisch, f.pfad) !== alt) return { konflikt: f.pfad };
+      const da = hole(frisch, f.pfad);
+      if (da === neu) continue; // dort steht schon der eigene neue Wert
+      if (da !== alt) return { konflikt: f.pfad };
       daten = setze(daten, f.pfad, neu);
     }
     return { daten };
+  }
+
+  // Gespeicherten Entwurf ({werte, basis}, Schlüssel "datei|pfad") auf einen geladenen Stand {test, eintrag} anwenden.
+  // Ein Feld wird nur übernommen, wenn der geladene Wert noch der Basis entspricht, von der der Entwurf ausging;
+  // sonst bleibt der geladene Wert und das Label landet in verworfen (auch bei alten Entwürfen ohne Basis).
+  function entwurfAnwenden(stand, entwurf, felderListe) {
+    let daten = stand;
+    let angewendet = 0;
+    const verworfen = [];
+    const werte = (entwurf && istObjekt(entwurf.werte)) ? entwurf.werte : {};
+    const basis = (entwurf && istObjekt(entwurf.basis)) ? entwurf.basis : {};
+    for (const f of felderListe) {
+      const k = f.datei + '|' + f.pfad;
+      if (!Object.prototype.hasOwnProperty.call(werte, k) || typeof werte[k] !== 'string') continue;
+      const da = hole(daten[f.datei], f.pfad);
+      if (werte[k] === da) continue;
+      if (!Object.prototype.hasOwnProperty.call(basis, k) || basis[k] !== da) { verworfen.push(f.label); continue; }
+      daten = Object.assign({}, daten, { [f.datei]: setze(daten[f.datei], f.pfad, werte[k]) });
+      angewendet++;
+    }
+    return { daten, angewendet, verworfen };
   }
 
   // Verhindert Erwähnungen (@name) und Querverweise (#12, owner/repo#12) in GitHub-Texten.
@@ -165,5 +188,5 @@
     return { titel, text: teile2.join('\n\n') };
   }
 
-  return { felder, setze, aenderungen, wendeAn, prText };
+  return { felder, setze, aenderungen, wendeAn, entwurfAnwenden, prText };
 });

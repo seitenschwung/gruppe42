@@ -74,13 +74,14 @@
     try { return JSON.parse(localStorage.getItem(SPEICHER + id) || 'null'); } catch (e) { return null; }
   }
   function speichereEntwurf() {
-    const werte = {};
+    // basis: Wert beim Laden; beim Wiederherstellen wird ein Feld nur übernommen, wenn er noch gilt.
+    const werte = {}, basis = {};
     for (const f of t.felder) {
       const w = wert(t.jetzt, f);
-      if (w !== wert(t.orig, f)) werte[schluessel(f)] = w;
+      if (w !== wert(t.orig, f)) { werte[schluessel(f)] = w; basis[schluessel(f)] = wert(t.orig, f); }
     }
     try {
-      if (Object.keys(werte).length) localStorage.setItem(SPEICHER + t.id, JSON.stringify({ werte }));
+      if (Object.keys(werte).length) localStorage.setItem(SPEICHER + t.id, JSON.stringify({ werte, basis }));
       else localStorage.removeItem(SPEICHER + t.id);
     } catch (e) { /* privater Modus: Entwurf bleibt nur bis zum Schließen */ }
   }
@@ -166,19 +167,17 @@
       index: i, id: eintrag.id, pfadDaten, gruppe, pr, ansicht: 'fragen', spec: '', frage: null, timer: null,
       orig: { test: daten, eintrag }, jetzt: { test: daten, eintrag }, felder: K.felder(daten, eintrag),
     };
-    const entwurf = leseEntwurf(t.id);
-    let wiederhergestellt = 0;
-    if (entwurf && entwurf.werte) {
-      for (const f of t.felder) {
-        const w = entwurf.werte[schluessel(f)];
-        if (typeof w === 'string' && w !== wert(t.jetzt, f)) {
-          t.jetzt = Object.assign({}, t.jetzt, { [f.datei]: K.setze(t.jetzt[f.datei], f.pfad, w) });
-          wiederhergestellt++;
-        }
-      }
+    const r = K.entwurfAnwenden(t.jetzt, leseEntwurf(t.id), t.felder);
+    t.jetzt = r.daten;
+    const teile = [];
+    if (r.angewendet) {
+      teile.push('Ihr gespeicherter Entwurf wurde wiederhergestellt (' + r.angewendet +
+        (r.angewendet === 1 ? ' geändertes Feld).' : ' geänderte Felder).'));
     }
-    meldung(wiederhergestellt ? 'Ihr gespeicherter Entwurf wurde wiederhergestellt (' + wiederhergestellt +
-      (wiederhergestellt === 1 ? ' geändertes Feld).' : ' geänderte Felder).') : '');
+    if (r.verworfen.length) {
+      teile.push('Diese Felder wurden inzwischen geändert; Ihr Entwurf wurde dort nicht übernommen: ' + r.verworfen.join(', ') + '.');
+    }
+    meldung(teile.join(' '), r.verworfen.length ? 'fehler' : 'info');
     zeigeBearbeiten();
   }
 
@@ -277,9 +276,10 @@
       if (!soll) return allgemein.push('Für diesen Test fehlt der Abdruck der Struktur. Bitte wenden Sie sich an Seitenschwung.');
       W.pruefeStruktur(daten, soll, felder).forEach((m) => {
         const [pfad, ...rest] = m.split(': ');
-        const text = /fehlt$/.test(m) && m.includes('{names}')
-          ? 'Der Platzhalter {names} muss stehen bleiben.'
-          : 'Diese Änderung ist hier nicht möglich (' + rest.join(': ') + ').';
+        const platzhalter = m.includes('{names}');
+        const text = platzhalter && /fehlt$/.test(m) ? 'Der Platzhalter {names} muss stehen bleiben.'
+          : platzhalter && m.includes('mehrfach') ? 'Der Platzhalter {names} darf nur einmal vorkommen.'
+            : 'Diese Änderung ist hier nicht möglich (' + rest.join(': ') + ').';
         dazu(datei, pfad, text);
       });
     };
