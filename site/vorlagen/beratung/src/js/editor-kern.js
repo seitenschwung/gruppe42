@@ -188,5 +188,10 @@
     return { titel, text: teile2.join('\n\n') };
   }
 
-  return { felder, setze, aenderungen, wendeAn, entwurfAnwenden, prText };
+  // Darf ein offener PR weiterverwendet werden? Nur wenn jeder berührte Pfad erlaubt ist. 100 Einträge = evtl. abgeschnitten.
+  function nurErlaubteDateien(dateien, erlaubt) {
+    return Array.isArray(dateien) && dateien.length < 100 && dateien.every((f) => erlaubt.includes(f));
+  }
+
+  return { felder, setze, aenderungen, wendeAn, entwurfAnwenden, prText, nurErlaubteDateien };
 });

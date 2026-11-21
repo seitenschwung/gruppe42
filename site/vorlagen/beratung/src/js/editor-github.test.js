@@ -221,6 +221,8 @@ test('kopf_und_erwartet: Head lesen; anderer Head beim Senden -> konflikt, nicht
 test('prDateien: Dateinamen, per_page=100', async () => {
   const m = mock({ ['GET ' + R + '/pulls/7/files?per_page=100']: { body: [{ filename: 'a.json' }, { filename: 'b/c.js' }] } });
   assert.deepStrictEqual(await G.prDateien(ctxMit(m), 7), ['a.json', 'b/c.js']);
+  const m3 = mock({ ['GET ' + R + '/pulls/7/files?per_page=100']: { body: [{ filename: 'ok.json', status: 'renamed', previous_filename: 'build.js' }] } });
+  assert.deepStrictEqual(await G.prDateien(ctxMit(m3), 7), ['ok.json', 'build.js']);
   const m2 = mock({ ['GET ' + R + '/pulls/7/files?per_page=100']: { status: 500, body: {} } });
   await assert.rejects(G.prDateien(ctxMit(m2), 7), { art: 'fehler', status: 500 });
 });

@@ -197,3 +197,12 @@ test('entwurf_anwenden: alter Entwurf ohne Basis wird verworfen; gleicher Wert z
   assert.deepStrictEqual(r.verworfen, [q5.label]);
   assert.deepStrictEqual(K.entwurfAnwenden({ test: d, eintrag: e }, null, f), { daten: { test: d, eintrag: e }, angewendet: 0, verworfen: [] });
 });
+
+test('nurErlaubteDateien', () => {
+  const ok = ['a.json', 'g.json'];
+  assert.strictEqual(K.nurErlaubteDateien(['a.json', 'g.json'], ok), true);
+  assert.strictEqual(K.nurErlaubteDateien([], ok), true);
+  assert.strictEqual(K.nurErlaubteDateien(['a.json', 'build.js'], ok), false);
+  assert.strictEqual(K.nurErlaubteDateien(['a.json', 'build.js'], ok), false); // Umbenennung: previous_filename steht in der Liste
+  assert.strictEqual(K.nurErlaubteDateien(new Array(100).fill('a.json'), ok), false);
+});

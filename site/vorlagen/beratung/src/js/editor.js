@@ -177,7 +177,7 @@
   async function istEigenerPr(pr, pfadDaten) {
     const erlaubt = [pfadDaten, PFAD_GRUPPE];
     const dateien = await gh('prDateien', pr.nummer);
-    return dateien.every((f) => erlaubt.includes(f));
+    return K.nurErlaubteDateien(dateien, erlaubt);
   }
 
   async function oeffneTest(i) {

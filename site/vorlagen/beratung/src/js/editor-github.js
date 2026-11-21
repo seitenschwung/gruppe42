@@ -94,7 +94,13 @@
   // Dateinamen, die ein PR ändert (bis 100).
   async function prDateien(ctx, nummer) {
     const liste = await anfrage(ctx, 'GET', '/repos/' + ctx.repo + '/pulls/' + nummer + '/files?per_page=100');
-    return liste.map((f) => f.filename);
+    // Auch der frühere Name (Umbenennung): so sieht die Prüfung jeden Pfad, den der PR berührt.
+    const pfade = [];
+    for (const f of liste) {
+      pfade.push(f.filename);
+      if (f.previous_filename) pfade.push(f.previous_filename);
+    }
+    return pfade;
   }
 
   async function setzeLabel(ctx, nummer, label) {
