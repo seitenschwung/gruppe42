@@ -1,5 +1,9 @@
 'use strict';
-// Nach bewusster Markup-Änderung Snapshots neu erzeugen (Fixture bauen, <main id="inhalt"> mit ?v=X nach __snapshots__/<seite>.html schreiben); nach Strukturänderung: node site/lib/struktur-erzeugen.js site/lib/__fixtures__/gruppe42.json
+// Snapshots: nach bewusster Markup-Änderung in testseite.js/build.js neu erzeugen mit
+//   G42_SNAPSHOTS_SCHREIBEN=1 node --test site/lib/testseite.test.js   (schreibt site/lib/__snapshots__/, Diff prüfen!)
+// Struktur der ECHTEN Tests geändert: echten Abdruck neu erzeugen: node site/lib/struktur-erzeugen.js site/kunden/gruppe42/gruppe42.json
+// Die Beispielkopie in __fixtures__ ist eingefroren; nur wenn ihre eigenen Test-JSONs geändert werden:
+//   node site/lib/struktur-erzeugen.js site/lib/__fixtures__/gruppe42.json
 const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs');
@@ -42,7 +46,9 @@ test('ausgabe_unveraendert', () => {
   assert.strictEqual(r.status, 0, r.stderr);
   for (const s of SEITEN) {
     const ist = hauptteil(fs.readFileSync(path.join(dist, s + '.html'), 'utf8'));
-    const soll = fs.readFileSync(path.join(__dirname, '__snapshots__', s + '.html'), 'utf8');
+    const datei = path.join(__dirname, '__snapshots__', s + '.html');
+    if (process.env.G42_SNAPSHOTS_SCHREIBEN === '1') fs.writeFileSync(datei, ist);
+    const soll = fs.readFileSync(datei, 'utf8');
     assert.ok(ist === soll, `${s}.html weicht vom Snapshot ab`);
   }
 });
