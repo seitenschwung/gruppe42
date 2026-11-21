@@ -23,8 +23,9 @@ const SECURITY_HEADERS = {
 };
 
 const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
-const isEditorPath = (p) => p === '/editor' || p.startsWith('/editor/');
-const isEditorApi = (u) => u === '/api/editor' || u.startsWith('/api/editor/');
+// Case-insensitive: the CSP must not depend on how the URL is spelled (file lookup itself stays case-sensitive).
+const isEditorPath = (p) => /^\/editor(\/|$)/i.test(p);
+const isEditorApi = (u) => /^\/api\/editor(\/|$)/i.test(u);
 
 // Headers for every response of a path; /editor gets a strict CSP and no caching.
 function headersFor(pathname) {

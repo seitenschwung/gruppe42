@@ -111,6 +111,17 @@ test('editor_header_kodierte_pfade', async () => {
   }
 });
 
+test('editor_header_ohne_gross_klein', async () => {
+  for (const p of ['/EDITOR/', '/Editor', '/eDiToR/x', '/%45ditor/']) {
+    const r = await get(p);
+    assert.strictEqual(r.headers.get('content-security-policy'), EDITOR_CSP, p);
+    assert.strictEqual(r.headers.get('x-frame-options'), 'DENY', p);
+    assert.strictEqual(r.headers.get('cache-control'), 'no-store', p);
+  }
+  assert.strictEqual(headersFor('/EDITOR/')['Content-Security-Policy'], EDITOR_CSP);
+  assert.strictEqual(headersFor('/editorial.html')['Content-Security-Policy'], undefined);
+});
+
 const logFor = async (p, needle) => {
   await get(p);
   for (let i = 0; i < 100 && !lines.some((l) => l.includes(needle)); i++) await new Promise((r) => setTimeout(r, 10));

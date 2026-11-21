@@ -1,11 +1,15 @@
 'use strict';
-// GitHub App login for /editor: OAuth code exchange only. The access token goes to the static editor page
-// in the URL fragment (never sent to a server) and is neither stored nor logged here.
+// GitHub App login for /editor: OAuth code exchange only. The access token reaches the editor page via a
+// short-lived HttpOnly cookie that the page redeems once with POST /api/editor/token (never in a URL).
+// Logout revokes the token at GitHub. The token is neither stored nor logged here.
 const crypto = require('node:crypto');
 
-const RATE_LIMIT = 20; // requests per IP per minute, both routes together
+const RATE_LIMIT = 20; // requests per IP per minute, all four routes together
 const COOKIE = 'g42_state';
 const cookieAttrs = (maxAge) => `Path=/api/editor; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
+const TOKEN_COOKIE = 'g42_token';
+const tokenAttrs = (maxAge) => `Path=/api/editor/token; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
+const MAX_BODY = 2048;
 const NO_CACHE = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' };
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', ...NO_CACHE };
 
@@ -22,6 +26,31 @@ function readCookie(header, name) {
     if (i > 0 && part.slice(0, i).trim() === name) return part.slice(i + 1).trim();
   }
   return undefined;
+}
+
+function readJson(req) {
+  return new Promise((resolve, reject) => {
+    let size = 0;
+    const chunks = [];
+    req.on('data', (c) => { size += c.length; if (size <= MAX_BODY) chunks.push(c); });
+    req.on('end', () => {
+      if (size > MAX_BODY) return reject(new Error('size'));
+      try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); } catch (e) { reject(e); }
+    });
+    req.on('error', reject);
+  });
+}
+
+// CSRF defence for the POST routes: custom header (forces a CORS preflight) plus Origin check.
+// "Own origin" comes from the Host header (the proxy passes it through): https always, http only for localhost.
+function sameOrigin(req) {
+  if (req.headers['x-g42-editor'] !== '1') return false;
+  const origin = req.headers.origin;
+  if (origin === undefined) return true;
+  const host = req.headers.host;
+  if (typeof host !== 'string' || !host) return false;
+  if (origin === 'https://' + host) return true;
+  return /^(localhost|127\.0\.0\.1)(:\d+)?$/.test(host) && origin === 'http://' + host;
 }
 
 function createEditorAuth({ env, fetch: doFetch, now = Date.now, random = crypto.randomBytes }) {
@@ -48,6 +77,14 @@ function createEditorAuth({ env, fetch: doFetch, now = Date.now, random = crypto
     return false;
   }
 
+  // Like guard, plus the same-origin check for POST routes.
+  function guardPost(req, res, send) {
+    if (guard(req, res, send)) return true;
+    if (sameOrigin(req)) return false;
+    send(res, 403, JSON_HEADERS, '{"error":"herkunft"}\n');
+    return true;
+  }
+
   async function login(req, res, send) {
     if (guard(req, res, send)) return;
     const nonce = random(16).toString('hex');
@@ -59,7 +96,7 @@ function createEditorAuth({ env, fetch: doFetch, now = Date.now, random = crypto
 
   async function callback(req, res, send) {
     if (guard(req, res, send)) return;
-    const done = (loc) => send(res, 302, { ...NO_CACHE, Location: loc, 'Set-Cookie': `${COOKIE}=; ${cookieAttrs(0)}` }, undefined);
+    const done = (loc, extra = []) => send(res, 302, { ...NO_CACHE, Location: loc, 'Set-Cookie': [`${COOKIE}=; ${cookieAttrs(0)}`, ...extra] }, undefined);
     const secret = env.EDITOR_GITHUB_CLIENT_SECRET;
     let params;
     try { params = new URL(req.url, 'http://localhost').searchParams; } catch { return done('/editor/#fehler=state'); }
@@ -83,15 +120,48 @@ function createEditorAuth({ env, fetch: doFetch, now = Date.now, random = crypto
       data = (await r.json()) || {};
     } catch { return done('/editor/#fehler=login'); }
     if (typeof data.access_token !== 'string' || !data.access_token) return done('/editor/#fehler=login');
-    let frag = `#token=${encodeURIComponent(data.access_token)}`;
-    if (Number.isFinite(data.expires_in)) frag += `&ablauf=${Math.trunc(data.expires_in)}`;
-    return done('/editor/' + frag);
+    const ablauf = Number.isFinite(data.expires_in) ? Math.trunc(data.expires_in) : '';
+    return done('/editor/#angemeldet', [`${TOKEN_COOKIE}=${encodeURIComponent(data.access_token)}.${ablauf}; ${tokenAttrs(60)}`]);
+  }
+
+  // Redeems the one-shot token cookie set by the callback.
+  async function token(req, res, send) {
+    if (guardPost(req, res, send)) return;
+    const raw = readCookie(req.headers.cookie, TOKEN_COOKIE) || '';
+    const dot = raw.lastIndexOf('.');
+    let tok = '';
+    try { tok = dot > 0 ? decodeURIComponent(raw.slice(0, dot)) : ''; } catch { tok = ''; }
+    const ablauf = dot > 0 ? raw.slice(dot + 1) : '';
+    if (!tok || !/^\d{0,9}$/.test(ablauf)) return send(res, 401, JSON_HEADERS, '{"error":"kein_token"}\n');
+    send(res, 200, { ...JSON_HEADERS, 'Set-Cookie': `${TOKEN_COOKIE}=; ${tokenAttrs(0)}` },
+      JSON.stringify({ token: tok, ablauf: ablauf === '' ? null : Number(ablauf) }) + '\n');
+  }
+
+  // Revokes the token at GitHub; always 204 afterwards (the browser forgets the token either way).
+  async function abmelden(req, res, send) {
+    if (guardPost(req, res, send)) return;
+    const done = () => send(res, 204, NO_CACHE, undefined);
+    let tok;
+    try { tok = (await readJson(req)).token; } catch { return done(); }
+    if (typeof tok !== 'string' || !tok) return done();
+    try {
+      const basic = Buffer.from(`${env.EDITOR_GITHUB_CLIENT_ID}:${env.EDITOR_GITHUB_CLIENT_SECRET}`).toString('base64');
+      await doFetch(`https://api.github.com/applications/${encodeURIComponent(env.EDITOR_GITHUB_CLIENT_ID)}/token`, {
+        method: 'DELETE',
+        headers: { Authorization: `Basic ${basic}`, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ access_token: tok }),
+        signal: AbortSignal.timeout(10_000),
+      });
+    } catch { /* revocation is best effort */ }
+    done();
   }
 
   return {
     routes: {
       '/api/editor/login': { method: 'GET', handler: login },
       '/api/editor/callback': { method: 'GET', handler: callback },
+      '/api/editor/token': { method: 'POST', handler: token },
+      '/api/editor/abmelden': { method: 'POST', handler: abmelden },
     },
   };
 }
