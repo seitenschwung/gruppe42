@@ -134,5 +134,5 @@
     return aus;
   }
 
-  return { TEXTFELDER_TEST, TEXTFELDER_EINTRAG, BETONT_ERLAUBT, GRENZEN, struktur, pruefeStruktur, pruefeTexte };
+  return { TEXTFELDER_TEST, TEXTFELDER_EINTRAG, BETONT_ERLAUBT, GRENZEN, muster, struktur, pruefeStruktur, pruefeTexte };
 });

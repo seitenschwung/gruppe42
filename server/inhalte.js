@@ -52,14 +52,15 @@ function setze(wurzel, st, wert) {
   const eltern = hole(wurzel, st.slice(0, -1));
   eltern[st[st.length - 1]] = wert;
 }
-// Konkreter Pfad -> Wächter-Muster (wie im Wächter selbst, dort nicht exportiert).
-const muster = (pfad) => pfad.replace(/\[\d+\]/g, '[]').replace(/^scale\.[^.[]+$/, 'scale.*');
+const muster = W.muster;
 
 function meldungVonText(prefix, text) {
   const i = text.indexOf(': ');
   return i > 0 ? { pfad: text.slice(0, i), meldung: text.slice(i + 2) } : { pfad: prefix || '', meldung: text };
 }
 
+// Wirft synchron, wenn Basis (gruppe42.json, tests/*.json) oder tests/struktur.json fehlen oder unlesbar sind;
+// der Aufrufer (Server-Start) muss das abfangen. Das Datenverzeichnis wird dagegen erst bei Bedarf geprüft.
 function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
   const lies = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
   const basisCfg = lies(path.join(basisDir, 'gruppe42.json'));
@@ -78,24 +79,43 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
   const verlaufPfad = path.join(dataDir, VERLAUF_DATEI);
   const leer = () => ({ version: 1, tests: {}, eintraege: {} });
 
+  // null = Overlay vorhanden, aber unlesbar/falsch aufgebaut (nie überschreiben); fehlende Datei = leer.
   function leseOverlay() {
+    let text;
+    try { text = fs.readFileSync(overlayPfad, 'utf8'); } catch (e) { return e.code === 'ENOENT' || e.code === 'ENOTDIR' ? leer() : null; }
     try {
-      const o = JSON.parse(fs.readFileSync(overlayPfad, 'utf8'));
-      return { version: 1, tests: istObjekt(o.tests) ? o.tests : {}, eintraege: istObjekt(o.eintraege) ? o.eintraege : {} };
-    } catch (e) {
-      if (e.code === 'ENOENT') return leer();
-      return null; // unlesbar: lesend wie leer behandeln, schreibend ablehnen
-    }
+      const o = JSON.parse(text);
+      if (!istObjekt(o) || o.version !== 1 || !istObjekt(o.tests) || !istObjekt(o.eintraege)) return null;
+      return o;
+    } catch (e) { return null; }
   }
-  function leseVerlauf() {
+  // Alle Zeilen (ungültige bleiben unberührt und werden hier übersprungen).
+  function leseZeilen() {
     let text;
     try { text = fs.readFileSync(verlaufPfad, 'utf8'); } catch (e) { return []; }
     const aus = [];
     for (const z of text.split('\n')) {
       if (!z.trim()) continue;
-      try { aus.push(JSON.parse(z)); } catch (e) { /* kaputte Zeile überspringen */ }
+      try { const o = JSON.parse(z); if (istObjekt(o)) aus.push(o); } catch (e) { /* kaputte Zeile überspringen */ }
     }
     return aus;
+  }
+  // Wirksame Verlaufseinträge: ohne Fehlschlag-Marker und ohne die als fehlgeschlagen markierten Zeilen.
+  function leseVerlauf() {
+    const alle = leseZeilen();
+    const schlecht = new Set(alle.filter((z) => z.ergebnis === 'fehlgeschlagen').map((z) => z.nr));
+    return alle.filter((z) => z.ergebnis !== 'fehlgeschlagen' && !schlecht.has(z.nr));
+  }
+  function haengeAn(zeile) {
+    let vorsatz = '';
+    try {
+      const fd = fs.openSync(verlaufPfad, 'r');
+      try {
+        const groesse = fs.fstatSync(fd).size;
+        if (groesse) { const b = Buffer.alloc(1); fs.readSync(fd, b, 0, 1, groesse - 1); if (b[0] !== 10) vorsatz = '\n'; }
+      } finally { fs.closeSync(fd); }
+    } catch (e) { /* Datei fehlt noch */ }
+    fs.appendFileSync(verlaufPfad, vorsatz + JSON.stringify(zeile) + '\n');
   }
 
   // Prüfung einer wirksamen Fassung: Textregeln und Struktur. [] = ok.
@@ -150,7 +170,7 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
   }
 
   // --- Verfügbarkeit ---
-  let verfuegbarCache = false;
+  let schreibbarCache = false;
   function probe() {
     try {
       fs.mkdirSync(dataDir, { recursive: true });
@@ -160,11 +180,13 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
       return true;
     } catch (e) { return false; }
   }
-  function verfuegbar() {
-    if (verfuegbarCache) return true;
-    verfuegbarCache = probe();
-    return verfuegbarCache;
+  // 'ok' | 'overlay_unlesbar' | 'nicht_schreibbar'. Erfolg der Schreibprobe wird gemerkt, ein Fehlschlag jedes Mal neu geprüft.
+  function zustand() {
+    if (leseOverlay() === null) return 'overlay_unlesbar';
+    if (!schreibbarCache) schreibbarCache = probe();
+    return schreibbarCache ? 'ok' : 'nicht_schreibbar';
   }
+  function verfuegbar() { return zustand() === 'ok'; }
 
   function schreibeAtomar(pfad, text) {
     const tmp = pfad + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex');
@@ -185,7 +207,6 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
       throw fehler('ungueltig', 'Keine Änderungen', { meldungen: [{ pfad: '', meldung: 'Keine Änderungen' }] });
     }
     const overlay = leseOverlay();
-    if (!overlay) throw fehler('nicht_verfuegbar', 'Overlay unlesbar');
     // 1) Form und Editierbarkeit
     const ungueltig = [];
     const gesehen = new Set();
@@ -226,17 +247,16 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
       else neuOverlay[bucket][key][a.pfad] = a.neu;
       if (!Object.keys(neuOverlay[bucket][key]).length) delete neuOverlay[bucket][key];
     }
-    const verlauf = leseVerlauf();
-    const nr = verlauf.reduce((m, z) => Math.max(m, Number(z.nr) || 0), 0) + 1;
+    const nr = leseZeilen().reduce((m, z) => Math.max(m, Number.isSafeInteger(z.nr) ? z.nr : 0), 0) + 1;
     const zeit = jetzt().toISOString();
     const zeile = Object.assign({ nr, zeit, wer, testId, aenderungen: echte }, extraZeile || {});
-    const alterText = fs.existsSync(overlayPfad) ? fs.readFileSync(overlayPfad, 'utf8') : null;
+    // Erst der Verlauf, dann das Overlay: nie eine Live-Änderung ohne Verlaufszeile.
+    try { haengeAn(zeile); } catch (e) { schreibbarCache = false; throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen'); }
     try {
       schreibeAtomar(overlayPfad, serial(neuOverlay));
-      schreibeAtomar(verlaufPfad, verlauf.concat([zeile]).map((z) => JSON.stringify(z) + '\n').join(''));
     } catch (e) {
-      verfuegbarCache = false;
-      try { if (alterText === null) fs.unlinkSync(overlayPfad); else schreibeAtomar(overlayPfad, alterText); } catch (e2) { /* best effort */ }
+      schreibbarCache = false;
+      try { haengeAn({ nr, ergebnis: 'fehlgeschlagen' }); } catch (e2) { /* best effort */ }
       throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen');
     }
     return { nr, zeit };
@@ -244,6 +264,7 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
 
   return {
     verfuegbar,
+    zustand,
     liste() {
       return [...tests.values()].map((t) => ({ id: t.eintrag.id, titel: t.eintrag.titel, sichtbar: t.eintrag.sichtbar === true }));
     },
@@ -268,8 +289,9 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
       return leseVerlauf().filter((z) => z.testId === testId).reverse().slice(0, max);
     },
     rueckgaengig(nr, wer) {
-      const zeile = leseVerlauf().find((z) => z.nr === nr);
-      if (!zeile) throw fehler('unbekannt', 'Unbekannte Änderung');
+      const zeile = Number.isSafeInteger(nr) ? leseVerlauf().find((z) => z.nr === nr) : null;
+      if (!zeile || typeof zeile.testId !== 'string' || !Array.isArray(zeile.aenderungen) || !zeile.aenderungen.length
+        || !zeile.aenderungen.every((a) => istObjekt(a) && typeof a.alt === 'string' && typeof a.neu === 'string')) throw fehler('unbekannt', 'Unbekannte Änderung');
       const umgekehrt = zeile.aenderungen.map((a) => ({ datei: a.datei, pfad: a.pfad, alt: a.neu, neu: a.alt }));
       const r = uebernehme(zeile.testId, umgekehrt, wer, { rueckgaengigVon: nr });
       return { nr: r.nr, zeit: r.zeit, testId: zeile.testId };
@@ -281,8 +303,8 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
     leeren(sha256) {
       if (!verfuegbar()) throw fehler('nicht_verfuegbar', 'Speicher nicht verfügbar');
       const overlay = leseOverlay();
-      if (!overlay || sha(serial(overlay)) !== sha256) return false;
-      try { schreibeAtomar(overlayPfad, serial(leer())); } catch (e) { verfuegbarCache = false; throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen'); }
+      if (sha(serial(overlay)) !== sha256) return false;
+      try { schreibeAtomar(overlayPfad, serial(leer())); } catch (e) { schreibbarCache = false; throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen'); }
       return true;
     },
   };

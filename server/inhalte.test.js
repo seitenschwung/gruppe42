@@ -222,3 +222,72 @@ test('export und leeren: sha256 muss zum Stand passen', () => {
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dataDir, 'inhalte.json'), 'utf8')), { version: 1, tests: {}, eintraege: {} });
   assert.equal(inh.speichere(ID, [aend(inh, 'questions[0].text', 'C')], 'a').nr, 3, 'nr läuft weiter');
 });
+
+const zeilenLesen = (dataDir) => fs.readFileSync(path.join(dataDir, 'verlauf.jsonl'), 'utf8').trim().split('\n').map((z) => JSON.parse(z));
+
+test('Absturz beim Overlay-Schreiben: Verlaufzeile als fehlgeschlagen markiert, Overlay unverändert', (t) => {
+  const { inh, dataDir } = umgebung();
+  inh.speichere(ID, [aend(inh, 'questions[0].text', 'Eins')], 'a');
+  const vorher = fs.readFileSync(path.join(dataDir, 'inhalte.json'), 'utf8');
+  const echt = fs.renameSync;
+  const m = t.mock.method(fs, 'renameSync', (von, nach) => {
+    if (String(nach).endsWith('inhalte.json')) throw new Error('kaputt');
+    return echt(von, nach);
+  });
+  assert.equal(fehlerArt(() => inh.speichere(ID, [aend(inh, 'questions[0].text', 'Zwei')], 'a')).art, 'nicht_verfuegbar');
+  m.mock.restore();
+  assert.equal(fs.readFileSync(path.join(dataDir, 'inhalte.json'), 'utf8'), vorher);
+  assert.equal(frage0(inh), 'Eins');
+  const z = zeilenLesen(dataDir);
+  assert.equal(z.length, 3);
+  assert.deepEqual(z[2], { nr: 2, ergebnis: 'fehlgeschlagen' });
+  assert.deepEqual(inh.verlauf(ID).map((x) => x.nr), [1]);
+  assert.equal(fehlerArt(() => inh.rueckgaengig(2, 'a')).art, 'unbekannt');
+  assert.equal(inh.speichere(ID, [aend(inh, 'questions[0].text', 'Drei')], 'a').nr, 3, 'nr wird nicht wiederverwendet');
+  assert.deepEqual(fs.readdirSync(dataDir).sort(), ['inhalte.json', 'verlauf.jsonl']);
+});
+
+test('kaputtes, falsch aufgebautes oder falsch versioniertes Overlay: zustand overlay_unlesbar, nie überschrieben', () => {
+  const faelle = ['{kaputt', '[]', '{"version":1,"tests":[],"eintraege":{}}', '{"version":1,"tests":{}}', '{"version":2,"tests":{},"eintraege":{}}', 'null'];
+  for (const inhalt of faelle) {
+    const { inh, dataDir } = umgebung();
+    assert.equal(inh.zustand(), 'ok');
+    fs.mkdirSync(dataDir, { recursive: true });
+    const p = path.join(dataDir, 'inhalte.json');
+    fs.writeFileSync(p, inhalt);
+    assert.equal(inh.zustand(), 'overlay_unlesbar', inhalt);
+    assert.equal(inh.verfuegbar(), false);
+    assert.equal(fehlerArt(() => inh.speichere(ID, [aend(inh, 'questions[0].text', 'x')], 'a')).art, 'nicht_verfuegbar');
+    assert.equal(fehlerArt(() => inh.leeren(inh.export().sha256)).art, 'nicht_verfuegbar');
+    assert.equal(fs.readFileSync(p, 'utf8'), inhalt, 'Datei unberührt');
+    assert.equal(fs.existsSync(path.join(dataDir, 'verlauf.jsonl')), false);
+    assert.equal(inh.wirksam(ID).daten.id, 'antreiber', 'lesen fällt auf Basis zurück');
+  }
+});
+
+test('zustand nicht_schreibbar', () => {
+  const { wurzel, basisDir } = umgebung();
+  const datei = path.join(wurzel, 'keinverzeichnis');
+  fs.writeFileSync(datei, 'x');
+  assert.equal(createInhalte({ basisDir, dataDir: path.join(datei, 'e') }).zustand(), 'nicht_schreibbar');
+});
+
+test('Verlauf: kaputte Zeilen bleiben, rueckgaengig auf fehlerhafte Zeile -> unbekannt, nr nur sichere Ganzzahl', () => {
+  const { inh, dataDir } = umgebung();
+  inh.speichere(ID, [aend(inh, 'questions[0].text', 'Eins')], 'a');
+  const v = path.join(dataDir, 'verlauf.jsonl');
+  const kaputt = 'das ist kein json';
+  const schlecht = JSON.stringify({ nr: 5, zeit: 'z', wer: 'x', testId: ID, aenderungen: 'nope' });
+  fs.appendFileSync(v, kaputt + '\n' + schlecht); // ohne abschließenden Zeilenumbruch
+  assert.equal(fehlerArt(() => inh.rueckgaengig(5, 'a')).art, 'unbekannt');
+  assert.equal(fehlerArt(() => inh.rueckgaengig('1', 'a')).art, 'unbekannt');
+  assert.equal(fehlerArt(() => inh.rueckgaengig(1.5, 'a')).art, 'unbekannt');
+  assert.equal(fehlerArt(() => inh.rueckgaengig(Infinity, 'a')).art, 'unbekannt');
+  assert.equal(frage0(inh), 'Eins');
+  const r = inh.speichere(ID, [aend(inh, 'questions[0].text', 'Zwei')], 'a');
+  assert.equal(r.nr, 6, 'nr berücksichtigt auch fehlerhafte Zeile mit nr');
+  const text = fs.readFileSync(v, 'utf8').split('\n');
+  assert.equal(text[1], kaputt);
+  assert.equal(text[2], schlecht);
+  assert.equal(JSON.parse(text[3]).nr, 6);
+});
