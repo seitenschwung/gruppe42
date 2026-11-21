@@ -242,3 +242,32 @@ test('steuerzeichen_verboten', () => {
   e.titel = 'Ti​tel';
   assert.ok(pruefeTexte(e, TEXTFELDER_EINTRAG).some((x) => x.pfad === 'titel' && /Steuerzeichen/.test(x.meldung)));
 });
+
+test('steuerzeichen_c0_verboten', () => {
+  const meldung = 'Enthält Zeilenumbrüche oder Steuerzeichen – bitte als eine Zeile schreiben.';
+  for (const z of ['\u0000', '\t', '\n', '\r', '\u001B', '\u001F']) {
+    mit('teamklima', (d) => {
+      d.questions[0].text = 'Fra' + z + 'ge';
+      const m = pruefeTexte(d, TEXTFELDER_TEST).filter((x) => x.pfad === 'questions[0].text');
+      assert.deepStrictEqual(m.map((x) => x.meldung), [meldung], 'U+' + z.charCodeAt(0).toString(16));
+    });
+  }
+  mit('teamklima', (d) => {
+    d.questions[0].text = 'Frage mit Leerzeichen und Umlauten äöü – „Zitat“';
+    assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), []);
+  });
+  const g = JSON.parse(fs.readFileSync(path.join(DIR, 'gruppe42.json'), 'utf8'));
+  const e = structuredClone(g.tests.eintraege[0]);
+  e.beschreibung = 'Zeile\nzwei';
+  assert.ok(pruefeTexte(e, TEXTFELDER_EINTRAG).some((x) => x.pfad === 'beschreibung' && x.meldung === meldung));
+});
+
+test('fixture_ok', () => {
+  const FIX = path.join(__dirname, '__fixtures__');
+  const gf = JSON.parse(fs.readFileSync(path.join(FIX, 'gruppe42.json'), 'utf8'));
+  for (const e of gf.tests.eintraege) {
+    assert.deepStrictEqual(pruefeTexte(e, TEXTFELDER_EINTRAG), [], e.id);
+    const d = JSON.parse(fs.readFileSync(path.join(FIX, e.daten), 'utf8'));
+    assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), [], e.id);
+  }
+});

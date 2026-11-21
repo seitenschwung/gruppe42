@@ -323,7 +323,10 @@
     const eingabe = el('textarea', { id });
     eingabe.value = wert(t.jetzt, f);
     eingabe.rows = K.zeilen(eingabe.value);
-    eingabe.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') ev.preventDefault(); });
+    eingabe.addEventListener('keydown', (ev) => {
+      // Während einer IME-Eingabe (z. B. Wortvorschläge) bestätigt Enter nur die Auswahl: nicht abfangen.
+      if (ev.key === 'Enter' && !ev.isComposing && ev.keyCode !== 229) ev.preventDefault();
+    });
     const marke = el('span', { klasse: 'ed-marke', text: 'geändert', hidden: true });
     const zurueck = knopf('Zurücksetzen', 'knopf-rand ed-klein', () => {
       setzeWert(f, wert(t.orig, f));

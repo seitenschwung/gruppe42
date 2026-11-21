@@ -49,6 +49,15 @@ function rohZu(DATA, frage, gewertet) {
   return frage.reverse ? sk.max + sk.min - gewertet : gewertet;
 }
 
+// Hinweis „fast überall dieselbe Antwort“: nur bei einem echten Durchlauf (nicht in der Vorschau, dort wählt niemand).
+function zeigeMusterHinweis(antworten, istVorschau) {
+  if (istVorschau || antworten.length < 10) return false;
+  var haeufig = {};
+  antworten.forEach(function (a) { haeufig[a] = (haeufig[a] || 0) + 1; });
+  var meiste = Math.max.apply(null, Object.keys(haeufig).map(function (k) { return haeufig[k]; }));
+  return meiste / antworten.length >= 0.9;
+}
+
 // Antworten für die Vorschau. spec: '' zufällig | '3' alle gleich | 'bereich:<id>' | 'stufe:<i>'
 function vorschauAntworten(DATA, spec) {
   spec = spec == null ? '' : String(spec);
@@ -92,6 +101,7 @@ if (typeof document !== 'undefined') (function () {
 
   var DATA = JSON.parse(datenEl.textContent);
   var antworten = new Array(DATA.questions.length).fill(null);
+  var istVorschau = false; // true, solange das Ergebnis aus Vorschau-Antworten stammt
   var index = 0;
 
   function q(sel, root) { return (root || wurzel).querySelector(sel); }
@@ -205,10 +215,7 @@ if (typeof document !== 'undefined') (function () {
     // Hinweis bei auffälligem Antwortmuster (fast überall dieselbe Antwort): das Ergebnis sagt dann wenig aus
     var alt = ergebnis.querySelector('[data-muster]');
     if (alt) alt.remove();
-    var haeufig = {};
-    antworten.forEach(function (a) { haeufig[a] = (haeufig[a] || 0) + 1; });
-    var meiste = Math.max.apply(null, Object.keys(haeufig).map(function (k) { return haeufig[k]; }));
-    if (antworten.length >= 10 && meiste / antworten.length >= 0.9) {
+    if (zeigeMusterHinweis(antworten, istVorschau)) {
       var hinweis = el('p', 'shop-hinweis test-muster', 'Du hast fast überall dieselbe Antwort gewählt. Dann sagt das Ergebnis wenig aus. Wenn du magst, starte neu und wäge die Aussagen einzeln ab.');
       hinweis.setAttribute('data-muster', '');
       hinweis.setAttribute('role', 'note');
@@ -386,6 +393,7 @@ if (typeof document !== 'undefined') (function () {
     zeigeFrage(true);
   });
   ergebnis.querySelector('[data-neu]').addEventListener('click', function () {
+    istVorschau = false;
     antworten.fill(null);
     index = 0;
     ergebnis.hidden = true;
@@ -406,10 +414,11 @@ if (typeof document !== 'undefined') (function () {
   if (vorschau === null) vorschau = new URLSearchParams(location.search).get('vorschau');
   if (vorschau !== null) {
     antworten = vorschauAntworten(DATA, vorschau);
+    istVorschau = true;
     index = DATA.questions.length - 1;
     auswerten();
   }
 })();
 
-if (typeof module === 'object' && module.exports) module.exports = { auswertenWerte: auswertenWerte, vorschauAntworten: vorschauAntworten };
+if (typeof module === 'object' && module.exports) module.exports = { auswertenWerte: auswertenWerte, vorschauAntworten: vorschauAntworten, zeigeMusterHinweis: zeigeMusterHinweis };
 })();

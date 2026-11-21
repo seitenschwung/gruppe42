@@ -36,6 +36,8 @@
 
   // Bidi-Steuerzeichen und Zeichen ohne Breite: unsichtbar, können Text verfälschen oder verschleiern.
   const STEUERZEICHEN = /[\u202A-\u202E\u2066-\u2069\u200B-\u200F\uFEFF]/;
+  // C0-Steuerzeichen inkl. Zeilenumbruch und Tab: alle Textfelder sind einzeilig.
+  const C0 = /[\u0000-\u001F]/;
 
   const MARKER = '<text>';
   const PLATZHALTER = '{names}';
@@ -124,6 +126,7 @@
       if (wert.includes('<')) melde('Das Zeichen "<" ist nicht erlaubt');
       if (wert.includes('*') && !BETONT_ERLAUBT.includes(m)) melde('Das Zeichen "*" ist hier nicht erlaubt');
       if (wert.includes('](')) melde('Links sind nicht erlaubt');
+      if (C0.test(wert)) melde('Enthält Zeilenumbrüche oder Steuerzeichen – bitte als eine Zeile schreiben.');
       if (STEUERZEICHEN.test(wert)) melde('Enthält unsichtbare Steuerzeichen – bitte Text neu eintippen.');
       // Die Testseite hängt ". Kein Diagnoseinstrument." an den Status an.
       if (m === 'status' && /\.\s*$/.test(wert)) melde('Bitte ohne Punkt am Ende – er wird automatisch ergänzt.');

@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 const fs = require('node:fs');
 const path = require('node:path');
-const { auswertenWerte, vorschauAntworten } = require('./antreiber.js');
+const { auswertenWerte, vorschauAntworten, zeigeMusterHinweis } = require('./antreiber.js');
 
 const dir = path.join(__dirname, '../../../../kunden/gruppe42/tests');
 const tests = fs.readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'struktur.json')
@@ -59,5 +59,22 @@ test('ladbar ohne window/document, keine Globals; ungültige Specs fallen auf Zu
     const a = vorschauAntworten(d, spec);
     assert.strictEqual(a.length, d.questions.length, spec);
     assert.ok(a.every((x) => Object.keys(d.scale).includes(String(x))), spec);
+  }
+});
+
+test('muster_hinweis: nur bei echtem Durchlauf, nicht in der Vorschau', () => {
+  const gleich = new Array(20).fill(3);
+  assert.strictEqual(zeigeMusterHinweis(gleich, false), true);
+  assert.strictEqual(zeigeMusterHinweis(gleich, true), false);
+  const fast = new Array(18).fill(4).concat([1, 2]);
+  assert.strictEqual(zeigeMusterHinweis(fast, false), true);
+  const gemischt = new Array(17).fill(4).concat([1, 2, 5]);
+  assert.strictEqual(zeigeMusterHinweis(gemischt, false), false);
+  assert.strictEqual(zeigeMusterHinweis(new Array(9).fill(3), false), false);
+  // Gleichstand-Vorschau ('3') auf echten Ranking-Tests: Antworten wären auffällig, Hinweis trotzdem nicht
+  for (const { f, d } of tests.filter((t) => t.d.result.kind === 'ranking')) {
+    const a = vorschauAntworten(d, '3');
+    assert.strictEqual(zeigeMusterHinweis(a, false), true, f);
+    assert.strictEqual(zeigeMusterHinweis(a, true), false, f);
   }
 });
