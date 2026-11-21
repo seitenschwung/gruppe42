@@ -115,7 +115,7 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
   - `GET /api/editor/login` → Redirect zum GitHub-Login der App mit zufälligem `state`
     (signiertes, kurzlebiges Cookie nur für Pfad `/api/editor`, `HttpOnly`, `Secure`, `SameSite=Lax`).
   - `GET /api/editor/callback` → prüft `state`, tauscht `code` serverseitig gegen das User-Token und setzt es als Cookie `g42_token`
-    (`HttpOnly`, `Secure`, `SameSite=Strict`, `Path=/api/editor/token`, 60 s) und leitet zu `/editor/#angemeldet` weiter. Das Token steht nie in einer URL
+    (`HttpOnly`, `Secure`, `SameSite=Lax` (nicht Strict: WebKit kann Strict-Cookies nach der Cross-Site-OAuth-Weiterleitung zurückhalten; der Endpunkt ist POST-only mit Header- und Origin-Prüfung, Lax-Cookies gehen nicht bei Cross-Site-POST mit), `Path=/api/editor/token`, 60 s) und leitet zu `/editor/#angemeldet` weiter. Das Token steht nie in einer URL
     (auch nicht im Fragment); ein `#token=` in der URL wird nicht angenommen (kein Login-CSRF). Das Token wird serverseitig **nicht** gespeichert.
   - `POST /api/editor/token` (Header `X-G42-Editor: 1` Pflicht, `Origin` fehlt oder ist der eigene) liefert das Token einmal als `{token, ablauf}` (`no-store`)
     und löscht das Cookie; ohne Cookie `401`.
@@ -184,5 +184,6 @@ Alles andere ist fest. Felder, die es bisher nicht gibt, kann der Editor nicht a
   Gegenmaßnahmen (Checkliste in `CLAUDE.md`): Actions-Token nur lesend, Actions dürfen keine PRs erstellen/freigeben, keine weiteren Secrets, benannte Pflicht-Checks,
   immer den ganzen Diff prüfen, Template-Deploy per Digest und GHCR-Zugriff nur für Actions. Strukturelle Lösung: Umbau B
   (`2026-11-22-test-editor-umbau-b-design.md`), der Ingrids Schreibrolle entfernt.
+- Cookie-Injektion: Eine Nachbar-Subdomain unter `*.seitenschwung.com` könnte `g42_token`/`g42_state`-Cookies setzen (Login-CSRF in ein fremdes Konto). Gegenmaßnahme: keine nicht vertrauenswürdigen Seiten auf Nachbar-Subdomains betreiben; ein `__Host-`-Präfix würde `Path=/` erfordern.
 - Bypass für den Automerge-Akteur (falls der Owner ihn einrichtet): dieser Akteur kann dann ohne Review mergen; ohne Bypass braucht jeder Bot-PR einen Klick.
 - Inhaltliche Fehler in Texten: die Freigabe durch Seitenschwung ist die Kontrolle.

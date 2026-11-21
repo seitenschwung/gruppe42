@@ -37,7 +37,7 @@ wird Ihr Entwurf für dieses Feld nicht übernommen; ein Hinweis nennt dann die 
 
 Am Handy wechseln Sie mit **Bearbeiten** und **Vorschau** zwischen den beiden Ansichten:
 
-![Bearbeiten am Handy (Felder, Knopf „Zur Freigabe senden“ noch grau, solange es keine Änderungen gibt)](anleitung-test-editor/bearbeiten-handy.jpg)
+![Bearbeiten am Handy (Felder mit Beschriftung und Hinweis „Erscheint: …“)](anleitung-test-editor/bearbeiten-handy.jpg)
 
 ## 4. Vorschau
 Die Vorschau zeigt, wie der Test mit Ihrem neuen Text aussieht. Mit **Fragen**, **Ergebnis** und **Kachel** wählen Sie,
