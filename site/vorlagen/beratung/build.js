@@ -516,7 +516,7 @@ function ladeTest(cfg) {
 
 function testSeite(cfg, daten, testsCfg) {
   return `
-${T.kopf(cfg)}
+<!--g42:kopf-->${T.kopf(cfg)}<!--/g42:kopf-->
 ${T.abschnitte(cfg, daten, testsCfg, kontaktband())}`;
 }
 
@@ -547,7 +547,7 @@ ${kontaktband()}`;
 }
 
 function testUebersicht(cfg) {
-  const karten = sichtbareTests.map((e) => T.kachel(e, seiteVon(e.id))).join('');
+  const karten = '<!--g42:kacheln-->' + sichtbareTests.map((e) => T.kachel(e, seiteVon(e.id))).join('') + '<!--/g42:kacheln-->';
   const kartenKarte = kartenSichtbar ? `
       <li class="karte">
         <div class="karte-inhalt">

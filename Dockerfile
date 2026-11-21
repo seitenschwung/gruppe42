@@ -16,15 +16,15 @@ FROM node:20-alpine AS test
 WORKDIR /app
 COPY server/ server/
 COPY site/ site/
-RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/editor-auth.test.js server/webhook.test.js server/orders.test.js server/inhalte.test.js site/vorlagen/beratung/src/js/antreiber.test.js site/vorlagen/beratung/src/js/editor-kern.test.js site/vorlagen/beratung/src/js/editor-github.test.js
+RUN node --test site/lib/testwaechter.test.js site/lib/struktur.test.js site/lib/testseite.test.js server/server.test.js server/products.test.js server/checkout.test.js server/editor-auth.test.js server/webhook.test.js server/orders.test.js server/inhalte.test.js server/seiten.test.js site/vorlagen/beratung/src/js/antreiber.test.js site/vorlagen/beratung/src/js/editor-kern.test.js site/vorlagen/beratung/src/js/editor-github.test.js
 
 # --- 3) Serve: Node server for static files and later /api/* ---
 FROM node:20-alpine
 ARG APP_VERSION=dev
 ENV NODE_ENV=production APP_VERSION=$APP_VERSION STATIC_ROOT=/app/html
 WORKDIR /app
-COPY server/server.js server/products.js server/products.json server/checkout.js server/editor-auth.js server/webhook.js server/orders.js server/inhalte.js server/
-COPY site/lib/testwaechter.js site/lib/
+COPY server/server.js server/products.js server/products.json server/checkout.js server/editor-auth.js server/webhook.js server/orders.js server/inhalte.js server/seiten.js server/
+COPY site/lib/testwaechter.js site/lib/testseite.js site/lib/
 COPY site/kunden/gruppe42/gruppe42.json /app/inhalte/gruppe42.json
 COPY site/kunden/gruppe42/tests/ /app/inhalte/tests/
 COPY --from=build /out/ /app/html/

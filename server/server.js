@@ -49,7 +49,8 @@ function send(res, status, headers, body) {
 }
 
 // api: optional { routes: { '/api/x': { method, handler(req, res, send) } } } (see checkout.js)
-function createServer({ root, version, log, api }) {
+// seiten: optional { seite(pathname) -> {html, etag} | null } (see seiten.js): Live-Fassung statt Datei.
+function createServer({ root, version, log, api, seiten }) {
   const rootDir = path.resolve(root);
 
   return http.createServer((req, res) => {
@@ -97,6 +98,9 @@ function createServer({ root, version, log, api }) {
       return send(res, 404, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, '{"error":"not_found"}\n');
     }
 
+    const live = seiten && seiten.seite(pathname);
+    if (live) return serveHtml(req, res, live, head);
+
     if (pathname.includes('\0')) return send(res, 400, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Bad Request\n');
     let file = path.join(rootDir, pathname);
     if (file !== rootDir && !file.startsWith(rootDir + path.sep)) {
@@ -121,6 +125,15 @@ function notFound(res) {
   send(res, 404, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Not Found\n');
 }
 
+function serveHtml(req, res, { html, etag }, head) {
+  const headers = { 'Content-Type': MIME['.html'], ETag: etag };
+  if (req.headers['if-none-match'] === etag) return send(res, 304, headers, undefined);
+  const body = Buffer.from(html, 'utf8');
+  headers['Content-Length'] = body.length;
+  res.writeHead(200, allHeaders(res, headers));
+  res.end(head ? undefined : body);
+}
+
 function serve(req, res, file, st, head) {
   const etag = `"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
   const headers = {
@@ -138,6 +151,7 @@ function serve(req, res, file, st, head) {
 module.exports = { createServer, headersFor };
 
 if (require.main === module) {
+  // TODO(Task 5): createInhalte + createSeiten hier verdrahten und seiten an createServer übergeben.
   const orders = require('./orders').createOrderStore({ dir: process.env.DATA_DIR || '/data' });
   const server = createServer({
     root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
