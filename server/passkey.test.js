@@ -31,7 +31,7 @@ test('registrierungOptionen', () => {
   assert.deepStrictEqual(o, {
     rp: { id: RP, name: 'Gruppe 42' }, user: { id: b64u('u1'), name: 'ingrid', displayName: 'ingrid' },
     challenge: b64u(CH), pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-    timeout: 300000, attestation: 'none', authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
+    timeout: 300000, attestation: 'none', authenticatorSelection: { residentKey: 'required', requireResidentKey: true, userVerification: 'required' },
     excludeCredentials: [],
   });
   assert.doesNotThrow(() => JSON.stringify(o));
@@ -265,4 +265,38 @@ test('challenge_vergleich_mit_timingSafeEqual', () => {
     pk.pruefeRegistrierung({ antwort: a.registriere(basis), ...basis });
     assert.ok(aufrufe >= 1);
   } finally { crypto.timingSafeEqual = orig; }
+});
+
+// --- Fix round 1 ---
+test('registrierungOptionen_excludeCredentials', () => {
+  const id = b64u(Buffer.alloc(16, 1));
+  const o = pk.registrierungOptionen({ rpId: RP, rpName: 'G', userId: 'u1', userName: 'i', challenge: CH, excludeCredentials: [id] });
+  assert.deepStrictEqual(o.excludeCredentials, [{ type: 'public-key', id }]);
+  for (const excludeCredentials of ['x', ['a+b'], [''], [b64u(Buffer.alloc(1024))]]) {
+    abgelehnt(() => pk.registrierungOptionen({ rpId: RP, rpName: 'G', userId: 'u1', userName: 'i', challenge: CH, excludeCredentials }));
+  }
+});
+
+test('challenge_zu_kurz_abgelehnt', () => {
+  const kurz = Buffer.alloc(15, 7);
+  abgelehnt(() => pk.registrierungOptionen({ rpId: RP, rpName: 'G', userId: 'u1', userName: 'i', challenge: kurz }), /challenge/);
+  abgelehnt(() => pk.anmeldungOptionen({ rpId: RP, challenge: b64u(kurz) }), /challenge/);
+  assert.strictEqual(pk.anmeldungOptionen({ rpId: RP, challenge: Buffer.alloc(16) }).challenge, b64u(Buffer.alloc(16)));
+  const a = neuerAuthenticator();
+  const k = { ...basis, challenge: kurz };
+  abgelehnt(() => pk.pruefeRegistrierung({ antwort: a.registriere(k), ...k }), /challenge zu kurz/);
+  const { a: a2, passkey } = registriert();
+  abgelehnt(() => pk.pruefeAnmeldung({ antwort: a2.melde(k), ...k, passkey }), /challenge zu kurz/);
+});
+
+test('bom_wird_nicht_entfernt', () => {
+  // CBOR text string with a UTF-8 BOM stays distinct from the plain string
+  const t = pk.cbor(Buffer.from([0x64, 0xef, 0xbb, 0xbf, 0x61]));
+  assert.strictEqual(t, '﻿a');
+  // fmt "﻿none" is not "none"
+  const a = neuerAuthenticator();
+  abgelehnt(() => pk.pruefeRegistrierung({ antwort: a.registriere({ ...basis, fmt: '﻿none' }), ...basis }), /fmt/);
+  // clientDataJSON with BOM is not valid JSON
+  const cd = '﻿' + JSON.stringify({ type: 'webauthn.create', challenge: b64u(CH), origin: ORIGIN });
+  abgelehnt(() => pk.pruefeRegistrierung({ antwort: a.registriere({ ...basis, clientDataRoh: cd }), ...basis }), /clientData json/);
 });

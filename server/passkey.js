@@ -32,11 +32,17 @@ function vonB64u(s, feld) {
   return buf;
 }
 
-const alsB64u = (wert, feld) => {
-  if (Buffer.isBuffer(wert) || wert instanceof Uint8Array) return b64u(wert);
-  if (typeof wert === 'string') { vonB64u(wert, feld); return wert; }
-  throw fehler(feld);
-};
+const MIN_CHALLENGE = 16;
+// Challenge as base64url string; Buffer or base64url string accepted, at least 16 bytes.
+function challengeB64u(wert) {
+  let buf;
+  if (Buffer.isBuffer(wert) || wert instanceof Uint8Array) buf = Buffer.from(wert);
+  else if (typeof wert === 'string') buf = vonB64u(wert, 'challenge');
+  else throw fehler('challenge');
+  if (buf.length < MIN_CHALLENGE) throw fehler('challenge zu kurz');
+  return b64u(buf);
+}
+const utf8Strikt = () => new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
 
 function gleichSicher(a, b) {
   const x = Buffer.from(String(a), 'utf8');
@@ -51,7 +57,7 @@ function cborAb(buf, start) {
   if (!Buffer.isBuffer(buf)) throw fehler('cbor eingabe');
   let pos = start;
   let elemente = 0;
-  const utf8 = new TextDecoder('utf-8', { fatal: true });
+  const utf8 = utf8Strikt();
 
   function laenge(zusatz) {
     if (zusatz < 24) return zusatz;
@@ -130,23 +136,30 @@ function cbor(buf) {
 }
 
 // --- Options ---
-function registrierungOptionen({ rpId, rpName, userId, userName, challenge }) {
+function registrierungOptionen({ rpId, rpName, userId, userName, challenge, excludeCredentials = [] }) {
+  if (!Array.isArray(excludeCredentials)) throw fehler('excludeCredentials');
+  const ausschluss = excludeCredentials.map((id) => {
+    const b = vonB64u(id, 'excludeCredentials');
+    if (b.length < 1 || b.length > MAX_CRED_ID) throw fehler('excludeCredentials laenge');
+    return { type: 'public-key', id };
+  });
   const uid = typeof userId === 'string' ? Buffer.from(userId, 'utf8') : Buffer.from(userId);
   if (uid.length < 1 || uid.length > 64) throw fehler('user.id laenge');
   return {
     rp: { id: rpId, name: rpName },
     user: { id: b64u(uid), name: userName, displayName: userName },
-    challenge: alsB64u(challenge, 'challenge'),
+    challenge: challengeB64u(challenge),
     pubKeyCredParams: ALGS.map((alg) => ({ type: 'public-key', alg })),
     timeout: TIMEOUT,
     attestation: 'none',
-    authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
-    excludeCredentials: [],
+    // discoverable required: login uses allowCredentials: [] only
+    authenticatorSelection: { residentKey: 'required', requireResidentKey: true, userVerification: 'required' },
+    excludeCredentials: ausschluss,
   };
 }
 
 function anmeldungOptionen({ rpId, challenge }) {
-  return { rpId, challenge: alsB64u(challenge, 'challenge'), timeout: TIMEOUT, userVerification: 'required', allowCredentials: [] };
+  return { rpId, challenge: challengeB64u(challenge), timeout: TIMEOUT, userVerification: 'required', allowCredentials: [] };
 }
 
 // --- Shared steps ---
@@ -166,10 +179,10 @@ function pruefeHuelle(antwort, felder) {
 // §7.1 steps 5-12 / §7.2 steps 10-15: clientDataJSON.
 function pruefeClientData(roh, typ, challenge, origin) {
   let cd;
-  try { cd = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(roh)); } catch { throw fehler('clientData json'); }
+  try { cd = JSON.parse(utf8Strikt().decode(roh)); } catch { throw fehler('clientData json'); }
   if (!cd || typeof cd !== 'object' || Array.isArray(cd)) throw fehler('clientData form');
   if (cd.type !== typ) throw fehler('clientData type');
-  if (typeof cd.challenge !== 'string' || !gleichSicher(cd.challenge, alsB64u(challenge, 'challenge'))) {
+  if (typeof cd.challenge !== 'string' || !gleichSicher(cd.challenge, challengeB64u(challenge))) {
     throw fehler('clientData challenge');
   }
   if (typeof origin !== 'string' || !origin || cd.origin !== origin) throw fehler('clientData origin');

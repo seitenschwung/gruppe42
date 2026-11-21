@@ -50,7 +50,7 @@ Entscheidungen des Owners: keine Freigabe vor Livegang; Login per **Passkey**; n
 - Fehlen Marker oder Overlay, wird die gebaute Seite unverändert ausgeliefert.
 
 ### 3. Passkey (`server/passkey.js`)
-- Registrierung (`navigator.credentials.create`): `attestation: "none"`, `userVerification: "required"`, `residentKey: "preferred"`, Algorithmen ES256 (-7) und RS256 (-257). Server prüft `clientDataJSON` (`type`, `challenge`, `origin === EDITOR_ORIGIN`), `authData` (rpIdHash = SHA-256 von `EDITOR_RP_ID`, Flags UP und UV), liest Credential-ID und COSE-Schlüssel und speichert ihn als JWK.
+- Registrierung (`navigator.credentials.create`): `attestation: "none"`, `userVerification: "required"`, `residentKey: "required"` (`requireResidentKey: true`; Anmeldung ist nur discoverable, `allowCredentials: []`), Algorithmen ES256 (-7) und RS256 (-257). Server prüft `clientDataJSON` (`type`, `challenge`, `origin === EDITOR_ORIGIN`), `authData` (rpIdHash = SHA-256 von `EDITOR_RP_ID`, Flags UP und UV), liest Credential-ID und COSE-Schlüssel und speichert ihn als JWK.
 - Anmeldung (`navigator.credentials.get`): gleiche Prüfungen plus Signatur über `authData || SHA-256(clientDataJSON)` mit dem gespeicherten Schlüssel; `signCount` muss steigen, wenn er nicht 0 ist.
 - Challenges: 32 Zufallsbytes, einmalig, 5 Minuten gültig, im Speicher.
 - Passkeys: `/data/editor/passkeys.json` = `[{id, name, jwk, alg, signCount, erstellt}]`.
