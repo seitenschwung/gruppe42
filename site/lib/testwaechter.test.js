@@ -60,6 +60,30 @@ test('neues_feld', () => mit('teamklima', (d, S) => {
   assert.match(meldungen(d, S).join(), /result\.foo: unbekanntes Feld/);
 }));
 
+test('prototyp_namen_als_neue_schluessel', () => {
+  for (const name of ['constructor', 'toString', 'valueOf', 'hasOwnProperty']) {
+    mit('teamklima', (d, S) => {
+      d.result[name] = 'x';
+      assert.match(meldungen(d, S).join(), new RegExp('result\\.' + name + ': unbekanntes Feld'), name);
+    });
+  }
+});
+
+test('eigener___proto___schluessel', () => mit('teamklima', (d, S) => {
+  d.result = Object.assign(JSON.parse('{"__proto__":{"x":1}}'), d.result);
+  assert.ok(Object.prototype.hasOwnProperty.call(d.result, '__proto__'));
+  assert.match(meldungen(d, S).join(), /result\.__proto__: unbekanntes Feld/);
+  const dd = JSON.parse(JSON.stringify(lade('teamklima')).replace('"result":{', '"result":{"__proto__":{"x":1},'));
+  assert.match(meldungen(dd, S).join(), /result\.__proto__: unbekanntes Feld/);
+}));
+
+test('result_intro_grenze', () => mit('teamklima', (d) => {
+  d.result.intro = 'a'.repeat(400);
+  assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), []);
+  d.result.intro = 'a'.repeat(401);
+  assert.ok(pruefeTexte(d, TEXTFELDER_TEST).some((m) => m.pfad === 'result.intro'));
+}));
+
 test('cta_href_fest', () => {
   mit('antreiber', (d, S) => {
     d.result.cta.href = 'https://x';

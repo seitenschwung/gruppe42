@@ -26,7 +26,7 @@
     'titel', 'motto', 'kurz',
   ];
   const MITTEL = [
-    'questions[].text', 'categories[].headline', 'intro', 'beschreibung', 'result.lead', 'result.tie',
+    'questions[].text', 'categories[].headline', 'result.intro', 'intro', 'beschreibung', 'result.lead', 'result.tie',
   ];
   function grenzeFuer(muster) {
     if (KURZ.includes(muster)) return GRENZEN.kurz;
@@ -42,6 +42,7 @@
     return pfad.replace(/\[\d+\]/g, '[]').replace(/^scale\.[^.[]+$/, 'scale.*');
   }
   const unterschluessel = (pfad, schluessel) => (pfad ? pfad + '.' + schluessel : schluessel);
+  const hat = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
   const istObjekt = (w) => w !== null && typeof w === 'object' && !Array.isArray(w);
 
   // Tiefe Kopie, bei der jeder String an einem Textfeld durch den Marker ersetzt wird.
@@ -50,7 +51,13 @@
     if (Array.isArray(daten)) return daten.map((w, i) => struktur(w, textfelder, pfad + '[' + i + ']'));
     if (istObjekt(daten)) {
       const aus = {};
-      for (const k of Object.keys(daten)) aus[k] = struktur(daten[k], textfelder, unterschluessel(pfad, k));
+      for (const k of Object.keys(daten)) {
+        // defineProperty statt Zuweisung, damit auch ein eigener Schlüssel "__proto__" erhalten bleibt
+        Object.defineProperty(aus, k, {
+          value: struktur(daten[k], textfelder, unterschluessel(pfad, k)),
+          enumerable: true, writable: true, configurable: true,
+        });
+      }
       return aus;
     }
     if (typeof daten === 'string' && textfelder.includes(muster(pfad))) {
@@ -71,11 +78,11 @@
       if (!istObjekt(ist)) { aus.push(bez + ': geändert'); return; }
       for (const k of Object.keys(soll)) {
         const p = unterschluessel(pfad, k);
-        if (!(k in ist)) aus.push(p + ': fehlt');
+        if (!hat(ist, k)) aus.push(p + ': fehlt');
         else vergleiche(ist[k], soll[k], p, aus);
       }
       for (const k of Object.keys(ist)) {
-        if (!(k in soll)) aus.push(unterschluessel(pfad, k) + ': unbekanntes Feld');
+        if (!hat(soll, k)) aus.push(unterschluessel(pfad, k) + ': unbekanntes Feld');
       }
       return;
     }
