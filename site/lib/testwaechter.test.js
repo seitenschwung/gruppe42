@@ -271,3 +271,9 @@ test('fixture_ok', () => {
     assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), [], e.id);
   }
 });
+
+test('muster ist exportiert', () => {
+  const W = require('./testwaechter.js');
+  assert.equal(W.muster('questions[3].text'), 'questions[].text');
+  assert.equal(W.muster('scale.2'), 'scale.*');
+});

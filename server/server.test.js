@@ -72,7 +72,7 @@ test('methods, api placeholder, access log', async () => {
   assert.ok(!lines.some((l) => l.includes('/healthz')));
 });
 
-const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 
 test('editor_csp', async () => {
   for (const p of ['/editor/', '/editor/nope', '/editor']) {
@@ -90,6 +90,20 @@ test('editor_csp', async () => {
   assert.strictEqual(r304.status, 304);
   assert.strictEqual(r304.headers.get('content-security-policy'), EDITOR_CSP);
   assert.strictEqual(r304.headers.get('cache-control'), 'no-store');
+});
+
+test('html_no_cache_other_assets_unchanged', async () => {
+  const h = await get('/shop.html');
+  assert.strictEqual(h.status, 200);
+  assert.strictEqual(h.headers.get('cache-control'), 'no-cache');
+  assert.ok(h.headers.get('etag') && h.headers.get('last-modified'));
+  const n = await get('/shop.html', { headers: { 'if-none-match': h.headers.get('etag') } });
+  assert.strictEqual(n.status, 304);
+  assert.strictEqual(n.headers.get('cache-control'), 'no-cache');
+  const idx = await get('/sub/');
+  assert.strictEqual(idx.headers.get('cache-control'), 'no-cache');
+  const css = await get('/a.css');
+  assert.strictEqual(css.headers.get('cache-control'), null);
 });
 
 test('andere_seiten_ohne_csp', async () => {
@@ -129,14 +143,14 @@ const logFor = async (p, needle) => {
 };
 
 test('log_ohne_query', async () => {
-  const cb = await logFor('/api/editor/callback?code=geheim&state=x', '/api/editor/callback');
+  const cb = await logFor('/api/editor/anmelden?code=geheim&state=x', '/api/editor/anmelden');
   assert.ok(cb.length && cb.every((l) => !l.includes('geheim') && !l.includes('?')), cb.join());
   assert.ok((await logFor('/shop.html?a=1', '/shop.html?a=1')).length);
 });
 
 test('log_ohne_query_kodiert', async () => {
-  for (const [p, needle] of [['/api/%65ditor/callback?code=geheim1', '/api/%65ditor/callback'],
-    ['/x/..%2fapi/editor/callback?code=geheim2', '/x/..%2fapi/editor/callback'],
+  for (const [p, needle] of [['/api/%65ditor/anmelden?code=geheim1', '/api/%65ditor/anmelden'],
+    ['/x/..%2fapi/editor/anmelden?code=geheim2', '/x/..%2fapi/editor/anmelden'],
     ['/%zz?code=geheim3', '/%zz']]) {
     const l = await logFor(p, needle);
     assert.ok(l.length, p);

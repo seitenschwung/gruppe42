@@ -22,7 +22,7 @@ const SECURITY_HEADERS = {
   'X-Frame-Options': 'SAMEORIGIN',
 };
 
-const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
+const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 // Case-insensitive: the CSP must not depend on how the URL is spelled (file lookup itself stays case-sensitive).
 const isEditorPath = (p) => /^\/editor(\/|$)/i.test(p);
 const isEditorApi = (u) => /^\/api\/editor(\/|$)/i.test(u);
@@ -49,7 +49,8 @@ function send(res, status, headers, body) {
 }
 
 // api: optional { routes: { '/api/x': { method, handler(req, res, send) } } } (see checkout.js)
-function createServer({ root, version, log, api }) {
+// seiten: optional { seite(pathname) -> {html, etag} | null } (see seiten.js): Live-Fassung statt Datei.
+function createServer({ root, version, log, api, seiten }) {
   const rootDir = path.resolve(root);
 
   return http.createServer((req, res) => {
@@ -63,7 +64,7 @@ function createServer({ root, version, log, api }) {
     } catch { /* bad percent escape: answered with 400 below */ }
     if (log && req.url !== '/healthz') {
       // Combined log format, the one CrowdSec's http/nginx parsers expect.
-      // OAuth code/state must never reach the log: no query for /api/editor, nor when the path can't be parsed.
+      // Editor URLs (invitation codes etc.) must never reach the log: no query for /api/editor, nor when the path can't be parsed.
       const logUrl = pathname === null || isEditorApi(pathname) ? req.url.split('?')[0] : req.url;
       res.on('finish', () => {
         const h = req.headers;
@@ -97,6 +98,9 @@ function createServer({ root, version, log, api }) {
       return send(res, 404, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' }, '{"error":"not_found"}\n');
     }
 
+    const live = seiten && seiten.seite(pathname);
+    if (live) return serveHtml(req, res, live, head);
+
     if (pathname.includes('\0')) return send(res, 400, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Bad Request\n');
     let file = path.join(rootDir, pathname);
     if (file !== rootDir && !file.startsWith(rootDir + path.sep)) {
@@ -121,6 +125,15 @@ function notFound(res) {
   send(res, 404, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Not Found\n');
 }
 
+function serveHtml(req, res, { html, etag }, head) {
+  const headers = { 'Content-Type': MIME['.html'], ETag: etag, 'Cache-Control': 'no-cache' };
+  if (req.headers['if-none-match'] === etag) return send(res, 304, headers, undefined);
+  const body = Buffer.from(html, 'utf8');
+  headers['Content-Length'] = body.length;
+  res.writeHead(200, allHeaders(res, headers));
+  res.end(head ? undefined : body);
+}
+
 function serve(req, res, file, st, head) {
   const etag = `"${st.size.toString(16)}-${Math.floor(st.mtimeMs).toString(16)}"`;
   const headers = {
@@ -128,6 +141,8 @@ function serve(req, res, file, st, head) {
     'Last-Modified': st.mtime.toUTCString(),
     ETag: etag,
   };
+  // HTML immer revalidieren (ETag/304), damit Live-Texte sofort sichtbar sind; andere Dateien unverändert.
+  if (path.extname(file).toLowerCase() === '.html') headers['Cache-Control'] = 'no-cache';
   if (req.headers['if-none-match'] === etag) return send(res, 304, headers, undefined);
   headers['Content-Length'] = st.size;
   res.writeHead(200, allHeaders(res, headers));
@@ -139,14 +154,32 @@ module.exports = { createServer, headersFor };
 
 if (require.main === module) {
   const orders = require('./orders').createOrderStore({ dir: process.env.DATA_DIR || '/data' });
+  // Live-Inhalte: scheitert das Laden der Basis, bleibt die öffentliche Seite Image-Stand und die Editor-API antwortet 503.
+  const { pfadeAusEnv, createEditorApi } = require('./editor-api');
+  const root = process.env.STATIC_ROOT || path.join(__dirname, '..', 'html');
+  let inhalte = null;
+  let seiten = null;
+  try {
+    inhalte = require('./inhalte').createInhalte(pfadeAusEnv(process.env));
+    seiten = require('./seiten').createSeiten({ root, inhalte, Testseite: require('../site/lib/testseite.js'), log: console.log });
+  } catch (e) {
+    console.log('editor: Inhalte nicht geladen, Editor aus');
+    inhalte = null;
+    seiten = null;
+  }
+  // Editor login (invitation, passkey, session) and the editor API behind it.
+  const sitzung = require('./editor-sitzung').createSitzung({ env: process.env });
+  const editorApi = createEditorApi({ env: process.env, inhalte, seiten, sitzung, fetch, log: console.log });
   const server = createServer({
-    root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
+    root,
     version: process.env.APP_VERSION || 'dev',
     log: console.log,
+    seiten,
     api: {
       routes: {
         ...require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }).routes,
-        ...require('./editor-auth').createEditorAuth({ env: process.env, fetch }).routes,
+        ...sitzung.routes,
+        ...editorApi.routes,
         ...require('./webhook').createWebhook({
           env: process.env,
           log: console.log,

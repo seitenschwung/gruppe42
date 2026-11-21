@@ -167,7 +167,8 @@ const editorJs = tests.length ? [
   ['testwaechter', path.join(ROOT, '../../lib/testwaechter.js')],
   ['testseite', path.join(ROOT, '../../lib/testseite.js')],
   ['editor-kern', path.join(ROOT, 'src/js/editor-kern.js')],
-  ['editor-github', path.join(ROOT, 'src/js/editor-github.js')],
+  ['editor-api', path.join(ROOT, 'src/js/editor-api.js')],
+  ['editor-passkey', path.join(ROOT, 'src/js/editor-passkey.js')],
   ['editor-vorschau', path.join(ROOT, 'src/js/editor-vorschau.js')],
   ['editor', path.join(ROOT, 'src/js/editor.js')],
 ].map(([name, quelle]) => {
@@ -516,7 +517,7 @@ function ladeTest(cfg) {
 
 function testSeite(cfg, daten, testsCfg) {
   return `
-${T.kopf(cfg)}
+<!--g42:kopf-->${T.kopf(cfg)}<!--/g42:kopf-->
 ${T.abschnitte(cfg, daten, testsCfg, kontaktband())}`;
 }
 
@@ -547,7 +548,7 @@ ${kontaktband()}`;
 }
 
 function testUebersicht(cfg) {
-  const karten = sichtbareTests.map((e) => T.kachel(e, seiteVon(e.id))).join('');
+  const karten = '<!--g42:kacheln-->' + sichtbareTests.map((e) => T.kachel(e, seiteVon(e.id))).join('') + '<!--/g42:kacheln-->';
   const kartenKarte = kartenSichtbar ? `
       <li class="karte">
         <div class="karte-inhalt">
@@ -991,7 +992,7 @@ if (editorJs.length) {
   seiten.push({
     datei: 'editor/index.html', aktiv: 'editor', inhalt: editorSeite(), noindex: true, basis: true,
     titel: `Test-Editor – ${s.name}`,
-    beschreibung: 'Texte der Selbsttests bearbeiten und zur Freigabe senden.',
+    beschreibung: 'Texte der Selbsttests bearbeiten und live veröffentlichen.',
     zusatzHead: editorJs.map((u) => `<script src="${u}" defer></script>`).join(''),
   });
 }
