@@ -69,7 +69,7 @@ s.fallstudien.eintraege = liste(s.fallstudien.eintraege).filter((e) => e.kunde);
 const impulseSichtbar = s.impulse.sichtbar === true;
 const fallstudienSichtbar = s.fallstudien.sichtbar === true && s.fallstudien.eintraege.length > 0;
 
-const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten', 'methodik']);
+const reserviert = new Set(['index', 'impressum', 'datenschutz', 'shop', 'selbsttests', 'impulse', 'gespraechskarten', 'methodik', 'editor']);
 const ids = [...s.impulse.eintraege.map((e) => e.id),...s.zielgruppen.map((z) => z.id), ...s.leistungen.eintraege.filter((l) => liste(l.abschnitte).length).map((l) => l.id)];
 for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
@@ -161,6 +161,19 @@ const kartenSichtbar = !!(kartenCfg && kartenCfg.sichtbar === true);
 const kartenJs = kartenCfg ? fs.readFileSync(path.join(ROOT, 'src/js/karten.js'), 'utf8') : '';
 if (kartenCfg) fs.writeFileSync(path.join(DIST, 'js/karten.js'), kartenJs);
 const kartenJsUrl = `js/karten.js?v=${crypto.createHash('sha1').update(kartenJs).digest('hex').slice(0, 8)}`;
+// Test-Editor (/editor/): eigene Skripte nur auf der Editor-Seite, je mit ?v=-Prüfsumme
+const editorJs = tests.length ? [
+  ['testwaechter', path.join(ROOT, '../../lib/testwaechter.js')],
+  ['testseite', path.join(ROOT, '../../lib/testseite.js')],
+  ['editor-kern', path.join(ROOT, 'src/js/editor-kern.js')],
+  ['editor-github', path.join(ROOT, 'src/js/editor-github.js')],
+  ['editor-vorschau', path.join(ROOT, 'src/js/editor-vorschau.js')],
+  ['editor', path.join(ROOT, 'src/js/editor.js')],
+].map(([name, quelle]) => {
+  const inhalt = fs.readFileSync(quelle, 'utf8');
+  fs.writeFileSync(path.join(DIST, `js/${name}.js`), inhalt);
+  return `js/${name}.js?v=${crypto.createHash('sha1').update(inhalt).digest('hex').slice(0, 8)}`;
+}) : [];
 const testZiel = sichtbareTests.length === 1 && !kartenSichtbar ? `${sichtbareTests[0].id}.html` : 'selbsttests.html';
 
 // ---------------------------------------------------------------------------
@@ -551,6 +564,19 @@ ${seitenkopf(cfg.titel || 'Selbsttests', cfg.motto, cfg.intro, null, true)}
 </section>
 ${kontaktband()}`;
 }
+// Test-Editor: nur das Gerüst; Ansichten (Anmelden, Testwahl, Formular, Vorschau) baut js/editor.js.
+function editorSeite() {
+  return `
+<section class="abschnitt ed" aria-labelledby="ed-titel">
+  <div class="container">
+    <p class="kicker">Test-Editor</p>
+    <h1 class="ed-titel" id="ed-titel">Texte der Selbsttests bearbeiten</h1>
+    <noscript><p class="shop-hinweis">Für den Editor wird JavaScript benötigt.</p></noscript>
+    <div class="ed-meldung" data-ed-meldung role="status" aria-live="polite"></div>
+    <div class="ed-app" data-ed-app></div>
+  </div>
+</section>`;
+}
 // Gesprächskarten: Kartensätze liegen als JSON auf der Seite; js/karten.js zieht zufällig ohne Wiederholung.
 // Ohne JavaScript bleibt die Liste aller Karten sichtbar.
 function kartenSeite(cfg) {
@@ -786,9 +812,10 @@ function hauptnav({ aktiv, anker, kontaktZiel }) {
     </nav>`;
 }
 
-function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false }) {
+// basis: Seite in einem Unterordner (editor/index.html) -> <base href="/">, damit Fonts, CSS-URLs und Links stimmen
+function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '', noindex = false, basis = false }) {
   const start = datei === 'index.html';
-  const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei}` : '';
+  const seitenUrl = websiteUrl ? `${websiteUrl}/${start ? '' : datei.replace(/(^|\/)index\.html$/, '$1')}` : '';
   const anker = (id) => (start ? `#${id}` : `./#${id}`);
   // Kontaktband vorhanden -> Sprung auf der Seite; sonst zur Startseite (sonst tut der Knopf nichts)
   const kontaktZiel = inhalt.includes('id="kontakt"') ? '#kontakt' : './#kontakt';
@@ -801,6 +828,7 @@ function layout({ datei, titel, beschreibung, inhalt, aktiv = '', zusatzHead = '
 <html lang="de">
 <head>
 <meta charset="utf-8">
+${basis ? '<base href="/">' : ''}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(titel)}</title>
 <meta name="description" content="${esc(beschreibung)}">
@@ -817,7 +845,7 @@ ${og}
 <script src="${mainJsUrl}" defer></script>
 </head>
 <body>
-<a class="skip-link" href="#inhalt">Zum Inhalt springen</a>
+<a class="skip-link" href="${basis ? esc(datei.replace(/index\.html$/, '')) : ''}#inhalt">Zum Inhalt springen</a>
 ${demo ? `<div class="entwurf" role="note">Entwurf der neuen Website für ${esc(s.name)}${s.ersteller ? `, erstellt von ${esc(s.ersteller)}` : ''}</div>` : ''}
 <header class="kopf">
   <div class="container kopf-innen">
@@ -956,6 +984,16 @@ if (kartenCfg) {
     zusatzHead: `<script src="${kartenJsUrl}" defer></script>`,
   });
 }
+// Test-Editor: nicht im Menü, noindex (damit nicht in der Sitemap), in robots.txt ausgeschlossen
+if (editorJs.length) {
+  fs.mkdirSync(path.join(DIST, 'editor'), { recursive: true });
+  seiten.push({
+    datei: 'editor/index.html', aktiv: 'editor', inhalt: editorSeite(), noindex: true, basis: true,
+    titel: `Test-Editor – ${s.name}`,
+    beschreibung: 'Texte der Selbsttests bearbeiten und zur Freigabe senden.',
+    zusatzHead: editorJs.map((u) => `<script src="${u}" defer></script>`).join(''),
+  });
+}
 seiten.push(rechtsSeite('impressum.html', 'Impressum', s.impressum), rechtsSeite('datenschutz.html', 'Datenschutz', s.datenschutz));
 ergaenzeStrukturdaten(seiten);
 for (const seite of seiten) fs.writeFileSync(path.join(DIST, seite.datei), layout(seite));
@@ -968,7 +1006,7 @@ const zahl = (s.name.match(/(\d{1,3})$/) || [])[1];
 fs.writeFileSync(path.join(DIST, 'favicon.svg'),
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#F2B33D"/><text x="32" y="41" font-family="Arial, sans-serif" font-weight="700" font-size="${zahl ? 26 : 24}" text-anchor="middle" fill="#2E2520">${esc(zahl || h.initialen(s.name))}</text></svg>`);
 fs.writeFileSync(path.join(DIST, 'robots.txt'),
-  demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${websiteUrl ? `Sitemap: ${websiteUrl}/sitemap.xml\n` : ''}`);
+  demo ? 'User-agent: *\nDisallow: /\n' : `User-agent: *\nAllow: /\n${editorJs.length ? 'Disallow: /editor/\n' : ''}${websiteUrl ? `Sitemap: ${websiteUrl}/sitemap.xml\n` : ''}`);
 if (websiteUrl && !demo) {
   const heute = new Date().toISOString().slice(0, 10);
   const urls = seiten.filter((p) => !p.noindex).map((p) => `<url><loc>${websiteUrl}/${p.datei === 'index.html' ? '' : p.datei}</loc><lastmod>${heute}</lastmod></url>`).join('');
