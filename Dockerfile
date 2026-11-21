@@ -23,7 +23,7 @@ FROM node:20-alpine
 ARG APP_VERSION=dev
 ENV NODE_ENV=production APP_VERSION=$APP_VERSION STATIC_ROOT=/app/html
 WORKDIR /app
-COPY server/server.js server/products.js server/products.json server/checkout.js server/editor-auth.js server/webhook.js server/orders.js server/inhalte.js server/seiten.js server/passkey.js server/editor-sitzung.js server/editor-einladung.js server/
+COPY server/server.js server/products.js server/products.json server/checkout.js server/editor-auth.js server/webhook.js server/orders.js server/inhalte.js server/seiten.js server/passkey.js server/editor-sitzung.js server/editor-einladung.js server/datei-sperre.js server/
 COPY site/lib/testwaechter.js site/lib/testseite.js site/lib/
 COPY site/kunden/gruppe42/gruppe42.json /app/inhalte/gruppe42.json
 COPY site/kunden/gruppe42/tests/ /app/inhalte/tests/

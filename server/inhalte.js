@@ -6,6 +6,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const W = require('../site/lib/testwaechter.js');
+const { mitSperre } = require('./datei-sperre');
 
 const OVERLAY_DATEI = 'inhalte.json';
 const VERLAUF_DATEI = 'verlauf.jsonl';
@@ -115,7 +116,7 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
         if (groesse) { const b = Buffer.alloc(1); fs.readSync(fd, b, 0, 1, groesse - 1); if (b[0] !== 10) vorsatz = '\n'; }
       } finally { fs.closeSync(fd); }
     } catch (e) { /* Datei fehlt noch */ }
-    fs.appendFileSync(verlaufPfad, vorsatz + JSON.stringify(zeile) + '\n');
+    fs.appendFileSync(verlaufPfad, vorsatz + JSON.stringify(zeile) + '\n', { mode: 0o600 });
   }
 
   // Prüfung einer wirksamen Fassung: Textregeln und Struktur. [] = ok.
@@ -173,9 +174,9 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
   let schreibbarCache = false;
   function probe() {
     try {
-      fs.mkdirSync(dataDir, { recursive: true });
+      fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 });
       const p = path.join(dataDir, '.probe-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
-      fs.writeFileSync(p, 'x');
+      fs.writeFileSync(p, 'x', { mode: 0o600 });
       fs.unlinkSync(p);
       return true;
     } catch (e) { return false; }
@@ -191,7 +192,7 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
   function schreibeAtomar(pfad, text) {
     const tmp = pfad + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex');
     try {
-      fs.writeFileSync(tmp, text);
+      fs.writeFileSync(tmp, text, { mode: 0o600 });
       fs.renameSync(tmp, pfad);
     } catch (e) {
       try { fs.unlinkSync(tmp); } catch (e2) { /* nichts da */ }
@@ -199,9 +200,23 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
     }
   }
 
-  // Synchron: kein await, daher können zwei Aufrufe im Prozess nicht ineinander laufen.
+  // Lesen-Ändern-Schreiben unter der Dateisperre (gemeinsam mit den CLIs, z. B. Export/Leeren).
+  // Sperre nicht zu bekommen -> nicht_verfuegbar (gesperrt: true), Schreibbarkeit bleibt gemerkt.
+  function gesperrt(fn) {
+    try { return mitSperre(dataDir, fn); } catch (e) {
+      if (e.art === 'gesperrt') throw fehler('nicht_verfuegbar', 'Datenverzeichnis gesperrt', { gesperrt: true });
+      if (!e.art) { schreibbarCache = false; throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen'); }
+      throw e;
+    }
+  }
+
   function uebernehme(testId, aenderungen, wer, extraZeile) {
     if (!verfuegbar()) throw fehler('nicht_verfuegbar', 'Speicher nicht verfügbar');
+    return gesperrt(() => uebernehmeGesperrt(testId, aenderungen, wer, extraZeile));
+  }
+
+  // Synchron: kein await, daher können zwei Aufrufe im Prozess nicht ineinander laufen.
+  function uebernehmeGesperrt(testId, aenderungen, wer, extraZeile) {
     const t = finde(testId);
     if (!Array.isArray(aenderungen) || !aenderungen.length) {
       throw fehler('ungueltig', 'Keine Änderungen', { meldungen: [{ pfad: '', meldung: 'Keine Änderungen' }] });
@@ -302,10 +317,12 @@ function createInhalte({ basisDir, dataDir, jetzt = () => new Date() }) {
     },
     leeren(sha256) {
       if (!verfuegbar()) throw fehler('nicht_verfuegbar', 'Speicher nicht verfügbar');
-      const overlay = leseOverlay();
-      if (sha(serial(overlay)) !== sha256) return false;
-      try { schreibeAtomar(overlayPfad, serial(leer())); } catch (e) { schreibbarCache = false; throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen'); }
-      return true;
+      return gesperrt(() => {
+        const overlay = leseOverlay();
+        if (overlay === null || sha(serial(overlay)) !== sha256) return false;
+        try { schreibeAtomar(overlayPfad, serial(leer())); } catch (e) { schreibbarCache = false; throw fehler('nicht_verfuegbar', 'Schreiben fehlgeschlagen'); }
+        return true;
+      });
     },
   };
 }

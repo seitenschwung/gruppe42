@@ -38,12 +38,17 @@ function main(args, env) {
   if (args[0] === '--entfernen') {
     const praefix = args[1];
     if (args.length !== 2 || typeof praefix !== 'string' || !praefix) fehler('--entfernen <Passkey-ID-Anfang>');
-    const passkeys = daten.passkeys();
-    const treffer = passkeys.filter((p) => typeof p.id === 'string' && p.id.startsWith(praefix));
-    if (treffer.length === 0) fehler('kein Passkey mit diesem ID-Anfang');
-    if (treffer.length > 1) fehler('ID-Anfang mehrdeutig (' + treffer.length + ' Passkeys), bitte länger angeben');
-    daten.schreibePasskeys(passkeys.filter((p) => p !== treffer[0]));
-    process.stdout.write(`Passkey ${treffer[0].id.slice(0, 8)} (${treffer[0].name}) entfernt.\n`);
+    const weg = daten.sperre(() => {
+      const passkeys = daten.passkeys();
+      const treffer = passkeys.filter((p) => typeof p.id === 'string' && p.id.startsWith(praefix));
+      // No fehler() (process.exit) inside the lock: finally must release it.
+      if (treffer.length === 0) return { meldung: 'kein Passkey mit diesem ID-Anfang' };
+      if (treffer.length > 1) return { meldung: 'ID-Anfang mehrdeutig (' + treffer.length + ' Passkeys), bitte länger angeben' };
+      daten.schreibePasskeys(passkeys.filter((p) => p !== treffer[0]));
+      return treffer[0];
+    });
+    if (weg.meldung) fehler(weg.meldung);
+    process.stdout.write(`Passkey ${weg.id.slice(0, 8)} (${weg.name}) entfernt.\n`);
     return;
   }
 
@@ -52,18 +57,21 @@ function main(args, env) {
   if (!name || name.length > 64 || /[\u0000-\u001f\u007f]/.test(name)) fehler('Name: 1 bis 64 Zeichen, keine Steuerzeichen');
   const cfg = konfiguration(env);
   if (!cfg) fehler('EDITOR_ORIGIN und EDITOR_RP_ID fehlen oder sind ungültig');
-  const einladungen = daten.einladungen();
   const code = crypto.randomBytes(32).toString('base64url');
-  einladungen.push({
-    hash: sha256(code), name, userId: crypto.randomBytes(16).toString('base64url'),
-    erstellt: new Date().toISOString(), ablauf: new Date(Date.now() + GUELTIG).toISOString(), benutzt: false,
+  daten.sperre(() => {
+    const einladungen = daten.einladungen();
+    einladungen.push({
+      hash: sha256(code), name, userId: crypto.randomBytes(16).toString('base64url'),
+      erstellt: new Date().toISOString(), ablauf: new Date(Date.now() + GUELTIG).toISOString(), benutzt: false,
+    });
+    daten.schreibeEinladungen(einladungen);
   });
-  daten.schreibeEinladungen(einladungen);
   process.stdout.write(`${cfg.origin}/editor/#einladung=${code}\n`);
 }
 
 try {
   main(process.argv.slice(2), process.env);
 } catch (e) {
+  if (e.art === 'gesperrt') fehler('Datenverzeichnis gesperrt (Server schreibt gerade?), bitte erneut versuchen');
   fehler(e.code ? `${e.code} (Datenverzeichnis)` : 'Datei unlesbar oder ungültig');
 }

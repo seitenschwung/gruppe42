@@ -291,3 +291,23 @@ test('Verlauf: kaputte Zeilen bleiben, rueckgaengig auf fehlerhafte Zeile -> unb
   assert.equal(text[2], schlecht);
   assert.equal(JSON.parse(text[3]).nr, 6);
 });
+
+test('Dateisperre: gehaltene Sperre -> nicht_verfuegbar (gesperrt), nichts geschrieben; Dateirechte', () => {
+  const { inh, dataDir } = umgebung();
+  inh.speichere(ID, [aend(inh, 'questions[0].text', 'Eins')], 'Ingrid');
+  assert.equal(fs.statSync(dataDir).mode & 0o777, 0o700);
+  assert.equal(fs.statSync(path.join(dataDir, 'inhalte.json')).mode & 0o777, 0o600);
+  assert.equal(fs.statSync(path.join(dataDir, 'verlauf.jsonl')).mode & 0o777, 0o600);
+  const vorher = fs.readFileSync(path.join(dataDir, 'verlauf.jsonl'), 'utf8');
+  fs.writeFileSync(path.join(dataDir, '.sperre'), '1');
+  const e = fehlerArt(() => inh.speichere(ID, [aend(inh, 'questions[0].text', 'Zwei')], 'Ingrid'));
+  assert.equal(e.art, 'nicht_verfuegbar');
+  assert.equal(e.gesperrt, true);
+  assert.equal(fehlerArt(() => inh.leeren(inh.export().sha256)).art, 'nicht_verfuegbar');
+  assert.equal(fs.readFileSync(path.join(dataDir, 'verlauf.jsonl'), 'utf8'), vorher);
+  assert.equal(frage0(inh), 'Eins');
+  assert.equal(inh.verfuegbar(), true, 'Sperre ändert die Schreibbarkeit nicht');
+  fs.unlinkSync(path.join(dataDir, '.sperre'));
+  assert.equal(inh.speichere(ID, [aend(inh, 'questions[0].text', 'Zwei')], 'Ingrid').nr, 2);
+  assert.equal(inh.leeren(inh.export().sha256), true);
+});

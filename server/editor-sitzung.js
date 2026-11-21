@@ -7,11 +7,13 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const passkey = require('./passkey');
+const { mitSperre } = require('./datei-sperre');
 
 const RATE_LIMIT = 30; // requests per IP per minute, all routes together
 const MAX_BODY = 16384;
 const CHALLENGE_TTL = 5 * 60e3;
 const MAX_CHALLENGES = 1000;
+const MAX_CHALLENGES_IP = 5;
 const LEERLAUF = 2 * 3600e3;
 const ABSOLUT = 12 * 3600e3;
 const RP_NAME = 'Gruppe 42 Editor';
@@ -41,7 +43,7 @@ function konfiguration(env) {
 function schreibeAtomar(pfad, wert) {
   const tmp = pfad + '.tmp-' + process.pid + '-' + crypto.randomBytes(4).toString('hex');
   try {
-    fs.writeFileSync(tmp, JSON.stringify(wert, null, 2) + '\n');
+    fs.writeFileSync(tmp, JSON.stringify(wert, null, 2) + '\n', { mode: 0o600 });
     fs.renameSync(tmp, pfad);
   } catch (e) {
     try { fs.unlinkSync(tmp); } catch { /* nichts da */ }
@@ -63,8 +65,10 @@ function datenSpeicher(dataDir) {
   return {
     einladungen: () => leseListe(p(EINLADUNGEN)),
     passkeys: () => leseListe(p(PASSKEYS)),
-    schreibeEinladungen: (l) => { fs.mkdirSync(dataDir, { recursive: true }); schreibeAtomar(p(EINLADUNGEN), l); },
-    schreibePasskeys: (l) => { fs.mkdirSync(dataDir, { recursive: true }); schreibeAtomar(p(PASSKEYS), l); },
+    schreibeEinladungen: (l) => { fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 }); schreibeAtomar(p(EINLADUNGEN), l); },
+    schreibePasskeys: (l) => { fs.mkdirSync(dataDir, { recursive: true, mode: 0o700 }); schreibeAtomar(p(PASSKEYS), l); },
+    // Every read-modify-write of these files runs inside this (shared with the CLI).
+    sperre: (fn, o) => mitSperre(dataDir, fn, o),
   };
 }
 
@@ -123,9 +127,9 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
     if (!cfg) return false;
     if (schreibbar) return true;
     try {
-      fs.mkdirSync(dir, { recursive: true });
+      fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
       const probe = path.join(dir, '.probe-' + process.pid + '-' + crypto.randomBytes(4).toString('hex'));
-      fs.writeFileSync(probe, 'x');
+      fs.writeFileSync(probe, 'x', { mode: 0o600 });
       fs.unlinkSync(probe);
       schreibbar = true;
     } catch { schreibbar = false; }
@@ -141,12 +145,21 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
     return list.length > RATE_LIMIT;
   }
 
-  function neueChallenge(eintrag) {
+  // Per IP at most MAX_CHALLENGES_IP pending (its own oldest is evicted, never other users'); globally capped.
+  function neueChallenge(ip, eintrag) {
     const t = now();
-    for (const [k, v] of challenges) if (v.ablauf <= t) challenges.delete(k);
+    let vonIp = 0;
+    for (const [k, v] of challenges) {
+      if (v.ablauf <= t) challenges.delete(k);
+      else if (v.ip === ip) vonIp++;
+    }
+    for (const [k, v] of challenges) {
+      if (vonIp < MAX_CHALLENGES_IP) break;
+      if (v.ip === ip) { challenges.delete(k); vonIp--; }
+    }
     while (challenges.size >= MAX_CHALLENGES) challenges.delete(challenges.keys().next().value);
     const c = Buffer.from(random(32)).toString('base64url');
-    challenges.set(c, { ...eintrag, ablauf: t + CHALLENGE_TTL });
+    challenges.set(c, { ...eintrag, ip, ablauf: t + CHALLENGE_TTL });
     return c;
   }
 
@@ -205,15 +218,18 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
       if (req.headers['x-g42-editor'] !== '1' || req.headers.origin !== cfg.origin) return reply(403, { error: 'herkunft' });
       let body;
       try { body = await leseJson(req); } catch (e) { return reply(e.status || 400, { error: 'bad_request' }); }
-      try { return fn(body, reply, req); } catch { return reply(500, { error: 'intern' }); }
+      try { return fn(body, reply, req, ip); } catch (e) {
+        if (e.art === 'gesperrt') return reply(503, { error: 'editor_aus' });
+        return reply(500, { error: 'intern' });
+      }
     };
   }
 
-  const registrierenStart = route((body, reply) => {
+  const registrierenStart = route((body, reply, req, ip) => {
     const g = gueltigeEinladung(body.einladung);
     if (!g) return reply(400, { error: 'einladung' });
     const userId = typeof g.e.userId === 'string' && g.e.userId ? g.e.userId : Buffer.from(random(16)).toString('base64url');
-    const challenge = neueChallenge({ zweck: 'registrieren', einladungHash: g.hash, userId });
+    const challenge = neueChallenge(ip, { zweck: 'registrieren', einladungHash: g.hash, userId });
     const optionen = passkey.registrierungOptionen({
       rpId: cfg.rpId, rpName: RP_NAME, userId: Buffer.from(userId, 'base64url'), userName: g.e.name, challenge,
       excludeCredentials: daten.passkeys().map((p) => p.id),
@@ -234,18 +250,23 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
       if (e.art === 'passkey') return reply(400, { error: 'registrierung' });
       throw e;
     }
-    const pks = daten.passkeys();
-    if (pks.some((p) => p && p.id === neu.id)) return reply(400, { error: 'registrierung' });
-    // Invitation first: a crash between the two writes burns it rather than leaving it reusable.
-    g.e.benutzt = true;
-    daten.schreibeEinladungen(g.liste);
-    pks.push({ id: neu.id, name: g.e.name, jwk: neu.jwk, alg: neu.alg, signCount: neu.signCount, userId: c.userId, erstellt: new Date(now()).toISOString() });
-    daten.schreibePasskeys(pks);
-    return reply(200, { wer: g.e.name }, neueSitzung(g.e.name, neu.id));
+    return daten.sperre(() => {
+      // Re-read under the lock: the CLI (another process) may have changed the files meanwhile.
+      const g2 = gueltigeEinladung(body.einladung);
+      if (!g2) return reply(400, { error: 'einladung' });
+      const pks = daten.passkeys();
+      if (pks.some((p) => p && p.id === neu.id)) return reply(400, { error: 'registrierung' });
+      // Invitation first: a crash between the two writes burns it rather than leaving it reusable.
+      g2.e.benutzt = true;
+      daten.schreibeEinladungen(g2.liste);
+      pks.push({ id: neu.id, name: g2.e.name, jwk: neu.jwk, alg: neu.alg, signCount: neu.signCount, userId: c.userId, erstellt: new Date(now()).toISOString() });
+      daten.schreibePasskeys(pks);
+      return reply(200, { wer: g2.e.name }, neueSitzung(g2.e.name, neu.id));
+    });
   });
 
-  const anmeldenStart = route((body, reply) => {
-    const challenge = neueChallenge({ zweck: 'anmelden' });
+  const anmeldenStart = route((body, reply, req, ip) => {
+    const challenge = neueChallenge(ip, { zweck: 'anmelden' });
     return reply(200, { optionen: passkey.anmeldungOptionen({ rpId: cfg.rpId, challenge }) });
   });
 
@@ -253,19 +274,21 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
     const antwort = body.antwort;
     const c = nimmChallenge(antwort, 'anmelden');
     if (!c) return reply(401, { error: 'anmeldung' });
-    const pks = daten.passkeys();
-    const pk = pks.find((p) => p && typeof antwort.id === 'string' && p.id === antwort.id);
-    if (!pk) return reply(401, { error: 'anmeldung' });
-    let r;
-    try {
-      r = passkey.pruefeAnmeldung({ antwort, challenge: c.challenge, origin: cfg.origin, rpId: cfg.rpId, passkey: pk });
-    } catch (e) {
-      if (e.art === 'passkey') return reply(401, { error: 'anmeldung' });
-      throw e;
-    }
-    pk.signCount = r.signCount;
-    daten.schreibePasskeys(pks);
-    return reply(200, { wer: pk.name }, neueSitzung(pk.name, pk.id));
+    return daten.sperre(() => {
+      const pks = daten.passkeys();
+      const pk = pks.find((p) => p && typeof antwort.id === 'string' && p.id === antwort.id);
+      if (!pk) return reply(401, { error: 'anmeldung' });
+      let r;
+      try {
+        r = passkey.pruefeAnmeldung({ antwort, challenge: c.challenge, origin: cfg.origin, rpId: cfg.rpId, passkey: pk });
+      } catch (e) {
+        if (e.art === 'passkey') return reply(401, { error: 'anmeldung' });
+        throw e;
+      }
+      pk.signCount = r.signCount;
+      daten.schreibePasskeys(pks);
+      return reply(200, { wer: pk.name }, neueSitzung(pk.name, pk.id));
+    });
   });
 
   const abmelden = route((body, reply, req) => {

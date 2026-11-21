@@ -470,3 +470,97 @@ test('CLI: Fehler ohne Name, ohne Env, mit kaputter Datei', () => {
   assert.notStrictEqual(r.status, 0);
   assert.strictEqual(fs.readFileSync(path.join(dataDir, 'einladungen.json'), 'utf8'), '{kaputt', 'kaputte Datei nicht überschrieben');
 });
+
+// --- Fix-Runde 1: Sperre, Per-IP-Grenze, Dateirechte ---
+test('zwei parallele registrieren/ende mit derselben Einladung: genau einmal 200', async () => {
+  const s = await starte();
+  const code = einladen(s.dataDir, 'Ingrid');
+  const a = neuerAuthenticator();
+  const b = neuerAuthenticator();
+  const st1 = await s.post('/api/editor/registrieren/start', { einladung: code });
+  const st2 = await s.post('/api/editor/registrieren/start', { einladung: code });
+  const [r1, r2] = await Promise.all([
+    s.post('/api/editor/registrieren/ende', { einladung: code, antwort: a.registriere({ challenge: ch(st1), origin: ORIGIN, rpId: RP }) }),
+    s.post('/api/editor/registrieren/ende', { einladung: code, antwort: b.registriere({ challenge: ch(st2), origin: ORIGIN, rpId: RP }) }),
+  ]);
+  assert.deepStrictEqual([r1.status, r2.status].sort(), [200, 400]);
+  assert.deepStrictEqual((r1.status === 400 ? r1 : r2).json, { error: 'einladung' });
+  assert.strictEqual(JSON.parse(fs.readFileSync(path.join(s.dataDir, 'passkeys.json'), 'utf8')).length, 1);
+  await s.stop();
+});
+
+test('Challenges pro IP begrenzt: älteste der eigenen IP verdrängt, andere IPs unberührt', async () => {
+  const s = await starte();
+  const { a } = await registriere(s);
+  const andere = klient(s.base);
+  const fremdStart = await andere('/api/editor/anmelden/start', {});
+  const eigene = [];
+  for (let i = 0; i < 6; i++) eigene.push(await s.post('/api/editor/anmelden/start', {}));
+  const ende = (post, start) => post('/api/editor/anmelden/ende', { antwort: a.melde({ challenge: ch(start), origin: ORIGIN, rpId: RP }) });
+  assert.strictEqual((await ende(s.post, eigene[0])).status, 401, 'älteste eigene verdrängt');
+  assert.strictEqual((await ende(s.post, eigene[1])).status, 200, 'zweitälteste noch da');
+  assert.strictEqual((await ende(s.post, eigene[5])).status, 200);
+  assert.strictEqual((await ende(andere, fremdStart)).status, 200, 'Challenge der anderen IP bleibt');
+  await s.stop();
+});
+
+test('Dateirechte: Dateien 0600, Verzeichnis 0700', async (t) => {
+  const s = await starte({ dataDir: path.join(tmp(), 'neu', 'editor') });
+  t.after(() => s.stop());
+  // Erste Anfrage legt das Verzeichnis an (einladen() im Test würde es sonst mit 0755 anlegen).
+  assert.strictEqual((await s.post('/api/editor/anmelden/start', {})).status, 200);
+  assert.strictEqual(fs.statSync(s.dataDir).mode & 0o777, 0o700);
+  await registriere(s);
+  assert.strictEqual(fs.statSync(path.join(s.dataDir, 'passkeys.json')).mode & 0o777, 0o600);
+  assert.strictEqual(fs.statSync(path.join(s.dataDir, 'einladungen.json')).mode & 0o777, 0o600, 'vom Server neu geschrieben');
+  const dataDir = path.join(tmp(), 'cli', 'editor');
+  assert.strictEqual(cli(['Name'], { ...ENV, EDITOR_DATA_DIR: dataDir }).status, 0);
+  assert.strictEqual(fs.statSync(dataDir).mode & 0o777, 0o700);
+  assert.strictEqual(fs.statSync(path.join(dataDir, 'einladungen.json')).mode & 0o777, 0o600);
+});
+
+test('Sperre: gehaltene Sperre -> CLI scheitert klar, Server 503; veraltete Sperre wird übernommen', async () => {
+  const dataDir = tmp();
+  const env = { ...ENV, EDITOR_DATA_DIR: dataDir };
+  const sperre = path.join(dataDir, '.sperre');
+  fs.writeFileSync(sperre, '1');
+  const r = cli(['Name'], env);
+  assert.notStrictEqual(r.status, 0);
+  assert.match(r.stderr, /gesperrt/);
+  assert.ok(!fs.existsSync(path.join(dataDir, 'einladungen.json')));
+  assert.ok(fs.existsSync(sperre), 'fremde Sperre nicht entfernt');
+  assert.notStrictEqual(cli(['--entfernen', 'abc'], env).status, 0);
+
+  // Server: Anmeldung unter gehaltener Sperre -> 503 editor_aus
+  fs.unlinkSync(sperre);
+  const s = await starte({ dataDir });
+  const { a } = await registriere(s);
+  fs.writeFileSync(sperre, '1');
+  const { res } = await melde(s, a);
+  assert.strictEqual(res.status, 503);
+  assert.deepStrictEqual(res.json, { error: 'editor_aus' });
+  assert.strictEqual(res.headers['set-cookie'], undefined);
+
+  // Veraltet (älter als 30 s): wird übernommen und danach freigegeben
+  const alt = new Date(Date.now() - 60_000);
+  fs.utimesSync(sperre, alt, alt);
+  assert.strictEqual(cli(['Zweite'], env).status, 0);
+  assert.ok(!fs.existsSync(sperre));
+  assert.strictEqual((await melde(s, a)).res.status, 200);
+  // Fehler im CLI innerhalb der Sperre (unbekannter Präfix) gibt die Sperre frei
+  assert.notStrictEqual(cli(['--entfernen', 'zzzz'], env).status, 0);
+  assert.ok(!fs.existsSync(sperre));
+  await s.stop();
+});
+
+test('mitSperre: Fehler in fn gibt frei; gehaltene Sperre -> art gesperrt', () => {
+  const { mitSperre } = require('./datei-sperre');
+  const dir = tmp();
+  assert.throws(() => mitSperre(dir, () => { throw new Error('x'); }), /x/);
+  assert.ok(!fs.existsSync(path.join(dir, '.sperre')));
+  assert.strictEqual(mitSperre(dir, () => 7), 7);
+  const t0 = Date.now();
+  assert.throws(() => mitSperre(dir, () => mitSperre(dir, () => 1, { warten: 100 })), (e) => e.art === 'gesperrt');
+  assert.ok(Date.now() - t0 >= 100);
+  assert.ok(!fs.existsSync(path.join(dir, '.sperre')));
+});
