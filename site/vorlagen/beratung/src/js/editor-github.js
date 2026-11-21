@@ -133,6 +133,8 @@
       // Folgesendung: Titel auf den neuen Stand, Änderungsliste und Notiz als Kommentar (die PR-Beschreibung bleibt).
       await anfrage(ctx, 'PATCH', r + '/pulls/' + eingabe.pr.nummer, { title: eingabe.titel });
       await anfrage(ctx, 'POST', r + '/issues/' + eingabe.pr.nummer + '/comments', { body: eingabe.text });
+      // PRs von vor Paket A haben das Label noch nicht: nachziehen, Fehler egal.
+      try { await setzeLabel(ctx, eingabe.pr.nummer, 'manual-review'); } catch (e) { /* bewusst ignoriert */ }
       return { nummer: eingabe.pr.nummer, url: eingabe.pr.url, branch };
     }
     await anfrage(ctx, 'POST', r + '/git/refs', { ref: 'refs/heads/' + branch, sha: neu.sha }, [409, 422]);

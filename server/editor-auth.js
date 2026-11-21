@@ -8,7 +8,7 @@ const RATE_LIMIT = 20; // requests per IP per minute, all four routes together
 const COOKIE = 'g42_state';
 const cookieAttrs = (maxAge) => `Path=/api/editor; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
 const TOKEN_COOKIE = 'g42_token';
-const tokenAttrs = (maxAge) => `Path=/api/editor/token; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
+const tokenAttrs = (maxAge) => `Path=/api/editor/token; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Lax`;
 const MAX_BODY = 2048;
 const NO_CACHE = { 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' };
 const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', ...NO_CACHE };

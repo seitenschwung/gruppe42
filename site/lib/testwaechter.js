@@ -35,9 +35,9 @@
   }
 
   // Bidi-Steuerzeichen und Zeichen ohne Breite: unsichtbar, können Text verfälschen oder verschleiern.
-  const STEUERZEICHEN = /[\u202A-\u202E\u2066-\u2069\u200B-\u200F\uFEFF]/;
-  // C0-Steuerzeichen inkl. Zeilenumbruch und Tab: alle Textfelder sind einzeilig.
-  const C0 = /[\u0000-\u001F]/;
+  const STEUERZEICHEN = /[\u202A-\u202E\u2066-\u2069\u200B-\u200F\uFEFF\u2028\u2029\u2060-\u2064\u00AD\u061C]/;
+  // C0/C1-Steuerzeichen (U+0000–U+001F, U+007F–U+009F) inkl. Zeilenumbruch und Tab: alle Textfelder sind einzeilig.
+  const C0 = /[\u0000-\u001F\u007F-\u009F]/;
 
   const MARKER = '<text>';
   const PLATZHALTER = '{names}';

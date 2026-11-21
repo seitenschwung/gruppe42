@@ -335,9 +335,9 @@
       eingabe.focus();
     }, { hidden: true, 'aria-label': 'Zurücksetzen: ' + f.label });
     eingabe.addEventListener('input', () => {
-      if (/[\r\n]/.test(eingabe.value)) {
+      if (/[\r\n\u2028\u2029]/.test(eingabe.value)) {
         const pos = eingabe.selectionStart;
-        eingabe.value = eingabe.value.replace(/\r\n?|\n/g, ' ');
+        eingabe.value = eingabe.value.replace(/\r\n?|\n|\u2028|\u2029/g, ' ');
         eingabe.setSelectionRange(pos, pos);
       }
       passeHoeheAn(eingabe);

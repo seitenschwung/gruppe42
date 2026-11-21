@@ -254,12 +254,25 @@ test('sende: Label-Fehler bricht nicht ab', async () => {
   assert.strictEqual(r.nummer, 12);
 });
 
-test('sende: Folgesendung setzt kein Label', async () => {
+test('sende: Folgesendung setzt Label nach', async () => {
   const routen = schreibRoutenBasis('inhalt/a-1');
   routen['PATCH ' + R + '/git/refs/heads/inhalt/a-1'] = { body: {} };
   routen['PATCH ' + R + '/pulls/3'] = { body: {} };
   routen['POST ' + R + '/issues/3/comments'] = { body: {} };
+  routen['POST ' + R + '/issues/3/labels'] = { body: [] };
   const m = mock(routen);
   await G.sende(ctxMit(m), { testId: 'a', dateien, titel: 't', text: 'x', pr: { nummer: 3, branch: 'inhalt/a-1', url: 'u' } });
-  assert.ok(!m.aufrufe.some((a) => a.url.endsWith('/labels')));
+  const l = m.aufrufe[m.aufrufe.length - 1];
+  assert.strictEqual(l.m + ' ' + l.url.replace(R, ''), 'POST /issues/3/labels');
+  assert.deepStrictEqual(l.body, { labels: ['manual-review'] });
+});
+
+test('sende: Folgesendung, Label-Fehler egal', async () => {
+  const routen = schreibRoutenBasis('inhalt/a-1');
+  routen['PATCH ' + R + '/git/refs/heads/inhalt/a-1'] = { body: {} };
+  routen['PATCH ' + R + '/pulls/3'] = { body: {} };
+  routen['POST ' + R + '/issues/3/comments'] = { body: {} };
+  routen['POST ' + R + '/issues/3/labels'] = { status: 404, body: {} };
+  const r = await G.sende(ctxMit(mock(routen)), { testId: 'a', dateien, titel: 't', text: 'x', pr: { nummer: 3, branch: 'inhalt/a-1', url: 'u' } });
+  assert.strictEqual(r.nummer, 3);
 });

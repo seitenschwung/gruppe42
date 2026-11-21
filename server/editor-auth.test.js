@@ -87,7 +87,7 @@ test('callback_ok', async () => {
   assert.strictEqual(r.headers.Location, '/editor/#angemeldet');
   assert.ok(!r.headers.Location.includes('gho_a'), 'Token nicht im Location');
   const sc = [].concat(r.headers['Set-Cookie']);
-  assert.ok(sc.includes(`g42_token=${encodeURIComponent('gho_a b+c')}.28800; Path=/api/editor/token; Max-Age=60; HttpOnly; Secure; SameSite=Strict`), sc.join('|'));
+  assert.ok(sc.includes(`g42_token=${encodeURIComponent('gho_a b+c')}.28800; Path=/api/editor/token; Max-Age=60; HttpOnly; Secure; SameSite=Lax`), sc.join('|'));
   assert.ok(sc.some((c) => /^g42_state=; Path=\/api\/editor; Max-Age=0/.test(c)), sc.join('|'));
   assert.strictEqual(r.headers['Cache-Control'], 'no-store');
   assert.strictEqual(r.headers['Referrer-Policy'], 'no-referrer');
@@ -97,7 +97,7 @@ test('callback_ohne_ablauf', async () => {
   const { routes } = setup(ENV, { ok: true, json: async () => ({ access_token: 'tok' }) });
   const r = await call(routes['/api/editor/callback'], `/api/editor/callback?code=c&state=${NONCE}`, cookie());
   assert.strictEqual(r.headers.Location, '/editor/#angemeldet');
-  assert.ok([].concat(r.headers['Set-Cookie']).includes('g42_token=tok.; Path=/api/editor/token; Max-Age=60; HttpOnly; Secure; SameSite=Strict'));
+  assert.ok([].concat(r.headers['Set-Cookie']).includes('g42_token=tok.; Path=/api/editor/token; Max-Age=60; HttpOnly; Secure; SameSite=Lax'));
 });
 
 test('github_fehler', async () => {
@@ -133,7 +133,7 @@ test('rate_limit', async () => {
 
 const HDR = { host: 'gruppe42.seitenschwung.com', 'x-g42-editor': '1', origin: 'https://gruppe42.seitenschwung.com' };
 const TOKEN_COOKIE = { cookie: `g42_token=${encodeURIComponent('gho_a b+c.d')}.28800` };
-const CLEAR = 'g42_token=; Path=/api/editor/token; Max-Age=0; HttpOnly; Secure; SameSite=Strict';
+const CLEAR = 'g42_token=; Path=/api/editor/token; Max-Age=0; HttpOnly; Secure; SameSite=Lax';
 
 test('token_ok_und_einmalig', async () => {
   const { routes } = setup();

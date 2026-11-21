@@ -221,7 +221,7 @@ test('status_ohne_schlusspunkt', () => mit('teamklima', (d) => {
 }));
 
 test('steuerzeichen_verboten', () => {
-  const verboten = ['‪', '‮', '⁦', '⁩', '​', '‏', '﻿'];
+  const verboten = ['‪', '‮', '⁦', '⁩', '​', '‏', '﻿', '\u2028', '\u2029', '\u2060', '\u2064', '\u00AD', '\u061C'];
   for (const z of verboten) {
     mit('teamklima', (d) => {
       d.questions[0].text = 'Fra' + z + 'ge';
@@ -231,7 +231,7 @@ test('steuerzeichen_verboten', () => {
     });
   }
   // Grenzen: direkt daneben liegende Zeichen sind erlaubt
-  for (const z of [' ', ' ', '⁥', '⁪', ' ', '‐']) {
+  for (const z of ['‧', ' ', '⁥', '⁪', ' ', '‐']) {
     mit('teamklima', (d) => {
       d.questions[0].text = 'Fra' + z + 'ge';
       assert.deepStrictEqual(pruefeTexte(d, TEXTFELDER_TEST), [], 'U+' + z.charCodeAt(0).toString(16));
@@ -245,7 +245,7 @@ test('steuerzeichen_verboten', () => {
 
 test('steuerzeichen_c0_verboten', () => {
   const meldung = 'Enthält Zeilenumbrüche oder Steuerzeichen – bitte als eine Zeile schreiben.';
-  for (const z of ['\u0000', '\t', '\n', '\r', '\u001B', '\u001F']) {
+  for (const z of ['\u0000', '\t', '\n', '\r', '\u001B', '\u001F', '\u007F', '\u0085', '\u009F']) {
     mit('teamklima', (d) => {
       d.questions[0].text = 'Fra' + z + 'ge';
       const m = pruefeTexte(d, TEXTFELDER_TEST).filter((x) => x.pfad === 'questions[0].text');
