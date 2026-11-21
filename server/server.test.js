@@ -101,11 +101,34 @@ test('andere_seiten_ohne_csp', async () => {
   assert.strictEqual(headersFor('/editorial.html')['Content-Security-Policy'], undefined);
 });
 
+test('editor_header_kodierte_pfade', async () => {
+  for (const p of ['/%2feditor/', '/x/..%2feditor/index.html', '/%2Feditor', '/./editor/']) {
+    const r = await get(p);
+    assert.ok([200, 301].includes(r.status), `${p} ${r.status}`);
+    assert.strictEqual(r.headers.get('content-security-policy'), EDITOR_CSP, p);
+    assert.strictEqual(r.headers.get('x-frame-options'), 'DENY', p);
+    assert.strictEqual(r.headers.get('cache-control'), 'no-store', p);
+  }
+});
+
+const logFor = async (p, needle) => {
+  await get(p);
+  for (let i = 0; i < 100 && !lines.some((l) => l.includes(needle)); i++) await new Promise((r) => setTimeout(r, 10));
+  return lines.filter((l) => l.includes(needle));
+};
+
 test('log_ohne_query', async () => {
-  await get('/api/editor/callback?code=geheim&state=x');
-  await get('/shop.html?a=1');
-  await new Promise((r) => setTimeout(r, 50));
-  const cb = lines.find((l) => l.includes('/api/editor/callback'));
-  assert.ok(cb && !cb.includes('geheim') && !cb.includes('?'), cb);
-  assert.ok(lines.some((l) => l.includes('"GET /shop.html?a=1"')));
+  const cb = await logFor('/api/editor/callback?code=geheim&state=x', '/api/editor/callback');
+  assert.ok(cb.length && cb.every((l) => !l.includes('geheim') && !l.includes('?')), cb.join());
+  assert.ok((await logFor('/shop.html?a=1', '/shop.html?a=1')).length);
+});
+
+test('log_ohne_query_kodiert', async () => {
+  for (const [p, needle] of [['/api/%65ditor/callback?code=geheim1', '/api/%65ditor/callback'],
+    ['/x/..%2fapi/editor/callback?code=geheim2', '/x/..%2fapi/editor/callback'],
+    ['/%zz?code=geheim3', '/%zz']]) {
+    const l = await logFor(p, needle);
+    assert.ok(l.length, p);
+    assert.ok(l.every((x) => !x.includes('geheim') && !x.includes('?')), l.join());
+  }
 });

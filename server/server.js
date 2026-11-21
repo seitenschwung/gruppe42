@@ -24,7 +24,7 @@ const SECURITY_HEADERS = {
 
 const EDITOR_CSP = "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'";
 const isEditorPath = (p) => p === '/editor' || p.startsWith('/editor/');
-const isEditorApi = (u) => u === '/api/editor' || u.startsWith('/api/editor/') || u.startsWith('/api/editor?');
+const isEditorApi = (u) => u === '/api/editor' || u.startsWith('/api/editor/');
 
 // Headers for every response of a path; /editor gets a strict CSP and no caching.
 function headersFor(pathname) {
@@ -52,20 +52,25 @@ function createServer({ root, version, log, api }) {
   const rootDir = path.resolve(root);
 
   return http.createServer((req, res) => {
+    // Decode and normalize once: headers, routing, log redaction and file lookup all see the same path
+    // (no "//editor/" or "/x/..%2feditor/" bypass).
+    let pathname = null;
+    try {
+      const decoded = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
+      pathname = path.posix.normalize(decoded);
+      if (!pathname.startsWith('/')) pathname = '/' + pathname;
+    } catch { /* bad percent escape: answered with 400 below */ }
     if (log && req.url !== '/healthz') {
       // Combined log format, the one CrowdSec's http/nginx parsers expect.
+      // OAuth code/state must never reach the log: no query for /api/editor, nor when the path can't be parsed.
+      const logUrl = pathname === null || isEditorApi(pathname) ? req.url.split('?')[0] : req.url;
       res.on('finish', () => {
         const h = req.headers;
         const ip = (h['x-forwarded-for'] || req.socket.remoteAddress || '-').split(',')[0].trim();
-        // OAuth code/state must never reach the log: drop the query for /api/editor.
-        const logUrl = isEditorApi(req.url) ? req.url.split('?')[0] : req.url;
         log(`${ip} - - [${clfDate(new Date())}] "${req.method} ${logUrl}" ${res.statusCode} ${res.getHeader('content-length') || '-'} "${h.referer || '-'}" "${h['user-agent'] || '-'}"`);
       });
     }
-    let pathname;
-    try {
-      pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    } catch {
+    if (pathname === null) {
       return send(res, 400, { 'Content-Type': 'text/plain; charset=utf-8' }, 'Bad Request\n');
     }
     res.pathHeaders = headersFor(pathname);
