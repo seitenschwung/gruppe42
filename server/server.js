@@ -151,20 +151,35 @@ function serve(req, res, file, st, head) {
 module.exports = { createServer, headersFor };
 
 if (require.main === module) {
-  // TODO(Task 5): createInhalte + createSeiten hier verdrahten und seiten an createServer übergeben.
   const orders = require('./orders').createOrderStore({ dir: process.env.DATA_DIR || '/data' });
-  // Editor login (invitation, passkey, session); pruefe(req) is for the editor API (Task 5).
+  // Live-Inhalte: scheitert das Laden der Basis, bleibt die öffentliche Seite Image-Stand und die Editor-API antwortet 503.
+  const { pfadeAusEnv, createEditorApi } = require('./editor-api');
+  const root = process.env.STATIC_ROOT || path.join(__dirname, '..', 'html');
+  let inhalte = null;
+  let seiten = null;
+  try {
+    inhalte = require('./inhalte').createInhalte(pfadeAusEnv(process.env));
+    seiten = require('./seiten').createSeiten({ root, inhalte, Testseite: require('../site/lib/testseite.js'), log: console.log });
+  } catch (e) {
+    console.log('editor: Inhalte nicht geladen, Editor aus');
+    inhalte = null;
+    seiten = null;
+  }
+  // Editor login (invitation, passkey, session) and the editor API behind it.
   const sitzung = require('./editor-sitzung').createSitzung({ env: process.env });
+  const editorApi = createEditorApi({ env: process.env, inhalte, seiten, sitzung, fetch, log: console.log });
   const server = createServer({
-    root: process.env.STATIC_ROOT || path.join(__dirname, '..', 'html'),
+    root,
     version: process.env.APP_VERSION || 'dev',
     log: console.log,
+    seiten,
     api: {
       routes: {
         ...require('./checkout').createApi({ products: require('./products').loadProducts(), env: process.env, fetch }).routes,
         ...require('./editor-auth').createEditorAuth({ env: process.env, fetch }).routes,
         // After editor-auth on purpose: its /api/editor/abmelden is replaced (editor-auth goes in Task 7).
         ...sitzung.routes,
+        ...editorApi.routes,
         ...require('./webhook').createWebhook({
           env: process.env,
           log: console.log,

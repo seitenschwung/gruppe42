@@ -8,6 +8,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const passkey = require('./passkey');
 const { mitSperre } = require('./datei-sperre');
+const { JSON_HEADERS, ipVon, leseJson: leseJsonMax, createLimiter } = require('./editor-http');
 
 const RATE_LIMIT = 30; // requests per IP per minute, all routes together
 const MAX_BODY = 16384;
@@ -19,7 +20,6 @@ const ABSOLUT = 12 * 3600e3;
 const RP_NAME = 'Gruppe 42 Editor';
 const COOKIE = 'g42_sitzung';
 const COOKIE_ATTR = 'Path=/api/editor; HttpOnly; Secure; SameSite=Strict';
-const JSON_HEADERS = { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' };
 const EINLADUNGEN = 'einladungen.json';
 const PASSKEYS = 'passkeys.json';
 
@@ -81,27 +81,7 @@ function leseCookie(header, name) {
   return undefined;
 }
 
-function leseJson(req) {
-  return new Promise((resolve, reject) => {
-    if (!/^application\/json\b/i.test(req.headers['content-type'] || '')) return reject(Object.assign(new Error('type'), { status: 415 }));
-    let size = 0;
-    const chunks = [];
-    req.on('data', (c) => {
-      size += c.length;
-      if (size > MAX_BODY) { if (size - c.length <= MAX_BODY) reject(Object.assign(new Error('size'), { status: 413 })); return; }
-      chunks.push(c);
-    });
-    req.on('end', () => {
-      if (size > MAX_BODY) return;
-      if (size === 0) return resolve({});
-      try {
-        const v = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        resolve(v && typeof v === 'object' && !Array.isArray(v) ? v : {});
-      } catch { reject(Object.assign(new Error('json'), { status: 400 })); }
-    });
-    req.on('error', reject);
-  });
-}
+const leseJson = (req) => leseJsonMax(req, MAX_BODY);
 
 // Challenge string from the (not yet verified) clientDataJSON, only to look it up; verification follows.
 function challengeAus(antwort) {
@@ -120,7 +100,7 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
   const now = () => +jetzt();
   const challenges = new Map(); // challenge (base64url) -> {zweck, einladungHash?, userId?, ablauf}
   const sitzungen = new Map(); // sha256(session id) -> {wer, passkeyId, erstellt, zuletzt}
-  const hits = new Map(); // ip -> [timestamps]
+  const limited = createLimiter(RATE_LIMIT, now);
 
   let schreibbar = false;
   function verfuegbar() {
@@ -134,15 +114,6 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
       schreibbar = true;
     } catch { schreibbar = false; }
     return schreibbar;
-  }
-
-  function limited(ip) {
-    const t = now();
-    const list = (hits.get(ip) || []).filter((x) => t - x < 60_000);
-    list.push(t);
-    hits.set(ip, list);
-    if (hits.size > 5000) for (const [k, v] of hits) if (t - v[v.length - 1] > 60_000) hits.delete(k);
-    return list.length > RATE_LIMIT;
   }
 
   // Per IP at most MAX_CHALLENGES_IP pending (its own oldest is evicted, never other users'); globally capped.
@@ -212,8 +183,7 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
     return async (req, res, send) => {
       const reply = (status, obj, cookie) => send(res, status, cookie ? { ...JSON_HEADERS, 'Set-Cookie': cookie } : JSON_HEADERS, JSON.stringify(obj) + '\n');
       if (!verfuegbar()) return reply(503, { error: 'editor_aus' });
-      // Behind the reverse proxy the last X-Forwarded-For entry is the one the proxy added.
-      const ip = (req.headers['x-forwarded-for'] || req.socket.remoteAddress || '-').split(',').pop().trim();
+      const ip = ipVon(req);
       if (limited(ip)) return reply(429, { error: 'rate_limited' });
       if (req.headers['x-g42-editor'] !== '1' || req.headers.origin !== cfg.origin) return reply(403, { error: 'herkunft' });
       let body;

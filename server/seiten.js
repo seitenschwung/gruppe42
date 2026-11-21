@@ -24,7 +24,8 @@ function innen(text, name) {
   return text.slice(auf.length, text.length - `<!--/g42:${name}-->`.length);
 }
 
-function createSeiten({ root, inhalte, Testseite }) {
+// log: optional, bekommt je Renderfehler genau eine Zeile ohne Texte.
+function createSeiten({ root, inhalte, Testseite, log }) {
   const T = Testseite;
   const rootDir = path.resolve(root);
   const seiten = new Map(); // pathname -> {html, etag}
@@ -61,9 +62,9 @@ function createSeiten({ root, inhalte, Testseite }) {
     if (!inhalte) { seiten.clear(); return; }
     const ids = testId ? [testId] : inhalte.liste().map((t) => t.id);
     for (const id of ids) {
-      try { testSeite(id); } catch (e) { seiten.delete('/' + id + '.html'); }
+      try { testSeite(id); } catch (e) { seiten.delete('/' + id + '.html'); if (log) log(`seiten: Rendern fehlgeschlagen (${id})`); }
     }
-    try { uebersicht(); } catch (e) { seiten.delete('/selbsttests.html'); }
+    try { uebersicht(); } catch (e) { seiten.delete('/selbsttests.html'); if (log) log('seiten: Rendern fehlgeschlagen (selbsttests)'); }
   }
 
   aktualisiere();
