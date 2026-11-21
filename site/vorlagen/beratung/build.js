@@ -16,6 +16,8 @@ const path = require('path');
 const crypto = require('crypto');
 const h = require('../../lib/helfer');
 const { bildVerarbeitung, bildTag, vorladen } = require('../../lib/bilder');
+const W = require('../../lib/testwaechter');
+const { abdruckPfad, ABDRUCK_DATEI } = require('../../lib/struktur-erzeugen');
 
 const ROOT = __dirname;
 const DATEI = path.resolve(process.argv[2] || path.join(ROOT, '../../kunden/gruppe42/gruppe42.json'));
@@ -72,6 +74,61 @@ for (const id of ids) {
   if (reserviert.has(id)) { console.error(`✖ id "${id}" ist reserviert.`); process.exit(1); }
   if (ids.indexOf(id) !== ids.lastIndexOf(id)) { console.error(`✖ id "${id}" kommt doppelt vor.`); process.exit(1); }
 }
+
+// Wächter: Struktur gegen den eingecheckten Abdruck (tests/struktur.json), Texte gegen die Textregeln.
+// Nach bewusster Strukturänderung Abdruck neu erzeugen: node site/lib/struktur-erzeugen.js <pfad>/gruppe42.json
+let abdruckCache = null;
+function ladeAbdruck() {
+  if (abdruckCache) return abdruckCache;
+  const pfad = abdruckPfad(DATEI);
+  const erzeugen = 'node site/lib/struktur-erzeugen.js ' + path.relative(process.cwd(), DATEI);
+  if (!fs.existsSync(pfad)) {
+    console.error(`✖ ${ABDRUCK_DATEI} fehlt (${pfad}). Erzeugen mit: ${erzeugen}`);
+    process.exit(1);
+  }
+  try { abdruckCache = JSON.parse(fs.readFileSync(pfad, 'utf8')); } catch (e) {
+    console.error(`✖ ${ABDRUCK_DATEI} konnte nicht gelesen werden: ${e.message}`);
+    process.exit(1);
+  }
+  return abdruckCache;
+}
+function testMeldungen(daten, abdruck) {
+  const soll = abdruck.tests && abdruck.tests[daten.id];
+  const aus = [];
+  if (!soll) aus.push(`Kein Eintrag für "${daten.id}" in ${ABDRUCK_DATEI}`);
+  else W.pruefeStruktur(daten, soll, W.TEXTFELDER_TEST).forEach((m) => aus.push('Struktur: ' + m));
+  W.pruefeTexte(daten, W.TEXTFELDER_TEST).forEach((m) => aus.push(`${m.pfad}: ${m.meldung}`));
+  return aus;
+}
+// Läuft vor jeder Bildverarbeitung: prüft alle Tests und die Einträge in tests.eintraege, sammelt alle Meldungen.
+function pruefeTests() {
+  const liste_ = liste(s.tests && s.tests.eintraege);
+  if (!liste_.length) return;
+  const abdruck = ladeAbdruck();
+  const aus = [];
+  const sollEintraege = liste(abdruck.eintraege);
+  if (sollEintraege.length !== liste_.length) aus.push(`tests.eintraege: Anzahl ${liste_.length} statt ${sollEintraege.length}`);
+  else liste_.forEach((e, i) => {
+    const pre = `tests.eintraege[${i}]`;
+    W.pruefeStruktur(e, sollEintraege[i], W.TEXTFELDER_EINTRAG).forEach((m) => aus.push(`${pre}.${m}`));
+    W.pruefeTexte(e, W.TEXTFELDER_EINTRAG).forEach((m) => aus.push(`${pre}.${m.pfad}: ${m.meldung}`));
+  });
+  for (const e of liste_) {
+    if (!e || !e.daten) continue;
+    let daten;
+    try { daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), e.daten), 'utf8')); } catch (err) {
+      aus.push(`Test "${e.id}": ${e.daten} konnte nicht gelesen werden: ${err.message}`);
+      continue;
+    }
+    testMeldungen(daten, abdruck).forEach((m) => aus.push(`Test "${e.id}": ${m}`));
+  }
+  if (aus.length) {
+    aus.forEach((m) => console.error(`✖ ${m}`));
+    console.error(`✖ Selbsttests: ${aus.length} Verstoß/Verstöße, Build abgebrochen.`);
+    process.exit(1);
+  }
+}
+pruefeTests();
 
 // ---------------------------------------------------------------------------
 // 2. Ausgabeordner, Schriften, Skript
@@ -431,6 +488,9 @@ function ladeTest(cfg) {
   const daten = JSON.parse(fs.readFileSync(path.resolve(path.dirname(DATEI), cfg.daten), 'utf8'));
   const kennung = `Test "${cfg.id}"`;
   const fehler = (m) => { console.error(`✖ ${kennung}: ${m}`); process.exit(1); };
+  const abdruck = ladeAbdruck();
+  const meldungen = testMeldungen(daten, abdruck);
+  if (meldungen.length) { meldungen.forEach((m) => console.error(`✖ ${kennung}: ${m}`)); process.exit(1); }
   const kat = new Set(liste(daten.categories).map((c) => c.id));
   if (!kat.size || !liste(daten.questions).length || !daten.scale || !daten.result) fehler('categories, questions, scale und result sind Pflicht.');
   daten.questions.forEach((f) => { if (!kat.has(f.category)) fehler(`Frage ${f.id}: unbekannte Kategorie "${f.category}".`); });
