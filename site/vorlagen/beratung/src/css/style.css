@@ -565,7 +565,6 @@ button.knopf:disabled { opacity: .4; cursor: not-allowed; }
 .ed-aktionen .knopf { min-height: 44px; padding: 0 20px; }
 .ed-hinweise li { font-size: 14px; color: var(--terrakotta); }
 .ed-sprung { font: inherit; color: inherit; background: none; border: 0; padding: 0; text-align: left; text-decoration: underline; cursor: pointer; }
-.ed-status { margin-block: 8px 20px; padding: 16px 20px; border-radius: 16px; background: var(--salbei); display: grid; gap: 10px; }
 .ed-dialog { max-width: min(640px, calc(100vw - 32px)); width: 100%; border: 0; border-radius: 20px; padding: 28px; color: var(--espresso); background: var(--creme); }
 .ed-dialog::backdrop { background: #2e252080; }
 .ed-dialog > * + * { margin-top: 14px; }

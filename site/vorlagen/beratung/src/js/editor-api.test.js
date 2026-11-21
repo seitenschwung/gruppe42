@@ -78,8 +78,8 @@ test('fehler_mapping: 401/403/404/409/422/429/503', async () => {
   const aus = await fall(503, { error: 'editor_aus', grund: 'nicht_schreibbar' });
   assert.strictEqual(aus.art, 'aus');
   assert.strictEqual(aus.grund, 'nicht_schreibbar');
-  // Sitzungsrouten liefern 503 ohne grund
-  assert.strictEqual((await fall(503, { error: 'editor_aus' })).grund, 'aus');
+  // 503 ohne grund: leer (die Oberfläche zeigt dann eine neutrale Meldung)
+  assert.strictEqual((await fall(503, { error: 'editor_aus' })).grund, '');
   // 400 der Einrichtung: art fehler, code aus der Antwort
   const e = await fall(400, { error: 'einladung' });
   assert.strictEqual(e.art, 'fehler');

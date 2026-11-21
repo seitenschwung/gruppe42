@@ -10,21 +10,18 @@
   const meldungEl = d.querySelector('[data-ed-meldung]');
   if (!app || !meldungEl || !W || !K || !A || !P || !V || !window.Testseite) return;
 
-  // fetch und credentials werden einmal beim Laden festgehalten; spätere Änderungen (z. B. durch Fremdskripte) wirken nicht.
+  // fetch und credentials.create/get werden einmal beim Laden gebunden; spätere Änderungen (z. B. durch Fremdskripte) wirken nicht.
   const api = A.erstelle(window.fetch.bind(window));
-  const nav = { credentials: navigator.credentials };
   const passkeyDa = P.unterstuetzt(window);
+  const nav = passkeyDa ? { credentials: {
+    create: navigator.credentials.create.bind(navigator.credentials),
+    get: navigator.credentials.get.bind(navigator.credentials),
+  } } : null;
   const SPEICHER = 'g42-editor-entwurf-';
   const GRUPPEN = [
     ['start', 'Startseite des Tests'], ['skala', 'Antwortskala'], ['fragen', 'Fragen'],
     ['ergebnis', 'Ergebnis: allgemein'], ['stufen', 'Ergebnis-Stufen'], ['bereiche', 'Ergebnis je Bereich'],
   ];
-  const AUS = {
-    aus: 'Der Editor ist derzeit nicht eingeschaltet. Bitte wenden Sie sich an Seitenschwung.',
-    nicht_schreibbar: 'Speichern ist gerade nicht möglich, weil der Datenspeicher nicht erreichbar ist. Ihr Entwurf bleibt erhalten. Bitte wenden Sie sich an Seitenschwung.',
-    overlay_unlesbar: 'Die gespeicherten Änderungen können gerade nicht gelesen werden. Bitte wenden Sie sich an Seitenschwung.',
-    gesperrt: 'Gerade wird an anderer Stelle gespeichert. Bitte versuchen Sie es in einem Moment erneut; Ihr Entwurf bleibt erhalten.',
-  };
 
   let wer = '';
   let stand = null; // { tests: [{id, titel, sichtbar, daten, eintrag, verwaist}], testsCfg } von /api/editor/stand
@@ -101,7 +98,7 @@
       zeigeAbgemeldet();
       return meldung('Bitte erneut anmelden. Ihr Entwurf bleibt in diesem Browser gespeichert.', 'fehler');
     }
-    if (art === 'aus') return meldung(AUS[e.grund] || AUS.aus, 'fehler');
+    if (art === 'aus') return meldung(K.ausText(e.grund), 'fehler');
     if (art === 'zuviele') return meldung('Zu viele Anfragen in kurzer Zeit. Bitte warten Sie eine Minute und versuchen Sie es dann erneut.', 'fehler');
     if (art === 'herkunft') return meldung('Die Anfrage wurde abgelehnt. Bitte öffnen Sie den Editor direkt über die Adresse der Website.', 'fehler');
     if (art === 'netz') return meldung('Keine Verbindung. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.', 'fehler');
@@ -218,8 +215,10 @@
   };
 
   // Öffnet den Test mit dem Stand aus /stand; vorspann: Meldungen, die vor den Entwurfshinweisen stehen;
-  // ohne: Label, das schon im Vorspann genannt ist (nicht noch einmal als verworfen melden).
-  function oeffneTest(id, vorspann, ohne) {
+  // ohne: Label, das schon im Vorspann genannt ist (nicht noch einmal als verworfen melden);
+  // opt.art: Art der Meldung (sonst 'fehler' bei Vorspann), opt.extra: Elemente nach dem Text (z. B. Link).
+  function oeffneTest(id, vorspann, ohne, opt) {
+    opt = opt || {};
     const x = stand.tests.find((y) => y.id === id);
     if (!x) return fehler({ art: 'unbekannt' });
     const orig = { test: x.daten, eintrag: x.eintrag };
@@ -241,7 +240,8 @@
     if (verworfen.length) {
       teile.push('Diese Felder wurden inzwischen geändert; Ihr Entwurf wurde dort nicht übernommen: ' + verworfen.join(', ') + '.');
     }
-    meldung(teile.join(' '), verworfen.length || (vorspann && vorspann.length) ? 'fehler' : 'info');
+    const art = verworfen.length ? 'fehler' : opt.art || (vorspann && vorspann.length ? 'fehler' : 'info');
+    meldung(teile.join(' '), art, ...(opt.extra || []));
     zeigeBearbeiten();
   }
 
@@ -428,7 +428,9 @@
     };
     struktur('test', t.jetzt.test, t.soll.test, W.TEXTFELDER_TEST);
     struktur('eintrag', t.jetzt.eintrag, t.soll.eintrag, W.TEXTFELDER_EINTRAG);
+    // t.server enthält nur Meldungen mit Feld (feldlose stehen oben in der Meldung und blockieren nicht).
     for (const [k, liste] of t.server) {
+      if (!t.dom.felder.has(k)) continue;
       const [datei, pfad] = [k.slice(0, k.indexOf('|')), k.slice(k.indexOf('|') + 1)];
       liste.forEach((text) => {
         const schon = (je.get(k) || []).includes(text);
@@ -436,15 +438,6 @@
       });
     }
     return { je, allgemein };
-  }
-
-  // Meldungen aus einer 422-Antwort ({pfad, meldung}, ohne Datei) den Feldern zuordnen.
-  function serverMeldungen(liste) {
-    t.server = new Map();
-    for (const m of liste) {
-      const k = t.dom.felder.has('test|' + m.pfad) ? 'test|' + m.pfad : t.dom.felder.has('eintrag|' + m.pfad) ? 'eintrag|' + m.pfad : '|' + m.pfad;
-      (t.server.get(k) || t.server.set(k, []).get(k)).push(m.meldung);
-    }
   }
 
   function pruefe() {
@@ -601,10 +594,21 @@
     x.dlg.showModal();
   }
 
-  // Meldung nach Speichern oder Rückgängig: "Ist live." nur, wenn der Server die Seite neu erzeugt hat.
-  function erfolg(id, live, vorne) {
-    meldung((vorne ? vorne + ' ' : '') + (live ? 'Ist live.' : 'Gespeichert, wird gerade veröffentlicht – bitte Seite in einer Minute prüfen.'),
-      'info', seitenLink(id));
+  // Nach Speichern oder Rückgängig: Meldung sofort zeigen, dann Stand neu laden und den Test neu öffnen.
+  // "Ist live." mit Link nur, wenn der Server die öffentliche Seite neu erzeugt hat; sonst Hinweis ohne Link.
+  async function nachErfolg(id, live, vorne) {
+    const text = K.erfolgText(vorne, live);
+    const art = live ? 'info' : 'fehler';
+    const extra = live ? [seitenLink(id)] : [];
+    meldung(text, art, ...extra);
+    try {
+      await ladeStand();
+    } catch (e) {
+      if (e && e.art === 'anmeldung') return fehler(e);
+      return meldung(vorne + '. Die Ansicht konnte nicht aktualisiert werden – bitte Seite neu laden.', 'fehler');
+    }
+    // Ein wiederhergestellter oder verworfener Entwurf wird hinter der Erfolgsmeldung genannt.
+    oeffneTest(id, [text], undefined, { art, extra });
   }
 
   async function speichere(dlg) {
@@ -625,17 +629,17 @@
           (eigen ? ' Ihr Text dafür war: „' + eigen.neu + '“.' : '') + (liste.length > 1 ? ' Ihre übrigen Änderungen sind noch da.' : '')], label);
       }
       if (e.art === 'ungueltig') {
-        serverMeldungen(e.meldungen);
+        const r2 = K.ordneMeldungen(e.meldungen, (k) => t.dom.felder.has(k));
+        t.server = r2.jeFeld;
         pruefe();
-        return meldung('Nicht gespeichert: Bitte beheben Sie zuerst die markierten Stellen.', 'fehler');
+        return meldung('Nicht gespeichert: ' + [r2.jeFeld.size ? 'Bitte beheben Sie zuerst die markierten Stellen.' : '']
+          .concat(r2.ohneFeld).filter(Boolean).join(' '), 'fehler');
       }
       throw e;
     }
     loescheEntwurf(id);
     dlg.close();
-    await ladeStand();
-    oeffneTest(id);
-    erfolg(id, r.live === true, 'Gespeichert.');
+    await nachErfolg(id, r.live === true, 'Gespeichert');
   }
 
   // --- Ansicht: Verlauf -------------------------------------------------------------------
@@ -703,9 +707,7 @@
       throw e;
     }
     dlg.close();
-    await ladeStand();
-    oeffneTest(id);
-    erfolg(id, r.live === true, 'Rückgängig gemacht.');
+    await nachErfolg(id, r.live === true, 'Rückgängig gemacht');
   }
 
   // --- Start --------------------------------------------------------------------------------

@@ -213,3 +213,40 @@ test('export_ohne_pr: keine GitHub-/PR-Helfer mehr', () => {
   assert.strictEqual(K.nurErlaubteDateien, undefined);
   assert.strictEqual(K.wendeAn, undefined);
 });
+
+test('erfolgText: live -> "Ist live.", sonst Hinweis auf alten Text (kein "wird veröffentlicht")', () => {
+  assert.strictEqual(K.erfolgText('Gespeichert', true), 'Gespeichert. Ist live.');
+  assert.strictEqual(K.erfolgText('Rückgängig gemacht', true), 'Rückgängig gemacht. Ist live.');
+  const nein = K.erfolgText('Gespeichert', false);
+  assert.strictEqual(nein, 'Gespeichert, aber die Website zeigt noch den alten Text. Bitte wenden Sie sich an Seitenschwung.');
+  assert.doesNotMatch(nein, /Ist live|veröffentlicht/);
+  assert.match(K.erfolgText('Rückgängig gemacht', false), /^Rückgängig gemacht, aber die Website zeigt noch den alten Text\./);
+});
+
+test('ordneMeldungen: Feldmeldungen je Feld, feldlose getrennt', () => {
+  const felder = new Set(['test|name', 'test|questions[0].text', 'eintrag|motto']);
+  const r = K.ordneMeldungen([
+    { pfad: 'questions[0].text', meldung: 'Darf nicht leer sein' },
+    { pfad: 'questions[0].text', meldung: 'Zu lang' },
+    { pfad: 'motto', meldung: 'Zu lang' },
+    { pfad: '', meldung: 'questions: Anzahl 3 statt 4' },
+    { pfad: 'gibtsnicht', meldung: 'Dieses Feld ist nicht änderbar' },
+  ], (k) => felder.has(k));
+  assert.deepStrictEqual([...r.jeFeld], [
+    ['test|questions[0].text', ['Darf nicht leer sein', 'Zu lang']],
+    ['eintrag|motto', ['Zu lang']],
+  ]);
+  assert.deepStrictEqual(r.ohneFeld, ['questions: Anzahl 3 statt 4', 'Dieses Feld ist nicht änderbar']);
+  assert.deepStrictEqual(K.ordneMeldungen(undefined, () => true), { jeFeld: new Map(), ohneFeld: [] });
+});
+
+test('ausText: je grund eine Meldung, ohne grund neutral', () => {
+  assert.match(K.ausText('nicht_schreibbar'), /Datenspeicher/);
+  assert.match(K.ausText('gesperrt'), /in einem Moment/);
+  assert.match(K.ausText('aus'), /nicht eingeschaltet/);
+  assert.match(K.ausText('overlay_unlesbar'), /nicht gelesen/);
+  const neutral = 'Der Editor ist gerade nicht verfügbar. Bitte versuchen Sie es in ein paar Minuten erneut.';
+  assert.strictEqual(K.ausText(''), neutral);
+  assert.strictEqual(K.ausText(undefined), neutral);
+  assert.strictEqual(K.ausText('toString'), neutral);
+});

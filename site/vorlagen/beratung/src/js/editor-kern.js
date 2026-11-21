@@ -1,4 +1,4 @@
-// Editor-Kern: Felderliste, Labels, Änderungen und Entwürfe für den Test-Editor. Ohne DOM, ohne Node-APIs.
+// Editor-Kern: Felderliste, Labels, Änderungen, Entwürfe und Meldungstexte für den Test-Editor. Ohne DOM, ohne Node-APIs.
 (function (root, factory) {
   'use strict';
   if (typeof module === 'object' && module.exports) module.exports = factory(require('../../../../lib/testwaechter'));
@@ -189,5 +189,34 @@
     return { daten, angewendet, verworfen };
   }
 
-  return { felder, setze, aenderungen, entwurfAnwenden, zeilen, passt };
+  // Meldung nach Speichern/Rückgängig. live:false heißt: gespeichert, aber die öffentliche Seite zeigt noch den alten Text.
+  function erfolgText(vorne, live) {
+    return live ? vorne + '. Ist live.' : vorne + ', aber die Website zeigt noch den alten Text. Bitte wenden Sie sich an Seitenschwung.';
+  }
+
+  // Meldungen einer 422-Antwort ({pfad, meldung}, ohne Datei): je Feld ("datei|pfad", test vor eintrag) oder ohne Feld.
+  function ordneMeldungen(liste, hatFeld) {
+    const jeFeld = new Map();
+    const ohneFeld = [];
+    for (const m of Array.isArray(liste) ? liste : []) {
+      const k = m.pfad && ['test|' + m.pfad, 'eintrag|' + m.pfad].find(hatFeld);
+      if (k) (jeFeld.get(k) || jeFeld.set(k, []).get(k)).push(m.meldung);
+      else ohneFeld.push(m.meldung);
+    }
+    return { jeFeld, ohneFeld };
+  }
+
+  const AUS = {
+    aus: 'Der Editor ist derzeit nicht eingeschaltet. Bitte wenden Sie sich an Seitenschwung.',
+    nicht_schreibbar: 'Speichern ist gerade nicht möglich, weil der Datenspeicher nicht erreichbar ist. Ihr Entwurf bleibt erhalten. Bitte wenden Sie sich an Seitenschwung.',
+    overlay_unlesbar: 'Die gespeicherten Änderungen können gerade nicht gelesen werden. Bitte wenden Sie sich an Seitenschwung.',
+    gesperrt: 'Gerade wird an anderer Stelle gespeichert. Bitte versuchen Sie es in einem Moment erneut; Ihr Entwurf bleibt erhalten.',
+  };
+  // Meldung zu 503 (editor_aus) je grund; unbekannt oder ohne grund: neutral.
+  function ausText(grund) {
+    return Object.prototype.hasOwnProperty.call(AUS, grund) ? AUS[grund]
+      : 'Der Editor ist gerade nicht verfügbar. Bitte versuchen Sie es in ein paar Minuten erneut.';
+  }
+
+  return { felder, setze, aenderungen, entwurfAnwenden, zeilen, passt, erfolgText, ordneMeldungen, ausText };
 });

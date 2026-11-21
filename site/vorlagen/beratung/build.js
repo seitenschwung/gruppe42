@@ -992,7 +992,7 @@ if (editorJs.length) {
   seiten.push({
     datei: 'editor/index.html', aktiv: 'editor', inhalt: editorSeite(), noindex: true, basis: true,
     titel: `Test-Editor – ${s.name}`,
-    beschreibung: 'Texte der Selbsttests bearbeiten und zur Freigabe senden.',
+    beschreibung: 'Texte der Selbsttests bearbeiten und live veröffentlichen.',
     zusatzHead: editorJs.map((u) => `<script src="${u}" defer></script>`).join(''),
   });
 }

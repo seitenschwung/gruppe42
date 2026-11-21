@@ -116,7 +116,7 @@ test('ohne Env, mit ungültiger Env oder ohne schreibbares Datenverzeichnis: 503
     for (const r of ROUTEN) {
       const res = await s.post(r, {});
       assert.strictEqual(res.status, 503, `${JSON.stringify(f.env)} ${r}`);
-      assert.deepStrictEqual(res.json, { error: 'editor_aus' });
+      assert.deepStrictEqual(res.json, { error: 'editor_aus', grund: f.dataDir ? 'nicht_schreibbar' : 'aus' });
       assert.strictEqual(res.headers['cache-control'], 'no-store');
     }
     assert.strictEqual(s.sitzung.pruefe(req('x'.repeat(43))), null);
@@ -538,7 +538,7 @@ test('Sperre: gehaltene Sperre -> CLI scheitert klar, Server 503; veraltete Sper
   fs.writeFileSync(sperre, '1');
   const { res } = await melde(s, a);
   assert.strictEqual(res.status, 503);
-  assert.deepStrictEqual(res.json, { error: 'editor_aus' });
+  assert.deepStrictEqual(res.json, { error: 'editor_aus', grund: 'gesperrt' });
   assert.strictEqual(res.headers['set-cookie'], undefined);
 
   // Veraltet (älter als 30 s): wird übernommen und danach freigegeben

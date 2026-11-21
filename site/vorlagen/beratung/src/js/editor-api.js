@@ -1,6 +1,6 @@
 // Editor-API im Browser: je Route eine Funktion, einheitliche Fehler. Ohne DOM.
 // Fehler haben e.art: 'anmeldung' | 'herkunft' | 'aus' (+grund) | 'konflikt' (+pfad) | 'ungueltig' (+meldungen)
-// | 'unbekannt' | 'zuviele' | 'netz' | 'fehler' (+status, +code aus der Antwort).
+// | 'unbekannt' | 'zuviele' | 'netz' | 'fehler' (+status, +code aus der Antwort). grund ist '' ohne Angabe des Servers.
 (function (root, factory) {
   'use strict';
   if (typeof module === 'object' && module.exports) module.exports = factory();
@@ -31,7 +31,7 @@
           : [],
       });
       case 429: return fehler('zuviele', { status });
-      case 503: return fehler('aus', { status, grund: typeof b.grund === 'string' && b.grund ? b.grund : 'aus' });
+      case 503: return fehler('aus', { status, grund: typeof b.grund === 'string' ? b.grund : '' });
       default: return fehler('fehler', { status, code: typeof b.error === 'string' ? b.error : '' });
     }
   }

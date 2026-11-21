@@ -184,12 +184,12 @@ function createSitzung({ env = process.env, dataDir, jetzt = () => Date.now(), r
       const reply = (status, obj, cookie) => send(res, status, cookie ? { ...JSON_HEADERS, 'Set-Cookie': cookie } : JSON_HEADERS, JSON.stringify(obj) + '\n');
       const ip = ipVon(req);
       if (limited(ip)) return reply(429, { error: 'rate_limited' });
-      if (!verfuegbar()) return reply(503, { error: 'editor_aus' });
+      if (!verfuegbar()) return reply(503, { error: 'editor_aus', grund: cfg ? 'nicht_schreibbar' : 'aus' });
       if (req.headers['x-g42-editor'] !== '1' || req.headers.origin !== cfg.origin) return reply(403, { error: 'herkunft' });
       let body;
       try { body = await leseJson(req); } catch (e) { return reply(e.status || 400, { error: 'bad_request' }); }
       try { return fn(body, reply, req, ip); } catch (e) {
-        if (e.art === 'gesperrt') return reply(503, { error: 'editor_aus' });
+        if (e.art === 'gesperrt') return reply(503, { error: 'editor_aus', grund: 'gesperrt' });
         return reply(500, { error: 'intern' });
       }
     };
